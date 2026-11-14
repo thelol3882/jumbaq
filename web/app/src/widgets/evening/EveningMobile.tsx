@@ -2,6 +2,7 @@ import type { Case } from "@/features/cases";
 import { AnswerForm, DecodeParentNote, EpisodeResultView, ParentNote, StoryText } from "@/features/episodes";
 import { NotebookPage } from "@/shared/components/notebook";
 import { AfterTheAnswer, EveningHeader, StepMain, type ShownEpisode } from "./parts";
+import { useStepScroll } from "./useStepScroll";
 
 /** Designs D2 and D3: one page, read top to bottom. */
 export function EveningMobile({
@@ -14,10 +15,11 @@ export function EveningMobile({
   codeBreaker?: string;
 }) {
   const { step, result } = episode.content;
+  const main = useStepScroll<HTMLDivElement>(step);
   return (
     <NotebookPage margin>
       <EveningHeader current={current} episode={episode} />
-      <div className="mt-8 flex flex-col gap-9">
+      <div ref={main} className="mt-8 flex scroll-mt-4 flex-col gap-9">
         {step === "done" && result ? (
           <>
             <EpisodeResultView result={result} last={episode.number === current.episodes.length} />

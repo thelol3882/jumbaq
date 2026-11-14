@@ -10,6 +10,7 @@ import {
 } from "@/features/episodes";
 import { NotebookPage, NotebookSpread } from "@/shared/components/notebook";
 import { AfterTheAnswer, EveningHeader, StepMain, type ShownEpisode } from "./parts";
+import { useStepScroll } from "./useStepScroll";
 
 /** Designs F4 and F5: the story and the steps on the left, the parent's page on the right. */
 export function EveningDesktop({
@@ -24,6 +25,7 @@ export function EveningDesktop({
   const t = useTranslations("widget.evening");
   const { step, result, decode } = episode.content;
   const done = step === "done" && result;
+  const main = useStepScroll<HTMLElement>(step);
   return (
     <NotebookPage width="wide">
       <EveningHeader current={current} episode={episode} wide />
@@ -31,7 +33,7 @@ export function EveningDesktop({
         <NotebookSpread
           sideLabel={done ? t("boardLabel") : t("parentLabel")}
           main={
-            <article className="relative pl-14">
+            <article ref={main} className="relative scroll-mt-4 pl-14">
               <span aria-hidden="true" className="absolute -top-10 -bottom-14 left-7.5 border-l-[1.5px] border-rule-margin" />
               {done ? (
                 <EpisodeResultView result={result} last={episode.number === current.episodes.length} large />
