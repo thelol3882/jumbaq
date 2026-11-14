@@ -506,3 +506,42 @@ async def test_a_plan_that_reuses_an_earlier_suspect_name_is_refused(
             )
         ).one()
     assert (status, is_fallback) == ("active", True)
+
+
+async def outcomes_of(sessionmaker: Sessionmaker, family_id: uuid.UUID, kind: str) -> list[str]:
+    async with sessionmaker() as session:
+        rows = await session.scalars(
+            select(LlmCallRow.outcome)
+            .where(LlmCallRow.family_id == family_id, LlmCallRow.kind == kind)
+            .order_by(LlmCallRow.created_at, LlmCallRow.id)
+        )
+        return list(rows)
+
+
+async def test_a_refused_plan_is_logged_as_refused(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, RuleBreaker()))
+
+    assert await outcomes_of(sessionmaker, family_id, "case_plan") == ["refused", "refused"]
+
+
+async def test_a_plan_that_passes_the_second_time_is_logged_refused_then_ok(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+
+    class RuleBreakerOnce(RuleBreaker):
+        calls = 0
+
+        async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
+            self.calls += 1
+            if self.calls == 1:
+                return await super().complete_json(prompt, schema)
+            return await StubProvider().complete_json(prompt, schema)
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, RuleBreakerOnce()))
+
+    assert await outcomes_of(sessionmaker, family_id, "case_plan") == ["refused", "ok"]

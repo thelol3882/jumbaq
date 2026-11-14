@@ -158,6 +158,7 @@ class EpisodeWriting:
             if not problems:
                 return payload, False
             logger.info("episode breaks the rules (%s), try %s", "; ".join(problems), attempt)
+            await self._writer.mark_refused(family, draft.call_id)
             task = replace(task, fix=tuple(problems))
             if domain.is_safe_riddle(payload.fallback_riddle, home.objects, youngest):
                 safe_riddle = payload.fallback_riddle

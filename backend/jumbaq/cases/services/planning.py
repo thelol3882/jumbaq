@@ -84,7 +84,8 @@ class CasePlanning:
         """A valid plan from the model, or None after PLAN_TRIES bad ones."""
         for attempt in range(1, PLAN_TRIES + 1):
             try:
-                plan = _plan(await self._writer.plan_case(family, task))
+                draft = await self._writer.plan_case(family, task)
+                plan = _plan(draft)
             except AiBadOutputError:
                 logger.info("plan of the wrong shape, try %s", attempt)
                 continue
@@ -99,6 +100,7 @@ class CasePlanning:
             if not problems:
                 return plan
             logger.info("plan breaks the rules (%s), try %s", "; ".join(problems), attempt)
+            await self._writer.mark_refused(family, draft.call_id)
             task = replace(task, fix=tuple(problems))
         return None
 
