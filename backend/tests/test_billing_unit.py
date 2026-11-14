@@ -67,7 +67,7 @@ def test_a_signed_subscription_event_is_read() -> None:
 
     assert change == SubscriptionChange(
         event["id"], FAMILY, "sub_9", "cus_test", S.ACTIVE,
-        datetime.fromtimestamp(1_800_000_000, UTC),
+        datetime.fromtimestamp(1_800_000_000, UTC), event["type"],
     )  # fmt: skip
 
 

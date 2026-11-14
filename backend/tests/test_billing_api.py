@@ -289,3 +289,34 @@ async def test_paying_after_a_failed_payment_activates_again(
         send(stripe, settings, event)
 
     assert await activations(sessionmaker, family_id) == 2
+
+
+async def test_an_event_for_an_unknown_family_gets_200_and_changes_nothing(
+    stripe: TestClient,
+    live_client: TestClient,
+    settings: Settings,
+    sessionmaker: Sessionmaker,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    stranger = uuid.uuid4()
+    event = subscription_event(stranger, "active", subscription_id=sub_id())
+
+    response = send(stripe, settings, event)
+
+    assert response.status_code == 200, response.text
+    assert response.json() == {"received": True}
+    assert await rows(sessionmaker, stranger) == []
+    assert f"{event['id']} of type {event['type']}" in caplog.text
+    assert "cus_test" not in caplog.text
+
+    # Retried by Stripe: the same answer.
+    assert send(stripe, settings, event).status_code == 200
+
+
+def test_an_event_with_a_family_that_is_no_id_gets_200(
+    stripe: TestClient, settings: Settings
+) -> None:
+    event = subscription_event(uuid.uuid4(), "active")
+    event["data"]["object"]["metadata"]["family_id"] = "not-an-id"
+
+    assert send(stripe, settings, event).status_code == 200
