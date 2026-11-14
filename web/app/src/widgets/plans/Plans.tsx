@@ -12,12 +12,13 @@ export function Plans() {
   const t = useTranslations("widget.plans");
   const errorMessage = useApiErrorMessage();
   const startHref = useStartHref();
-  const { family, loading, missing, error, retry } = useFamily();
+  // A visitor without the hint makes no API call, as on the landing page.
+  const hinted = startHref !== "/setup";
+  const { family, missing, error, retry } = useFamily({ skip: !hinted });
   const subscription = useGetSubscriptionQuery(undefined, { skip: !family });
   const { checkout, redirecting, error: checkoutError } = useCheckout();
   const subscribed = subscription.data?.active === true;
-  // While the API has not answered, the hint says what this browser has.
-  const anonymous = missing || (loading && startHref === "/setup");
+  const anonymous = !hinted || missing;
 
   return (
     <NotebookPage margin>
