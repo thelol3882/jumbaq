@@ -35,10 +35,7 @@ async def create_family(
 
 
 @router.get("/family")
-async def get_family(
-    family: FamilyDep, families: FamilyServiceDep, settings: SettingsDep
-) -> FamilyStateOut:
+async def get_family(family: FamilyDep, families: FamilyServiceDep) -> FamilyStateOut:
     """The family of the cookie. No cookie, or an unknown one, gives 401 `family.no_session`.
     `demo_mode` is true when the next episode may be opened at once."""
-    found = FamilyOut.model_validate(await families.get(family))
-    return FamilyStateOut(**found.model_dump(), demo_mode=settings.demo_mode)
+    return FamilyStateOut.model_validate(await families.get(family))

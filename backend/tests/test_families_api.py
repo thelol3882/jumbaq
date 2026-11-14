@@ -5,8 +5,10 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from jumbaq.core.deps import get_settings
 from jumbaq.families.deps import FAMILY_COOKIE
 from jumbaq.families.models import FamilyRow
+from tests.conftest import TEST_SETTINGS
 from tests.flows import create_family, family_body
 
 pytestmark = pytest.mark.integration
@@ -90,3 +92,16 @@ def test_a_change_without_the_header_of_the_web_app_is_refused(client: TestClien
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "common.forbidden"
+
+
+def test_the_family_says_whether_demo_mode_is_on(live_client: TestClient) -> None:
+    create_family(live_client)
+    assert live_client.get("/api/v1/family").json()["demo_mode"] is True
+
+    no_demo = TEST_SETTINGS.model_copy(update={"demo_mode": False})
+    live_client.app.dependency_overrides[get_settings] = lambda: no_demo  # type: ignore[attr-defined]
+    try:
+        body = live_client.get("/api/v1/family").json()
+    finally:
+        live_client.app.dependency_overrides.clear()  # type: ignore[attr-defined]
+    assert body["demo_mode"] is False
