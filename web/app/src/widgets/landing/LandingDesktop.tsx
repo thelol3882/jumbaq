@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { HandNote, NotebookPage, NotebookSpread, RiddleCard, StampLink, Wordmark } from "@/shared/components/notebook";
+import { HandNote, NotebookPage, NotebookSpread, PlansLink, RiddleCard, StampLink, Wordmark } from "@/shared/components/notebook";
 import { Headline, Steps } from "./parts";
 
 /** Design F1: the story on the left page, a real page of a case on the right. */
@@ -10,6 +10,7 @@ export function LandingDesktop({ startHref }: { startHref: string }) {
       <header className="flex flex-wrap items-center justify-between gap-6 font-type text-label text-ink-muted">
         <span>{t("volume")}</span>
         <span>{t("facts")}</span>
+        <PlansLink />
       </header>
       <div className="mt-10">
         <NotebookSpread

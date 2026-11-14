@@ -4,6 +4,9 @@
       "title": "jumbaq: a detective story your kids solve at home",
       "description": "One short mystery a night for five nights. You read it aloud, the kids search the room you're sitting in. No sign-up."
     },
+    "nav": {
+      "plans": "Plans"
+    },
     "unexpectedError": "Something went wrong. If it happens again, tell us this code: {requestId}",
     "errors": {
       "common": {

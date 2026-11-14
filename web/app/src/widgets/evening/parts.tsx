@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, SuspectTable, type Case } from "@/features/cases";
 import { ClueTag, DecodeStep, StrikeStep, type Episode } from "@/features/episodes";
-import { HandNote, StampLink, Wordmark } from "@/shared/components/notebook";
+import { HandNote, PlansLink, StampLink, Wordmark } from "@/shared/components/notebook";
 import { withTonightsClue } from "./services/tonightsClues";
 
 export type ShownEpisode = Episode & { content: NonNullable<Episode["content"]> };
@@ -23,6 +23,7 @@ export function EveningHeader({ current, episode, wide = false }: { current: Cas
           {t("eveningOf", { number: episode.number, total: current.episodes.length })}
         </span>
         {wide ? <EveningBoxes episodes={current.episodes} /> : null}
+        <PlansLink />
       </div>
     </header>
   );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { AccuseForm, EveningBoxes, EvidenceList } from "@/features/cases";
-import { NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
+import { NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { CertificateAndNext, SolvedStory, type AccuseViewProps } from "./parts";
 
 /** Design F6: the evidence to read aloud on the left, the pick on the right; then the win. */
@@ -15,6 +15,7 @@ export function AccuseDesktop({ current, solved, onSolved }: AccuseViewProps) {
           <Wordmark text={t("wordmark")} size="sm" />
         </Link>
         <EveningBoxes episodes={current.episodes} />
+        <PlansLink />
       </header>
       <div className="mt-11">
         {isSolved ? (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { AccuseForm, EvidenceList } from "@/features/cases";
-import { NotebookPage, Wordmark } from "@/shared/components/notebook";
+import { NotebookPage, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { CertificateAndNext, SolvedStory, type AccuseViewProps } from "./parts";
 
 /** Design D4: evidence, the pick and the stamp; after the right pick, the win and the certificate. */
@@ -9,9 +9,12 @@ export function AccuseMobile({ current, solved, onSolved }: AccuseViewProps) {
   const t = useTranslations("widget.accuse");
   return (
     <NotebookPage margin>
-      <Link href="/family" aria-label={t("back")} className="self-start">
-        <Wordmark text={t("wordmark")} size="sm" />
-      </Link>
+      <div className="flex items-center justify-between gap-4">
+        <Link href="/family" aria-label={t("back")}>
+          <Wordmark text={t("wordmark")} size="sm" />
+        </Link>
+        <PlansLink />
+      </div>
       <div className="mt-8 flex flex-col gap-8">
         {current.status === "solved" ? (
           <>
