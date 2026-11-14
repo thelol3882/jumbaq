@@ -163,7 +163,7 @@ FALLBACK_PLAN = Plan(
     "forest school. Someone took it, and the party is tomorrow.",
     suspects=(
         Suspect("s1", "Rosa the Rabbit", "fast and always in a hurry"),
-        Suspect("s2", "Milo the Magpie", "loves shiny and colourful things"),
+        Suspect("s2", "Milo the Magpie", "loves shiny and colorful things"),
         Suspect("s3", "Toby the Tortoise", "slow, calm and very honest"),
     ),
     culprit_id="s2",
@@ -171,12 +171,63 @@ FALLBACK_PLAN = Plan(
         Clue(1, "Rosa was at the carrot market all morning, many saw her.", "s1", False),
         Clue(2, "Toby is far too slow to catch a flying balloon.", "s3", False),
         Clue(3, "Rosa has no wings, so she could not reach the high branch.", "s1", False),
-        Clue(4, "A black and white feather lies where the balloon was tied.", "s2", True),
-        Clue(5, "A red ribbon hangs from the tall tree where magpies nest.", "s2", True),
+        Clue(4, "A black and white feather from Milo lies where the balloon was tied.", "s2", True),
+        Clue(5, "A red ribbon hangs in Milo's nest in the tall tree.", "s2", True),
     ),
     reveal="Milo the Magpie took the balloon because it was the shiniest thing he had ever "
     "seen. He kept it safe in his nest and is glad to bring it to the party.",
 )
+
+
+_PICNIC_PLAN = Plan(
+    title="The missing picnic cake",
+    setting="The lemon cake for the big meadow picnic was left on the old stone table. "
+    "Now only a few crumbs are there, and everyone is hungry.",
+    suspects=(
+        Suspect("s1", "Pip the Mouse", "tiny, quick and always nibbling"),
+        Suspect("s2", "Bella the Bear", "big, sleepy and very fond of sweet things"),
+        Suspect("s3", "Otto the Owl", "wise, quiet and awake all night"),
+    ),
+    culprit_id="s2",
+    clues=(
+        Clue(1, "Pip is so small that he cannot lift a whole cake.", "s1", False),
+        Clue(2, "Otto was busy counting stars on the hill all evening.", "s3", False),
+        Clue(3, "Pip was seen at the berry bush, far from the table.", "s1", False),
+        Clue(4, "Big paw prints, just like Bella's, lead away from the table.", "s2", True),
+        Clue(5, "Bella has a little lemon cream on her nose and a happy smile.", "s2", True),
+    ),
+    reveal="Bella the Bear was so hungry that she ate the cake in her sleep. She is sorry, "
+    "and she helps everybody bake a new one for the picnic.",
+)
+
+_SCARF_PLAN = Plan(
+    title="The runaway scarf",
+    setting="The long blue scarf of Grandpa Goat hung on the garden fence. This morning "
+    "it was gone, and the wind is cold today.",
+    suspects=(
+        Suspect("s1", "Fenny the Fox", "clever, curious and fond of games"),
+        Suspect("s2", "Daisy the Duck", "cheerful and splashes in every puddle"),
+        Suspect("s3", "Hugo the Hamster", "round, shy and a great collector"),
+    ),
+    culprit_id="s3",
+    clues=(
+        Clue(1, "Fenny spent the whole morning at the pond with her friends.", "s1", False),
+        Clue(2, "Daisy was at the bakery, and the baker saw her there.", "s2", False),
+        Clue(3, "Fenny cannot fit through the tiny hole in the fence.", "s1", False),
+        Clue(4, "Soft blue threads lead to the little hole where Hugo lives.", "s3", True),
+        Clue(5, "Hugo has a cozy new blue pillow in his burrow.", "s3", True),
+    ),
+    reveal="Hugo the Hamster wanted a soft bed for the winter and took the scarf by "
+    "mistake. He gives it back with a hug and a thank you.",
+)
+
+FALLBACK_PLANS = (FALLBACK_PLAN, _PICNIC_PLAN, _SCARF_PLAN)
+
+
+def fallback_plan(case_number: int) -> Plan:
+    """The built-in plan of a case, so a family that falls back twice does not play the same
+    case again. They cycle after the last one."""
+    return FALLBACK_PLANS[(case_number - 1) % len(FALLBACK_PLANS)]
 
 
 def can_move(current: CaseStatus, to: CaseStatus) -> bool:
