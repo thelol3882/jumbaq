@@ -288,7 +288,9 @@ def cipher_level_for(oldest_age: int) -> CipherLevel:
 
 
 def _clue_words(clue: str) -> list[str]:
-    return [word.upper() for word in _LETTERS.findall(clue)]
+    # "Grandma's" stays one word: a lone "S" would turn up in the cipher.
+    joined = clue.replace("'", "").replace("\u2019", "")
+    return [word.upper() for word in _LETTERS.findall(joined)]
 
 
 def _secret_index(words: list[str]) -> int | None:
