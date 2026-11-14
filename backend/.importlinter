@@ -46,6 +46,7 @@ forbidden_modules =
     jumbaq.models
     jumbaq.families
     jumbaq.cases
+    jumbaq.ai
 
 [importlinter:contract:models-without-web-framework]
 name = Models know nothing about FastAPI or Starlette
@@ -111,6 +112,7 @@ source_modules =
     jumbaq.core
     jumbaq.families
     jumbaq.cases
+    jumbaq.ai
 forbidden_modules =
     jumbaq.*.handlers
 allow_indirect_imports = True
@@ -130,6 +132,7 @@ name = Only routers and deps.py read the session cookie; other code gets a Famil
 type = forbidden
 source_modules =
     jumbaq.cases
+    jumbaq.ai
     jumbaq.core
     jumbaq.worker
 forbidden_modules =
@@ -150,6 +153,7 @@ source_modules =
     jumbaq.families
 forbidden_modules =
     jumbaq.cases
+    jumbaq.ai
 allow_indirect_imports = True
 
 [importlinter:contract:cases-through-public]
@@ -167,4 +171,41 @@ forbidden_modules =
     jumbaq.families.uow
     jumbaq.families.services
     jumbaq.families.schemas
+    jumbaq.ai.domain
+    jumbaq.ai.errors
+    jumbaq.ai.models
+    jumbaq.ai.parsing
+    jumbaq.ai.prompts
+    jumbaq.ai.providers
+    jumbaq.ai.repositories
+    jumbaq.ai.uow
+    jumbaq.ai.services
+allow_indirect_imports = True
+
+[importlinter:contract:ai-through-public]
+name = ai uses no other domain module
+type = forbidden
+source_modules =
+    jumbaq.ai
+forbidden_modules =
+    jumbaq.families
+    jumbaq.cases
+allow_indirect_imports = True
+
+[importlinter:contract:only-ai-providers-call-the-model]
+name = Only ai.providers talks to the model SDK
+type = forbidden
+source_modules =
+    jumbaq.main
+    jumbaq.worker
+    jumbaq.core
+    jumbaq.families
+    jumbaq.cases
+    jumbaq.ai.domain
+    jumbaq.ai.services
+    jumbaq.ai.repositories
+    jumbaq.ai.prompts
+    jumbaq.ai.parsing
+forbidden_modules =
+    anthropic
 allow_indirect_imports = True
