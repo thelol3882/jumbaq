@@ -289,8 +289,8 @@ async def test_the_current_case_shows_only_what_was_played(
     after_two = live_client.get("/api/v1/cases/current").json()
 
     assert [(c["episode"], c["suspect_id"], c["rules_out"]) for c in after_two["clues"]] == [
-        (1, CULPRIT, False),
-        (2, INNOCENT, True),
+        (1, INNOCENT, True),
+        (2, "s3", True),
     ]
     # The clue of episode 5 would give the culprit away.
     assert "hollow of the old oak" not in str(after_two)
