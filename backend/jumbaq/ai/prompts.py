@@ -66,6 +66,26 @@ def _clue_limit(task: CasePlanInput) -> str:
     )
 
 
+def _world(task: CasePlanInput) -> str:
+    if task.world is None or task.missing_thing is None:
+        return ""
+    return (
+        'The case happens in the world and around the missing thing given as "world" and '
+        '"missing_thing" in the data. Use both: the setting is that world, and the whole case '
+        "is about that thing going missing. Do not move it to a bakery or anywhere else.\n"
+    )
+
+
+def _earlier(task: CasePlanInput) -> str:
+    if not task.used_titles and not task.used_suspect_names:
+        return ""
+    return (
+        'The family already played the cases listed under "earlier_cases" in the data. Do not '
+        "reuse any of those titles or suspect names, and do not write a case that feels like "
+        "one of them. Code refuses a reused title or name.\n"
+    )
+
+
 def _retry(fix: tuple[str, ...]) -> str:
     if not fix:
         return ""
@@ -84,7 +104,7 @@ one suspect.
 
 Plan the case:
 - A short title and a setting of one or two sentences, in a world kids like (a toy town, a \
-forest school, a bakery of animals).
+forest school, a bakery of animals), unless the data gives you the world.
 - Exactly {SUSPECTS_PER_CASE} suspects with the ids "s1", "s2" and "s3", each with a name and \
 one line that a child remembers.
 - One culprit, given by its id.
@@ -113,12 +133,21 @@ matches the clues.
 - The culprit's real motive appears only in the reveal and in clues 4 and 5, never on a card.
 - The reveal: a few sentences that explain how the clues fit together, including the false \
 trail and why the culprit did it.
-{_clue_limit(task)}
+{_world(task)}{_earlier(task)}{_clue_limit(task)}
 {_SAFETY}
 
 {_DATA_RULES}
 Use American English spelling in every text you write (color, favorite, cozy, gray, neighbor)."""
     data = {"case_number": task.case_number, "home": _home(task.home)}
+    if task.world is not None:
+        data["world"] = task.world
+    if task.missing_thing is not None:
+        data["missing_thing"] = task.missing_thing
+    if task.used_titles or task.used_suspect_names:
+        data["earlier_cases"] = {
+            "titles": list(task.used_titles),
+            "suspect_names": list(task.used_suspect_names),
+        }
     user = f"Plan case number {task.case_number} for this family.\n\n{_retry(task.fix)}"
     return Prompt(system, user + data_block(data))
 

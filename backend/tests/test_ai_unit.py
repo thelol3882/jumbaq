@@ -286,3 +286,28 @@ def test_the_plan_prompt_keeps_every_card_from_giving_the_culprit_away() -> None
     assert "No description hints at guilt" in system
     assert "motive appears only in the reveal and in clues 4 and 5" in system
     assert "American English" in system
+
+
+def test_the_plan_prompt_gives_the_world_the_missing_thing_and_the_earlier_cases() -> None:
+    task = CasePlanInput(
+        HOME,
+        2,
+        world="a lighthouse by the sea",
+        missing_thing="the brass bell",
+        used_titles=("The Lost Cupcake",),
+        used_suspect_names=("Penny the Penguin",),
+    )
+    prompt = prompts.case_plan_prompt(task)
+
+    assert "Do not move it to a bakery" in prompt.system
+    assert "Do not reuse any of those titles or suspect names" in prompt.system
+    assert '"world": "a lighthouse by the sea"' in prompt.user
+    assert '"missing_thing": "the brass bell"' in prompt.user
+    assert "Penny the Penguin" in prompt.user and "The Lost Cupcake" in prompt.user
+
+
+def test_the_plan_prompt_of_a_first_case_names_no_earlier_cases() -> None:
+    prompt = prompts.case_plan_prompt(CasePlanInput(HOME, 1))
+
+    assert "earlier_cases" not in prompt.system + prompt.user
+    assert "Do not move it" not in prompt.system

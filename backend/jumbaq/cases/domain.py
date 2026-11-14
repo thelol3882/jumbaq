@@ -9,6 +9,7 @@ would pull the database into the domain. So does the check for words unsafe for 
 which comes from episodes.public.
 """
 
+import hashlib
 import re
 import uuid
 from collections.abc import Callable, Collection
@@ -234,6 +235,41 @@ def _clue_shape_problems(plan: Plan, ids: list[str], episodes: int) -> list[str]
                 f"the innocent suspect {sid} is not ruled out in episodes 1 to {CLEARED_BY_EPISODE}"
             )
     return problems
+
+
+@dataclass(frozen=True)
+class World:
+    """Where a case happens and what may go missing there."""
+
+    place: str
+    things: tuple[str, ...]
+
+
+# Code picks the world, not the model: left alone, the model writes the same bakery every time.
+WORLDS = (
+    World("a lighthouse by the sea", ("the brass bell", "the golden lantern", "the sea map")),
+    World("a space station", ("the glowing moon rock", "the star map", "the robot's silver key")),
+    World("a forest school", ("the big storybook", "the rainbow paint set", "the school drum")),
+    World("a little train", ("the red whistle", "the picnic basket", "the conductor's hat")),
+    World("a farm", ("the blue ribbon", "the basket of eggs", "the big dinner bell")),
+    World("a toy shop", ("the wind-up music box", "the shiny top hat", "the tiny drum")),
+    World("a zoo at night", ("the golden whistle", "the keeper's lantern", "the big banana")),
+    World("a castle kitchen", ("the royal pie", "the silver spoon", "the jar of cinnamon")),
+    World("a pirate ship", ("the treasure map", "the parrot's bell", "the captain's hat")),
+    World("a snowy village", ("the star for the tree", "the sled bell", "the big scarf")),
+    World("a museum", ("the little dinosaur bone", "the painted vase", "the glass marble")),
+    World("a circus", ("the juggling balls", "the clown's red nose", "the magic wand")),
+    World("a beach town", ("the giant sandcastle flag", "the ice cream bell", "the kite")),
+    World("a mountain hut", ("the warm blanket", "the wooden flute", "the trail map")),
+)
+
+
+def world_for(case_id: uuid.UUID) -> tuple[str, str]:
+    """The world and the missing thing of a case. A stable hash of the id, so a retry of the
+    planning keeps the same choice and different cases of a family differ."""
+    digest = int.from_bytes(hashlib.sha256(case_id.bytes).digest()[:8], "big")
+    world = WORLDS[digest % len(WORLDS)]
+    return world.place, world.things[digest // len(WORLDS) % len(world.things)]
 
 
 FALLBACK_PLAN = Plan(
