@@ -32,6 +32,7 @@ class ResultView:
     decoded_word: str | None
     revealed_suspect: bool
     struck_suspect_id: str | None
+    rules_out: bool | None
 
 
 @dataclass(frozen=True)
@@ -293,6 +294,7 @@ def _content(episode: Episode) -> ContentView | None:
             decoded_word=decoded_word,
             revealed_suspect=episode.strike_attempts >= domain.MAX_ATTEMPTS,
             struck_suspect_id=payload.clue_suspect_id,
+            rules_out=None if payload.clue_points_at is None else not payload.clue_points_at,
         )
     return ContentView(
         recap=payload.recap,

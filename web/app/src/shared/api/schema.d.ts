@@ -585,6 +585,8 @@ export interface components {
             revealed_suspect: boolean;
             /** Struck Suspect Id */
             struck_suspect_id: string | null;
+            /** Rules Out */
+            rules_out: boolean | null;
         };
         /**
          * EpisodeSlotStatus
