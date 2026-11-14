@@ -2,7 +2,7 @@ export type WritingStepState = "done" | "now" | "todo";
 
 /**
  * A typed checklist of what is being written: a red tick when done, a red box with a typing
- * caret for the step in progress, an empty grey box for later. Each state is also said in words.
+ * caret for the step in progress, an empty gray box for later. Each state is also said in words.
  */
 export function WritingSteps({
   steps,
