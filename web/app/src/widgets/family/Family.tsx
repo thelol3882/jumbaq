@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useGetSubscriptionQuery } from "@/features/billing";
 import { inOpening, tonight, useCurrentCase } from "@/features/cases";
 import { useDetectivesLabel, useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
@@ -18,11 +19,13 @@ export function Family() {
   const { family, loading, missing, error, retry } = useFamily();
   const detectivesLabel = useDetectivesLabel();
   const { current, slow, error: caseError, retry: check } = useCurrentCase({ skip: !family });
+  const subscription = useGetSubscriptionQuery(undefined, { skip: !family });
   const isMobile = useIsMobile();
   const step = current && !inOpening(current) ? tonight(current, new Date()) : undefined;
   useRefetchAt(step?.kind === "waits" ? step.opensAt : null, check);
 
   if (family) {
+    const subscribed = subscription.data?.active ?? false;
     const waiting = { slow, onCheck: () => void check() };
     // A failed poll keeps the case it already has on screen; only a case that never loaded is an error.
     const problem =
@@ -33,9 +36,9 @@ export function Family() {
         </div>
       ) : undefined;
     return isMobile ? (
-      <FamilyMobile family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} />
+      <FamilyMobile family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} />
     ) : (
-      <FamilyDesktop family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} />
+      <FamilyDesktop family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} />
     );
   }
 
