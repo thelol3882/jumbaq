@@ -67,7 +67,7 @@ The rules for changing the code: [backend/AGENTS.md](backend/AGENTS.md) and [web
 
 ## What a case costs
 
-Measured on jumbaq.fun on 14 November 2026: three new families each played a whole case, five evenings and the accusation, with `claude-sonnet-5-5`. The token counts are the ones the server records for every model call.
+Measured on jumbaq.fun on 15 November 2026 (Almaty time): three new families each played a whole case, five evenings and the accusation, with `claude-sonnet-5-5`. The token counts are the ones the server records for every model call.
 
 | | Family 1 (one kid, 5) | Family 2 (4 and 7) | Family 3 (6 and 9) |
 |---|---|---|---|
