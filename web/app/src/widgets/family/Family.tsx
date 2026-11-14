@@ -26,6 +26,7 @@ export function Family() {
 
   if (family) {
     const subscribed = subscription.data?.active ?? false;
+    const cancelsAt = subscription.data?.cancels_at ?? null;
     const waiting = { slow, onCheck: () => void check() };
     // A failed poll keeps the case it already has on screen; only a case that never loaded is an error.
     const problem =
@@ -36,9 +37,9 @@ export function Family() {
         </div>
       ) : undefined;
     return isMobile ? (
-      <FamilyMobile family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} />
+      <FamilyMobile family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} cancelsAt={cancelsAt} />
     ) : (
-      <FamilyDesktop family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} />
+      <FamilyDesktop family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} cancelsAt={cancelsAt} />
     );
   }
 

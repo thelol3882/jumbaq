@@ -22,6 +22,7 @@ export function Plans() {
   const detectivesLabel = useDetectivesLabel();
   const { checkout, redirecting, error: checkoutError } = useCheckout();
   const subscribed = subscription.data?.active === true;
+  const cancelsAt = subscription.data?.cancels_at;
   const anonymous = !hinted || missing;
 
   return (
@@ -44,10 +45,12 @@ export function Plans() {
           <StampLink href="/setup">{t("start")}</StampLink>
         ) : subscribed ? (
           <>
-            <p role="status" className="font-type text-case">
-              {t("status", { status: subscription.data?.status ?? "active" })}
-            </p>
-            <ManageSubscription />
+            {cancelsAt ? null : (
+              <p role="status" className="font-type text-case">
+                {t("status", { status: subscription.data?.status ?? "active" })}
+              </p>
+            )}
+            <ManageSubscription cancelsAt={cancelsAt} />
           </>
         ) : (
           <StampButton disabled={!subscription.isSuccess || redirecting} onClick={() => void checkout()}>
