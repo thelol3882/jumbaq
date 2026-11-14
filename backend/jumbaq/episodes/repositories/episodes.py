@@ -36,5 +36,5 @@ class EpisodeRepository(Protocol):
     ) -> None: ...
 
     async def update(self, episode: Episode) -> None:
-        """Saves what can change: status, payload, answer, times and the swap."""
+        """Saves what can change: status, payload, answer, the steps, times and the swap."""
         ...
