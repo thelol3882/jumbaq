@@ -54,11 +54,19 @@ class EpisodesDown:
     """The stub, but every episode call fails as a model that is down."""
 
     name, model = "episodes-down", "test"
+    error: Exception = AiUnavailableError("timeout")
 
     async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
         if schema is EPISODE_SCHEMA:
-            raise AiUnavailableError("timeout")
+            raise self.error
         return await StubProvider().complete_json(prompt, schema)
+
+
+class EpisodesBroken(EpisodesDown):
+    """Every episode call fails with something that is not an AI error, like a bad reply body."""
+
+    name = "episodes-broken"
+    error = RuntimeError("not json")
 
 
 def unsafe(data: dict[str, Any]) -> None:
@@ -272,12 +280,13 @@ async def test_the_daily_cap_gives_the_built_in_episode(
     assert (row.status, row.is_fallback) == ("ready", True)
 
 
+@pytest.mark.parametrize("provider_class", [EpisodesDown, EpisodesBroken])
 async def test_a_model_that_stays_down_gives_the_built_in_episode_on_the_last_attempt(
-    live_client: TestClient, sessionmaker: Sessionmaker
+    live_client: TestClient, sessionmaker: Sessionmaker, provider_class: type[EpisodesDown]
 ) -> None:
     family_id, _ = create_family(live_client)
-    delivery = OutboxDelivery(sessionmaker, handlers_with(sessionmaker, EpisodesDown()))
-    await deliver_all(sessionmaker, handlers_with(sessionmaker, EpisodesDown()))  # to the first try
+    delivery = OutboxDelivery(sessionmaker, handlers_with(sessionmaker, provider_class()))
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, provider_class()))  # first try
     row = await episode_1(sessionmaker, family_id)
     assert row.status == "generating"
 

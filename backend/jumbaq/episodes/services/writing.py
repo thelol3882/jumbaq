@@ -9,7 +9,6 @@ from jumbaq.ai.public import (
     EPISODES_PER_CASE,
     AiBadOutputError,
     AiDailyLimitError,
-    AiUnavailableError,
     ClueDraft,
     EpisodeDraft,
     EpisodeInput,
@@ -125,7 +124,7 @@ class EpisodeWriting:
                 # A built-in episode keeps the evening going; a failed one would stop the case.
                 logger.warning("episode %s: the family reached the daily cap", episode.id)
                 break
-            except AiUnavailableError:
+            except Exception:
                 if not is_last_attempt():
                     raise
                 logger.exception("episode %s: the model failed for good, built-in", episode.id)
