@@ -38,6 +38,21 @@ There are no accounts. A family lives in a cookie on one browser for a year. A n
 
 An optional email to save the family and move it to another device. Playing as a guest stays the default.
 
+## Switching Claude on and off
+
+The owner pays for the model, so the owner decides when it runs. The switch and the daily limit of model calls for all families together live in the database and are changed from the server, with no HTTP endpoint. While the model is off, every family still plays: new cases and episodes use the built-in ones. Until the switch is used for the first time, the settings decide (`JUMBAQ_AI_PROVIDER` and `JUMBAQ_AI_DAILY_CALL_LIMIT`).
+
+On the server, from the folder with `docker-compose.yml`:
+
+```sh
+docker compose -f deploy/docker-compose.yml exec api python -m jumbaq.ai.control status
+docker compose -f deploy/docker-compose.yml exec api python -m jumbaq.ai.control on
+docker compose -f deploy/docker-compose.yml exec api python -m jumbaq.ai.control limit 1000
+docker compose -f deploy/docker-compose.yml exec api python -m jumbaq.ai.control off
+```
+
+`status` prints whether the model is on, the daily limit, today's calls and whether each value comes from the table or the settings. A change applies to the next model call, with no restart. `limit` stays when the model is switched off and on. On a laptop, `make ai-status`, `make ai-on`, `make ai-off` and `make ai-limit n=1000` do the same inside the running stack.
+
 ## Deploy
 
 [Luxen](luxen.yaml) builds the backend and web images, pushes them to ghcr.io and deploys them to the server with `deploy/docker-compose.yml`. The web app is at https://jumbaq.fun, the API at https://api.jumbaq.fun. The server `.env` comes from `.env.example`.
