@@ -86,6 +86,19 @@ class UnsafeFirstDraft:
         return reply
 
 
+class LeakyFirstDraft(UnsafeFirstDraft):
+    """The stub, with the secret word of episode 1 (FEATHER, at the shift level GREY FEATHER
+    LIES) in the first draft."""
+
+    async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
+        reply = await StubProvider().complete_json(prompt, schema)
+        if schema is EPISODE_SCHEMA:
+            self.episode_prompts.append(prompt)
+            if len(self.episode_prompts) == 1:
+                reply.data["read_aloud"][1] = "A grey feather fell on the floor."
+        return reply
+
+
 def handlers_with(sessionmaker: Sessionmaker, provider: Provider, daily_limit: int = 40) -> Any:
     settings = TEST_SETTINGS.model_copy(update={"ai_daily_calls_per_family": daily_limit})
     writer = build_story_writer(sessionmaker, settings, SystemClock(), provider)
@@ -355,3 +368,21 @@ async def test_the_second_try_learns_why_the_first_draft_was_refused(
     assert "unsafe for small kids" in second.user and "in hint" in second.user
     episode = await episode_1(sessionmaker, family_id)
     assert episode.status == "ready" and not episode.is_fallback
+
+
+async def test_a_draft_that_gives_the_clue_away_is_refused_and_the_second_try_learns_it(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    provider = LeakyFirstDraft()
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, provider))
+
+    first, second = provider.episode_prompts
+    # The model is told the words before the first try, and why the draft was refused after it.
+    assert '"grey", "feather", "lies"' in first.system and "gives the clue away" not in first.user
+    assert "gives the clue away: feather, grey in read_aloud paragraph 2" in second.user
+    episode = await episode_1(sessionmaker, family_id)
+    assert episode.status == "ready" and not episode.is_fallback
+    assert episode.payload is not None
+    assert "feather" not in str(episode.payload["read_aloud"]).lower()

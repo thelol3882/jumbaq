@@ -26,7 +26,7 @@ from jumbaq.core.clock import Clock
 from jumbaq.core.context import is_last_attempt
 from jumbaq.core.family import FamilyRef
 from jumbaq.episodes import domain
-from jumbaq.episodes.domain import Episode, EpisodeStatus, Payload, Riddle
+from jumbaq.episodes.domain import CipherPlan, Episode, EpisodeStatus, Payload, Riddle
 from jumbaq.episodes.events import EpisodeRequested
 from jumbaq.episodes.uow import EpisodesUoWFactory
 from jumbaq.families.public import Family
@@ -76,14 +76,13 @@ class EpisodeWriting:
             await uow.episodes.set_status(family, episode_id, EpisodeStatus.GENERATING)
             await uow.commit()
 
-        # No unit of work is open here: the model call can take a while.
-        payload, is_fallback = await self._payload(family, episode, brief, home, played)
+        # The cipher comes first: the story must not give its secret away.
         oldest = max((kid.age for kid in home.kids), default=0)
+        plan = domain.plan_cipher(brief.clue.text, oldest, brief.other_clues)
+        # No unit of work is open here: the model call can take a while.
+        payload, is_fallback = await self._payload(family, episode, brief, home, played, plan)
         payload = domain.with_evening_steps(
-            payload,
-            brief.clue.suspect_id,
-            brief.clue.points_at,
-            domain.plan_cipher(brief.clue.text, oldest),
+            payload, brief.clue.suspect_id, brief.clue.points_at, plan
         )
 
         async with self._uow() as uow:
@@ -104,12 +103,17 @@ class EpisodeWriting:
         brief: EpisodeBrief,
         home: Family,
         played: list[Episode],
+        plan: CipherPlan,
     ) -> tuple[Payload, bool]:
         """The model's episode, or the built-in one. The second item is True for the built-in."""
         youngest = home.kids[0].age if home.kids else domain.YOUNG_AGE
         paragraph_max, short_max = domain.text_limits(youngest)
         rules = TextRules(paragraph_max, short_max, domain.BANNED_WORDS)
-        task = replace(_task(episode, brief, home, played), rules=rules)
+        task = replace(
+            _task(episode, brief, home, played),
+            rules=rules,
+            secret_words=domain.secret_words(plan.secret),
+        )
         safe_riddle: Riddle | None = None
         for attempt in range(1, WRITE_TRIES + 1):
             try:
@@ -127,7 +131,9 @@ class EpisodeWriting:
                 logger.exception("episode %s: the model failed for good, built-in", episode.id)
                 break
             payload = domain.with_plan_clue(_from_draft(draft), brief.clue.text)
-            problems = domain.draft_problems(payload, home.objects, youngest, ANSWER_SLOT)
+            problems = domain.draft_problems(
+                payload, home.objects, youngest, ANSWER_SLOT, plan.secret
+            )
             if not problems:
                 return payload, False
             logger.info("episode breaks the rules (%s), try %s", "; ".join(problems), attempt)
