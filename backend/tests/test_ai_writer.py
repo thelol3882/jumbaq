@@ -57,9 +57,15 @@ class Down:
 
 
 def writer(
-    sessionmaker: Sessionmaker, clock: FixedClock, provider: Provider, daily_limit: int = 40
+    sessionmaker: Sessionmaker,
+    clock: FixedClock,
+    provider: Provider,
+    daily_limit: int = 40,
+    global_limit: int = 1_000_000,
 ) -> StoryWriter:
-    settings = TEST_SETTINGS.model_copy(update={"ai_daily_calls_per_family": daily_limit})
+    settings = TEST_SETTINGS.model_copy(
+        update={"ai_daily_calls_per_family": daily_limit, "ai_daily_call_limit": global_limit}
+    )
     return build_story_writer(sessionmaker, settings, clock, provider)
 
 
@@ -144,3 +150,20 @@ async def test_the_daily_cap_counts_every_call_and_starts_again_at_midnight(
     clock.advance(timedelta(hours=14, minutes=30))
     await capped.plan_case(family, TASK)
     assert len(await calls_of(sessionmaker, family_id)) == 3
+
+
+async def test_the_global_cap_counts_the_calls_of_all_families(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    first_id, _ = create_family(live_client)
+    second_id, _ = create_family(live_client)
+    # A day of its own on every run, so the calls of other tests and runs do not count.
+    day = datetime(2100, 1, 1, 8, 0, tzinfo=UTC) + timedelta(days=uuid.uuid4().int % 20000)
+    clock = FixedClock(day)
+    capped = writer(sessionmaker, clock, StubProvider(), global_limit=1)
+
+    await capped.plan_case(FamilyRef(first_id), TASK)
+    with pytest.raises(AiDailyLimitError):
+        await capped.plan_case(FamilyRef(second_id), TASK)
+
+    assert await calls_of(sessionmaker, second_id) == []

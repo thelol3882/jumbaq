@@ -27,6 +27,12 @@ class SqlLlmCallRepository:
             )
         )
 
+    async def count_all_since(self, since: datetime) -> int:
+        count = await self._session.scalar(
+            select(func.count()).select_from(LlmCallRow).where(LlmCallRow.created_at >= since)
+        )
+        return count or 0
+
     async def count_since(self, family: FamilyRef, since: datetime) -> int:
         count = await self._session.scalar(
             select(func.count())
