@@ -79,7 +79,10 @@ class SqlCaseLookup:
         clue = next((clue for clue in plan.clues if clue.episode == episode), None)
         if clue is None:
             return None
-        return EpisodeBrief(row.id, row.number, plan.title, plan.setting, plan.suspects, clue)
+        others = tuple(other.text for other in plan.clues if other.episode != episode)
+        return EpisodeBrief(
+            row.id, row.number, plan.title, plan.setting, plan.suspects, clue, others
+        )
 
     async def current_case_number(self, family: FamilyRef) -> int | None:
         """The number of the family's newest case, None before the first one."""

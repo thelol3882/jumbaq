@@ -31,9 +31,10 @@ async def answer_episode(
     episode_id: uuid.UUID, body: AnswerIn, family: FamilyDep, episodes: EpisodeServiceDep
 ) -> EpisodeOut:
     """Step 1 of 3. Any answer fits the story. Only for a ready episode (409
-    `episode.not_ready`) that is available (409 `episode.not_available_yet`). A second answer
-    gives 409 `episode.wrong_step`. The cipher to decode is then in `content.decode`; an
-    episode without a cipher is played here and its result is in `content.result`."""
+    `episode.not_ready`) that is available (409 `episode.not_available_yet`). A played episode or
+    a second answer gives 409 `episode.wrong_step`. The cipher to decode is then in
+    `content.decode`; an episode without a cipher is played here and its result is in
+    `content.result`."""
     return EpisodeOut.model_validate(await episodes.answer(family, episode_id, body.answer))
 
 

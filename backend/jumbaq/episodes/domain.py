@@ -5,7 +5,6 @@ who then go and look at something in the home. The answer slot comes from ai.pub
 the caller, so this module stays free of the database.
 """
 
-import random
 import re
 import uuid
 from dataclasses import dataclass, replace
@@ -92,9 +91,29 @@ STOPWORDS = frozenset({
     "which", "who", "whom", "whose", "does", "did", "has", "had", "are", "but", "for", "not",
     "you", "your", "our", "out", "off", "over", "under",
 })  # fmt: skip
-FALLBACK_WORDS = ("APPLE", "CLOUD", "PENCIL", "BANANA", "GARDEN")
-FALLBACK_PHRASES = ("RED APPLE PIE", "BIG BLUE CLOUD", "SOFT GREEN PENCIL")
-_LETTERS = re.compile(r"[A-Za-z]+")
+# Little words a secret phrase never starts or ends on, and never counts as a word to hide.
+FILLER_WORDS = STOPWORDS | frozenset({
+    "a", "an", "of", "to", "in", "on", "at", "is", "it", "as", "by", "or", "if", "so", "up",
+    "he", "she", "his", "her", "its", "my", "me", "we", "us", "be", "am", "no", "do", "go",
+    "all", "any", "can", "one", "two", "too", "only", "just", "also", "ever", "each",
+})  # fmt: skip
+# Wrong buttons of the number code when the other clues have too few words. Kid words of 4 to 7
+# letters, so the length of the right button does not give it away.
+KID_WORDS = (
+    "APPLE", "CLOUD", "PENCIL", "BANANA", "GARDEN", "MONKEY", "ROCKET", "PUPPY", "BUTTER",
+    "CANDLE", "BASKET", "PIRATE", "TIGER", "WINTER", "COOKIE", "JUMPER", "LEMON", "FOREST",
+    "BUTTON", "PILLOW", "SPIDER", "DONKEY", "TRAIN", "ISLAND", "BOTTLE", "SUMMER", "TOWER",
+    "ORANGE", "CARROT", "MAGNET", "WAGON", "PARROT", "DRAGON", "BRIDGE", "TEAPOT", "MARBLE",
+)  # fmt: skip
+# The same for the shift level, by number of words.
+KID_PHRASES = {
+    2: ("RED APPLE", "BLUE CLOUD", "GREEN PENCIL", "YELLOW DUCK", "OLD TREE", "APPLE CAKE",
+        "SOFT PILLOW", "TALL TOWER"),
+    3: ("RED APPLE PIE", "BIG BLUE CLOUD", "SOFT GREEN PENCIL", "LITTLE YELLOW DUCK",
+        "TALL OLD TREE", "WARM APPLE CAKE", "FAST PAPER BOAT", "SMALL BROWN PUPPY"),
+}  # fmt: skip
+_APOSTROPHES = re.compile("['" + chr(0x2019) + "]")
+_WORD = re.compile(r"[A-Za-z]+(?:['\u2019][A-Za-z]+)*")
 _DIGITS = re.compile(r"\d{1,9}")
 
 
@@ -186,7 +205,11 @@ def banned_words(text: str) -> list[str]:
 
 
 def draft_problems(
-    payload: Payload, objects: tuple[str, ...], youngest_age: int, slot: str
+    payload: Payload,
+    objects: tuple[str, ...],
+    youngest_age: int,
+    slot: str,
+    secret: str | None = None,
 ) -> list[str]:
     """Why the episode cannot be read to the kids. Empty when it is fine."""
     problems = []
@@ -221,6 +244,14 @@ def draft_problems(
         if found:
             problems.append(
                 f"unsafe for small kids: {', '.join(found)} in {name}; leave the word out entirely"
+            )
+    hidden = set(secret_words(secret))
+    for name, text in named:
+        given_away = sorted({word for word in _spoken_words(text) if word in hidden})
+        if given_away:
+            problems.append(
+                f"gives the clue away: {', '.join(word.lower() for word in given_away)} in "
+                f"{name} is a word the kids decode later; tell the story without it"
             )
     return problems
 
@@ -365,10 +396,28 @@ def cipher_level_for(oldest_age: int) -> CipherLevel:
     return CipherLevel.SHIFT
 
 
+def _tokens(text: str) -> list[tuple[str, int, int]]:
+    """The words of a text as (letters in upper case, start, end). "Grandma's" is one word,
+    GRANDMAS: a lone "S" would turn up in the cipher."""
+    return [
+        (re.sub(r"['\u2019]", "", found.group(0)).upper(), found.start(), found.end())
+        for found in _WORD.finditer(text)
+    ]
+
+
+def _spoken_words(text: str) -> set[str]:
+    """The words of a text, and the word before a possessive: "feather's" says FEATHER."""
+    words = set()
+    for found in _WORD.finditer(text):
+        raw = found.group(0).upper()
+        words.add(_APOSTROPHES.sub("", raw))
+        if raw.endswith(("'S", chr(0x2019) + "S")):
+            words.add(raw[:-2])
+    return words
+
+
 def _clue_words(clue: str) -> list[str]:
-    # "Grandma's" stays one word: a lone "S" would turn up in the cipher.
-    joined = clue.replace("'", "").replace("\u2019", "")
-    return [word.upper() for word in _LETTERS.findall(joined)]
+    return [word for word, _, _ in _tokens(clue)]
 
 
 def _secret_index(words: list[str]) -> int | None:
@@ -382,39 +431,86 @@ def _secret_index(words: list[str]) -> int | None:
     return best
 
 
-def _fill(found: list[str], fallback: tuple[str, ...], secret: str) -> tuple[str, ...]:
-    chosen = list(dict.fromkeys(text for text in found if text != secret))[:2]
-    for text in fallback:
+def _window(words: list[str], best: int, size: int, around: bool) -> int | None:
+    """Where a window of `size` words starts: it does not start or end on a filler word. With
+    `around` it holds the best word. The one with the fewest filler words inside wins, then the
+    one with the best word nearest its middle; the first on a tie."""
+    scored = []
+    for start in range(len(words) - size + 1):
+        part = words[start : start + size]
+        if part[0].lower() in FILLER_WORDS or part[-1].lower() in FILLER_WORDS:
+            continue
+        inside = sum(word.lower() in FILLER_WORDS for word in part)
+        middle = abs(best - (start + (size - 1) / 2))
+        if around and not start <= best < start + size:
+            continue
+        scored.append((inside, middle, start))
+    return min(scored)[2] if scored else None
+
+
+def _length_order(texts: list[str], like: str) -> list[str]:
+    """Distinct texts, the ones with the most letters like `like` first."""
+    target = len(like.replace(" ", ""))
+    return sorted(dict.fromkeys(texts), key=lambda text: abs(len(text.replace(" ", "")) - target))
+
+
+def _decoys(
+    candidates: list[str], fallback: tuple[str, ...], secret: str, seen: set[str]
+) -> tuple[str, ...]:
+    """Two wrong buttons. None of their words is in the clue, because the kids would see that
+    it is not the missing one."""
+    chosen: list[str] = []
+    for text in _length_order(candidates, secret) + _length_order(list(fallback), secret):
+        if text == secret or text in chosen or any(word in seen for word in text.split()):
+            continue
+        chosen.append(text)
         if len(chosen) == 2:
             break
-        if text != secret and text not in chosen:
-            chosen.append(text)
     return tuple(chosen)
 
 
-def plan_cipher(clue: str, oldest_age: int) -> CipherPlan:
-    """The level for the kids' age and the secret and decoys from the plan's clue. A clue with
-    no word that works gives the level count, which needs none."""
+def plan_cipher(clue: str, oldest_age: int, other_clues: tuple[str, ...] = ()) -> CipherPlan:
+    """The level for the kids' age and the secret and decoys from the plan's clue. The decoys
+    come from the case's other clues, then from a list of kid words, and none of them is in
+    this clue. A clue with no secret that works gives the level count, which needs none."""
     level = cipher_level_for(oldest_age)
     words = _clue_words(clue)
     index = _secret_index(words)
-    if level == CipherLevel.NUMBER_CODE and index is not None:
+    if index is None:
+        return CipherPlan(CipherLevel.COUNT, None, ())
+    seen = set(words)
+    others = [_clue_words(other) for other in other_clues]
+    if level == CipherLevel.NUMBER_CODE:
         secret = words[index]
-        others = [
+        found = [
             word
-            for i, word in enumerate(words)
-            if i != index and len(word) >= 3 and word.lower() not in STOPWORDS
+            for other in others
+            for word in other
+            if len(word) in SECRET_WORD_LENGTHS and word.lower() not in FILLER_WORDS
         ]
-        return CipherPlan(level, secret, _fill(others, FALLBACK_WORDS, secret))
-    if level == CipherLevel.SHIFT and index is not None and len(words) >= 3:
-        start = min(index, len(words) - 3)
-        secret = " ".join(words[start : start + 3])
-        starts = range(len(words) - 2)
-        # Windows that share no word with the secret come first.
-        ordered = sorted(starts, key=lambda s: abs(s - start) < 3)
-        windows = [" ".join(words[s : s + 3]) for s in ordered if s != start]
-        return CipherPlan(level, secret, _fill(windows, FALLBACK_PHRASES, secret))
+        return CipherPlan(level, secret, _decoys(found, KID_WORDS, secret, seen))
+    if level == CipherLevel.SHIFT:
+        # Three words around the best word, else two, and only then a window elsewhere.
+        for around, size in ((True, 3), (True, 2), (False, 3), (False, 2)):
+            start = _window(words, index, size, around)
+            if start is None:
+                continue
+            secret = " ".join(words[start : start + size])
+            found = [
+                " ".join(other[s : s + size])
+                for other in others
+                for s in range(len(other) - size + 1)
+                if other[s].lower() not in FILLER_WORDS
+                and other[s + size - 1].lower() not in FILLER_WORDS
+            ]
+            return CipherPlan(level, secret, _decoys(found, KID_PHRASES[size], secret, seen))
     return CipherPlan(CipherLevel.COUNT, None, ())
+
+
+def secret_words(secret: str | None) -> tuple[str, ...]:
+    """The words of the secret that the story must not use before the kids decode the clue:
+    little filler words in a phrase do not count."""
+    return tuple(word for word in (secret or "").split() if word.lower() not in FILLER_WORDS)
 
 
 def cipher_key(answer: str) -> int:
@@ -424,17 +520,26 @@ def cipher_key(answer: str) -> int:
     return max(number, 1)
 
 
+def number_start(key: int) -> int:
+    """The number of the letter A in the number code."""
+    return (key - 1) % 9 + 1
+
+
+def shift_amount(key: int) -> int:
+    return (key - 1) % 25 + 1
+
+
 def number_code(key: int, secret: str) -> str:
     """Each letter is its place in the alphabet plus a start that depends on the key: with a
     start of 3, A is 3, B is 4. Letters are joined by "-" and words by " / "."""
-    start = (key - 1) % 9 + 1
+    start = number_start(key)
     return " / ".join(
         "-".join(str(ord(char) - ord("A") + start) for char in word) for word in secret.split()
     )
 
 
 def shift_text(key: int, secret: str) -> str:
-    shift = (key - 1) % 25 + 1
+    shift = shift_amount(key)
     return "".join(
         chr((ord(char) - ord("A") + shift) % 26 + ord("A")) if char != " " else char
         for char in secret
@@ -446,18 +551,28 @@ def count_target(key: int) -> int:
 
 
 def clue_with_gap(clue: str, secret: str) -> str:
-    """The clue with the secret word or words hidden, so the kids see the rest."""
-    parts = [re.escape(word) for word in secret.split()]
-    pattern = re.compile(r"\b" + r"[^A-Za-z]+".join(parts) + r"\b", re.I)
-    return pattern.sub(GAP, clue)
+    """The clue with the secret word or words hidden, so the kids see the rest. The words are
+    matched with apostrophes ignored, and the text of the clue stays as it was written."""
+    wanted = secret.split()
+    tokens = _tokens(clue)
+    result: list[str] = []
+    done = 0
+    index = 0
+    while index < len(tokens):
+        run = [word for word, _, _ in tokens[index : index + len(wanted)]]
+        if run == wanted:
+            result.append(clue[done : tokens[index][1]] + GAP)
+            done = tokens[index + len(wanted) - 1][2]
+            index += len(wanted)
+        else:
+            index += 1
+    return "".join(result) + clue[done:]
 
 
 def same_word(guess: str, secret: str) -> bool:
     return " ".join(guess.upper().split()) == secret
 
 
-def shuffled_options(secret: str, decoys: tuple[str, ...], seed: uuid.UUID) -> list[str]:
-    """The same order every time for the same episode, so a reload keeps the buttons in place."""
-    options = [secret, *decoys]
-    random.Random(seed.int).shuffle(options)
-    return options
+def sorted_options(secret: str, decoys: tuple[str, ...]) -> list[str]:
+    """In alphabetical order: any order that depends on the episode could be worked out."""
+    return sorted([secret, *decoys])

@@ -45,6 +45,8 @@ class AnsweredView:
 class DecodeView:
     level: CipherLevel
     key: int
+    start: int | None
+    shift: int | None
     code: str | None
     count: int | None
     clue_with_gap: str | None
@@ -236,6 +238,8 @@ class EpisodeService:
         episode = await episodes.get(family, episode_id, for_update=True)
         if episode is None:
             raise EpisodeNotFoundError()
+        if episode.status == EpisodeStatus.PLAYED:
+            raise EpisodeWrongStepError()
         if episode.status != EpisodeStatus.READY or episode.payload is None:
             raise EpisodeNotReadyError()
         if not domain.is_open(episode, self._clock.now()):
@@ -322,18 +326,24 @@ def _decode(episode: Episode) -> DecodeView | None:
     count = None
     gap = None
     options: list[str] = []
+    start = None
+    shift = None
     if secret is None:
         count = domain.count_target(key)
     else:
         if payload.cipher_level == CipherLevel.NUMBER_CODE:
+            start = domain.number_start(key)
             code = domain.number_code(key, secret)
         else:
+            shift = domain.shift_amount(key)
             code = domain.shift_text(key, secret)
         gap = domain.clue_with_gap(payload.case_clue, secret)
-        options = domain.shuffled_options(secret, payload.cipher_decoys, episode.id)
+        options = domain.sorted_options(secret, payload.cipher_decoys)
     return DecodeView(
         level=payload.cipher_level,
         key=key,
+        start=start,
+        shift=shift,
         code=code,
         count=count,
         clue_with_gap=gap,

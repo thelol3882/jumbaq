@@ -95,6 +95,9 @@ class EpisodeBrief:
     setting: str
     suspects: tuple[Suspect, ...]
     clue: Clue
+    # The texts of the plan's other clues. Only the episode's cipher uses them, for wrong
+    # buttons; they are never shown or sent to the model.
+    other_clues: tuple[str, ...] = ()
 
 
 # Every episode quotes its clue word for word to the kids, so a clue is one short sentence.

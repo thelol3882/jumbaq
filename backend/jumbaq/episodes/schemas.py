@@ -55,6 +55,10 @@ class DecodeOut(BaseModel):
 
     level: CipherLevel
     key: int
+    # The number of the letter A in the number code. Null for the other levels.
+    start: int | None
+    # How far each letter moves in the shift level. Null for the other levels.
+    shift: int | None
     # The cipher text. Null for count: the kids clap or hop `count` times.
     code: str | None
     count: int | None
