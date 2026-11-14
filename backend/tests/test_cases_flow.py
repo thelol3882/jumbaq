@@ -15,7 +15,7 @@ from jumbaq.ai.prompts import CASE_PLAN_SCHEMA, Prompt
 from jumbaq.ai.providers.base import Reply
 from jumbaq.ai.providers.stub import StubProvider
 from jumbaq.ai.public import AiUnavailableError, Provider, build_story_writer
-from jumbaq.cases.domain import FALLBACK_PLAN
+from jumbaq.cases.domain import fallback_plan
 from jumbaq.cases.models import CaseRow
 from jumbaq.cases.public import CaseOpened, CasePlanned, CaseSolved
 from jumbaq.cases.services.progress import CaseProgress
@@ -164,7 +164,7 @@ async def test_two_bad_plans_give_the_built_in_one(
 
     await deliver_all(sessionmaker, handlers_with(sessionmaker, provider))
 
-    assert await case_1(sessionmaker, family_id) == ("active", True, FALLBACK_PLAN.title)
+    assert await case_1(sessionmaker, family_id) == ("active", True, fallback_plan(1).title)
     assert await events(sessionmaker, family_id, CasePlanned.topic) == 1
 
 
@@ -175,7 +175,7 @@ async def test_the_daily_cap_gives_the_built_in_plan(
 
     await deliver_all(sessionmaker, handlers_with(sessionmaker, StubProvider(), daily_limit=0))
 
-    assert await case_1(sessionmaker, family_id) == ("active", True, FALLBACK_PLAN.title)
+    assert await case_1(sessionmaker, family_id) == ("active", True, fallback_plan(1).title)
     assert await events(sessionmaker, family_id, CasePlanned.topic) == 1
     async with sessionmaker() as session:
         requested = await session.scalar(
@@ -221,7 +221,7 @@ async def test_a_model_that_stays_down_gives_the_built_in_plan_on_the_last_attem
 
     await delivery.deliver_due()  # the last attempt
 
-    assert await case_1(sessionmaker, family_id) == ("active", True, FALLBACK_PLAN.title)
+    assert await case_1(sessionmaker, family_id) == ("active", True, fallback_plan(1).title)
     assert await events(sessionmaker, family_id, CasePlanned.topic) == 1
     async with sessionmaker() as session:
         row = (

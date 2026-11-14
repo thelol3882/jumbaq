@@ -272,76 +272,125 @@ def world_for(case_id: uuid.UUID) -> tuple[str, str]:
     return world.place, world.things[digest // len(WORLDS) % len(world.things)]
 
 
-FALLBACK_PLAN = Plan(
-    title="The lost birthday balloon",
-    setting="The big red balloon for Granny Hedgehog's birthday has floated out of the "
-    "forest school. Someone took it, and the party is tomorrow.",
-    suspects=(
-        Suspect("s1", "Rosa the Rabbit", "wants the balloon to float over her garden party"),
-        Suspect("s2", "Milo the Magpie", "wants the balloon to brighten his cozy nest"),
-        Suspect("s3", "Toby the Tortoise", "wants the balloon for his own birthday picnic"),
+# Built-in plans for when the model fails: each follows every rule of plan_problems, in a world
+# of its own, so a family that falls back twice does not get the same case twice.
+FALLBACK_PLANS = (
+    Plan(
+        title="The bell of Pebble Lighthouse",
+        setting="The little brass bell of Pebble Lighthouse is gone from its hook. Without it "
+        "the fishing boats cannot hear the lighthouse in the morning fog.",
+        suspects=(
+            Suspect("s1", "Gus the Gull", "wants the bell to call his chicks home for supper"),
+            Suspect("s2", "Mabel the Mouse", "wants the bell for the music show on her stage"),
+            Suspect("s3", "Carlo the Crab", "wants the bell as a cozy bed for his baby shells"),
+        ),
+        culprit_id="s3",
+        clues=(
+            Clue(1, "Gus left wet, webbed footprints right under the empty bell hook.", "s1", True),
+            Clue(
+                2,
+                "Mabel was rehearsing her show on the rocks, and the whole beach clapped.",
+                "s2",
+                False,
+            ),
+            Clue(
+                3,
+                "Gus walks the beach every dawn, so those footprints are just from his stroll.",
+                "s1",
+                False,
+            ),
+            Clue(
+                4,
+                "Tiny claw marks lead from the bell hook down to Carlo's tide pool.",
+                "s3",
+                True,
+            ),
+            Clue(
+                5,
+                "A soft ringing comes from Carlo's shell house under the big rock.",
+                "s3",
+                True,
+            ),
+        ),
+        reveal="Carlo the Crab took the bell to keep his baby shells warm and cozy, and he did "
+        "not know the boats needed it. Gus only walked by at dawn. Carlo hung the bell back on "
+        "its hook, and the boats heard the lighthouse again.",
     ),
-    culprit_id="s2",
-    clues=(
-        Clue(1, "Rosa left muddy paw prints right where the balloon was tied.", "s1", True),
-        Clue(2, "Toby was at the carrot market all morning, and many saw him.", "s3", False),
-        Clue(3, "Rosa dug carrots all morning, so that is the mud on her paws.", "s1", False),
-        Clue(4, "A black and white feather lies where Milo's balloon was tied.", "s2", True),
-        Clue(5, "A red ribbon hangs from the tall tree where Milo nests.", "s2", True),
+    Plan(
+        title="The moon rock of Star Station Nine",
+        setting="The glowing moon rock has vanished from its stand in the big hall of Star "
+        "Station Nine, and the visitors arrive soon.",
+        suspects=(
+            Suspect("s1", "Pip the Robot", "wants the moon rock to light up his new workshop"),
+            Suspect("s2", "Zuzu the Alien", "wants the moon rock to remind her of her home planet"),
+            Suspect("s3", "Captain Luna", "wants the moon rock to show the visitors on her tour"),
+        ),
+        culprit_id="s1",
+        clues=(
+            Clue(
+                1,
+                "Zuzu was in the garden dome all morning, picking space tomatoes with friends.",
+                "s2",
+                False,
+            ),
+            Clue(
+                2,
+                "Captain Luna's glove lies right next to the empty moon rock stand.",
+                "s3",
+                True,
+            ),
+            Clue(
+                3,
+                "Captain Luna dropped that glove earlier, while she gave the morning tour.",
+                "s3",
+                False,
+            ),
+            Clue(4, "Shiny drops of oil lead from the stand to Pip's workshop door.", "s1", True),
+            Clue(5, "A soft blue glow shines from under Pip's workshop door.", "s1", True),
+        ),
+        reveal="Pip the Robot took the moon rock because he wanted a glowing light for his "
+        "workshop. He forgot to ask first. The drops of oil and the blue glow showed the way, "
+        "and Pip happily put the moon rock back on its stand.",
     ),
-    reveal="Milo the Magpie took the balloon because it was the shiniest thing he had ever "
-    "seen. He kept it safe in his nest and is glad to bring it to the party.",
+    Plan(
+        title="The star of Snowy Hollow",
+        setting="The golden star that tops the big tree of Snowy Hollow has disappeared. The "
+        "village lights the tree tonight.",
+        suspects=(
+            Suspect("s1", "Fern the Fox", "wants the star for the trophy of the sled race"),
+            Suspect("s2", "Hank the Hare", "wants the star to shine over his snowy burrow"),
+            Suspect("s3", "Dot the Deer", "wants the star for the snow lantern party"),
+        ),
+        culprit_id="s2",
+        clues=(
+            Clue(1, "Fern's gray fur is stuck on the empty hook where the star hung.", "s1", True),
+            Clue(
+                2,
+                "Fern helped hang the tree lights yesterday, so her fur was left there then.",
+                "s1",
+                False,
+            ),
+            Clue(
+                3,
+                "Dot was building snow animals in the square, and the whole village saw her.",
+                "s3",
+                False,
+            ),
+            Clue(4, "Hank's tiny hare tracks hop from the tree to his snowy burrow.", "s2", True),
+            Clue(5, "A golden glow shines out of Hank's burrow under the hill.", "s2", True),
+        ),
+        reveal="Hank the Hare took the star because it was the prettiest light he had ever "
+        "seen, and he wanted it over his burrow. Fern's fur was only left from hanging the "
+        "lights. Hank brought the star back, and the village lit the tree.",
+    ),
 )
 
-
-_PICNIC_PLAN = Plan(
-    title="The missing picnic cake",
-    setting="The lemon cake for the big meadow picnic was left on the old stone table. "
-    "Now only a few crumbs are there, and everyone is hungry.",
-    suspects=(
-        Suspect("s1", "Pip the Mouse", "tiny, quick and always nibbling"),
-        Suspect("s2", "Bella the Bear", "big, sleepy and very fond of sweet things"),
-        Suspect("s3", "Otto the Owl", "wise, quiet and awake all night"),
-    ),
-    culprit_id="s2",
-    clues=(
-        Clue(1, "Pip is so small that he cannot lift a whole cake.", "s1", False),
-        Clue(2, "Otto was busy counting stars on the hill all evening.", "s3", False),
-        Clue(3, "Pip was seen at the berry bush, far from the table.", "s1", False),
-        Clue(4, "Big paw prints, just like Bella's, lead away from the table.", "s2", True),
-        Clue(5, "Bella has a little lemon cream on her nose and a happy smile.", "s2", True),
-    ),
-    reveal="Bella the Bear was so hungry that she ate the cake in her sleep. She is sorry, "
-    "and she helps everybody bake a new one for the picnic.",
-)
-
-_SCARF_PLAN = Plan(
-    title="The runaway scarf",
-    setting="The long blue scarf of Grandpa Goat hung on the garden fence. This morning "
-    "it was gone, and the wind is cold today.",
-    suspects=(
-        Suspect("s1", "Fenny the Fox", "clever, curious and fond of games"),
-        Suspect("s2", "Daisy the Duck", "cheerful and splashes in every puddle"),
-        Suspect("s3", "Hugo the Hamster", "round, shy and a great collector"),
-    ),
-    culprit_id="s3",
-    clues=(
-        Clue(1, "Fenny spent the whole morning at the pond with her friends.", "s1", False),
-        Clue(2, "Daisy was at the bakery, and the baker saw her there.", "s2", False),
-        Clue(3, "Fenny cannot fit through the tiny hole in the fence.", "s1", False),
-        Clue(4, "Soft blue threads lead to the little hole where Hugo lives.", "s3", True),
-        Clue(5, "Hugo has a cozy new blue pillow in his burrow.", "s3", True),
-    ),
-    reveal="Hugo the Hamster wanted a soft bed for the winter and took the scarf by "
-    "mistake. He gives it back with a hug and a thank you.",
-)
-
-FALLBACK_PLANS = (FALLBACK_PLAN, _PICNIC_PLAN, _SCARF_PLAN)
+# Kept for code that wants one built-in plan.
+FALLBACK_PLAN = FALLBACK_PLANS[0]
 
 
 def fallback_plan(case_number: int) -> Plan:
-    """The built-in plan of a case, so a family that falls back twice does not play the same
-    case again. They cycle after the last one."""
+    """The built-in plan for this case number: the cases of a family take turns."""
     return FALLBACK_PLANS[(case_number - 1) % len(FALLBACK_PLANS)]
 
 
