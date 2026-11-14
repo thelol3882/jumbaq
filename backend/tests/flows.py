@@ -11,6 +11,7 @@ from jumbaq.ai.public import StoryWriter, build_story_writer
 from jumbaq.core.clock import SystemClock
 from jumbaq.core.events import Event
 from jumbaq.core.outbox import Handler, OutboxDelivery
+from jumbaq.episodes.models import EpisodeRow
 from jumbaq.families.deps import FAMILY_COOKIE
 from jumbaq.worker.main import build_handlers
 from tests.conftest import TEST_SETTINGS
@@ -52,3 +53,27 @@ async def deliver_all(
         if await delivery.deliver_due() == 0:
             return
     raise AssertionError("the outbox did not get quiet")
+
+
+async def play_evening(
+    client: TestClient,
+    sessionmaker: async_sessionmaker[AsyncSession],
+    episode_id: str,
+    answer: str = "blue",
+) -> dict[str, Any]:
+    """The three steps with the right picks, read from the stored episode. Returns the played
+    episode."""
+    path = f"/api/v1/episodes/{episode_id}"
+    async with sessionmaker() as session:
+        row = await session.get(EpisodeRow, uuid.UUID(episode_id))
+    assert row is not None and row.payload is not None
+    payload = row.payload
+    answered = client.post(f"{path}/answer", json={"answer": answer})
+    assert answered.status_code == 200, answered.text
+    decoded = client.post(f"{path}/decode", json={"word": payload["cipher_secret"]})
+    assert decoded.status_code == 200, decoded.text
+    struck = client.post(f"{path}/strike", json={"suspect_id": payload["clue_suspect_id"]})
+    assert struck.status_code == 200, struck.text
+    played: dict[str, Any] = struck.json()
+    assert played["status"] == "played", played
+    return played

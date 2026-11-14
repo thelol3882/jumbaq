@@ -47,7 +47,8 @@
         "not_ready": "This story is still being written, or it was already played.",
         "not_available_yet": "The next evening opens later. Come back tomorrow, detectives.",
         "already_swapped": "The other riddle is already in use.",
-        "demo_mode_off": "Opening an evening early works only in the demo."
+        "demo_mode_off": "Opening an evening early works only in the demo.",
+        "wrong_step": "This step is already done. Load the page again."
       }
     },
     "fieldErrors": {

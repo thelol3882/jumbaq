@@ -5,7 +5,7 @@ import uuid
 from fastapi import APIRouter
 
 from jumbaq.episodes.deps import EpisodeServiceDep
-from jumbaq.episodes.schemas import AnswerIn, EpisodeOut
+from jumbaq.episodes.schemas import AnswerIn, DecodeIn, EpisodeOut, StrikeIn
 from jumbaq.families.deps import FamilyDep
 
 router = APIRouter(tags=["episodes"])
@@ -30,9 +30,31 @@ async def get_episode(
 async def answer_episode(
     episode_id: uuid.UUID, body: AnswerIn, family: FamilyDep, episodes: EpisodeServiceDep
 ) -> EpisodeOut:
-    """Any answer fits the story. Only for a ready episode (409 `episode.not_ready`) that is
-    available (409 `episode.not_available_yet`). The result is in `content.result`."""
+    """Step 1 of 3. Any answer fits the story. Only for a ready episode (409
+    `episode.not_ready`) that is available (409 `episode.not_available_yet`). A second answer
+    gives 409 `episode.wrong_step`. The cipher to decode is then in `content.decode`; an
+    episode without a cipher is played here and its result is in `content.result`."""
     return EpisodeOut.model_validate(await episodes.answer(family, episode_id, body.answer))
+
+
+@router.post("/episodes/{episode_id}/decode")
+async def decode_episode(
+    episode_id: uuid.UUID, body: DecodeIn, family: FamilyDep, episodes: EpisodeServiceDep
+) -> EpisodeOut:
+    """Step 2 of 3: the word the kids picked, or null for the count level. A wrong pick is not
+    an error: the step stays and `attempts` grows. After the second wrong one the word is
+    given away and the step moves on. Outside this step: 409 `episode.wrong_step`."""
+    return EpisodeOut.model_validate(await episodes.decode(family, episode_id, body.word))
+
+
+@router.post("/episodes/{episode_id}/strike")
+async def strike_episode(
+    episode_id: uuid.UUID, body: StrikeIn, family: FamilyDep, episodes: EpisodeServiceDep
+) -> EpisodeOut:
+    """Step 3 of 3: the suspect the clue is about. A wrong one is not an error: `attempts`
+    grows. The right one, or the second wrong one, ends the evening as played with the result
+    in `content.result`. Outside this step: 409 `episode.wrong_step`."""
+    return EpisodeOut.model_validate(await episodes.strike(family, episode_id, body.suspect_id))
 
 
 @router.post("/episodes/{episode_id}/swap")
