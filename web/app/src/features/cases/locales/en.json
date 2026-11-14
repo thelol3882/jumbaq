@@ -45,7 +45,6 @@
     "label": "Certificate of detection",
     "title": "certificate of detection",
     "intro": "This is to say that",
-    "and": "and",
     "solved": "solved {title} in five evenings and earned the rank of {rank}.",
     "chief": "chief of detectives"
   }
