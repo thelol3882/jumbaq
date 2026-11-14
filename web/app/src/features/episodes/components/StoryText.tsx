@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { RiddleCard } from "@/shared/components/notebook";
+import { ReadAloud } from "./ReadAloud";
 import type { EpisodeContent } from "../types";
 
 /** What the parent reads aloud: last time, the story, and the riddle on its card. Nothing to
@@ -17,27 +18,21 @@ export function StoryText({
   large?: boolean;
 }) {
   const t = useTranslations("episodes");
-  const aloud = large ? "text-aloud-lg" : "text-aloud";
   return (
     <div className="flex flex-col">
       {content.recap ? (
         <p className="font-type text-case font-normal text-ink-muted">
-          {first ? null : `${t("lastTime")} `}
-          {content.recap}
+          {first ? content.recap : t("lastTime", { recap: content.recap })}
         </p>
       ) : null}
-      <div className="relative mt-6 flex max-w-[34em] flex-col gap-4">
-        <span
-          aria-hidden="true"
-          className="absolute top-1 -left-12 font-type text-label-sm text-aloud-label [writing-mode:vertical-rl] rotate-180"
-        >
-          {t("readAloud")}
-        </span>
-        {content.read_aloud.map((paragraph, index) => (
-          <p key={index} className={`font-story ${aloud} text-aloud-fg`}>
-            {paragraph}
-          </p>
-        ))}
+      <div className="mt-6">
+        <ReadAloud large={large}>
+          {content.read_aloud.map((paragraph, index) => (
+            <p key={index} className="text-aloud-fg">
+              {paragraph}
+            </p>
+          ))}
+        </ReadAloud>
       </div>
       <div className="mt-9 max-w-[40rem]">
         <RiddleCard label={t("riddle")} text={content.riddle.text} size={large ? "lg" : "md"} />

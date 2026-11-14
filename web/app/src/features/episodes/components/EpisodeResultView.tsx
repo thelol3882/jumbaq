@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { EvidenceTag, HandNote } from "@/shared/components/notebook";
 import type { EpisodeResult } from "../types";
+import { ReadAloud } from "./ReadAloud";
 
 function Tick() {
   return (
@@ -23,7 +24,6 @@ export function EpisodeResultView({
   large?: boolean;
 }) {
   const t = useTranslations("episodes");
-  const aloud = large ? "text-aloud-lg" : "text-aloud";
   return (
     <div className="flex flex-col">
       <div className="flex items-center gap-3.5">
@@ -31,12 +31,11 @@ export function EpisodeResultView({
         <span className="-rotate-4 font-hand text-note-answer text-note-fg">{result.answer}</span>
         <Tick />
       </div>
-      <div className="relative mt-6 flex max-w-[34em] flex-col gap-5">
-        <span aria-hidden="true" className="absolute top-1 -left-12 rotate-180 font-type text-label-sm text-aloud-label [writing-mode:vertical-rl]">
-          {t("readAloud")}
-        </span>
-        <p className={`font-story ${aloud}`}>{result.resolution}</p>
-        <p className={`font-story ${aloud}`}>{result.cliffhanger}</p>
+      <div className="mt-6">
+        <ReadAloud large={large}>
+          <p className="text-aloud-fg">{result.resolution}</p>
+          <p className="text-aloud-fg">{result.cliffhanger}</p>
+        </ReadAloud>
       </div>
       {last ? null : <HandNote className="mt-2 ml-28 -rotate-2">{t("result.continued")}</HandNote>}
     </div>
