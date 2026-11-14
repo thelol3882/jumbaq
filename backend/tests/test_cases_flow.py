@@ -72,6 +72,17 @@ class RuleBreaker:
         return reply
 
 
+class UnsafeClue:
+    """The stub's plan with a clue that sends the kids to the window."""
+
+    name, model = "unsafe-clue", "test"
+
+    async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
+        reply = await StubProvider().complete_json(prompt, schema)
+        reply.data["clues"][1] |= {"text": "Felix climbed out of the window."}
+        return reply
+
+
 class Down:
     name, model = "down", "test"
 
@@ -143,7 +154,7 @@ async def test_one_bad_answer_is_asked_again(
     assert (await case_1(sessionmaker, family_id))[:2] == ("active", False)
 
 
-@pytest.mark.parametrize("provider", [WrongShape(), RuleBreaker()])
+@pytest.mark.parametrize("provider", [WrongShape(), RuleBreaker(), UnsafeClue()])
 async def test_two_bad_plans_give_the_built_in_one(
     live_client: TestClient, sessionmaker: Sessionmaker, provider: Provider
 ) -> None:

@@ -5,10 +5,12 @@ episode. The model writes it, these rules check it, and a built-in plan stands i
 fails twice.
 
 The numbers of suspects and episodes come from ai.public through the caller: importing it here
-would pull the database into the domain.
+would pull the database into the domain. So does the check for words unsafe for small kids,
+which comes from episodes.public.
 """
 
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import StrEnum
@@ -102,9 +104,23 @@ CLUE_MAX_CHARS = 140
 POINTING_EPISODES = 2
 
 
-def plan_problems(plan: Plan, suspects: int, episodes: int) -> list[str]:
-    """Why the plan cannot be played. Empty when it is fine."""
+def plan_problems(
+    plan: Plan, suspects: int, episodes: int, unsafe_words: Callable[[str], list[str]]
+) -> list[str]:
+    """Why the plan cannot be played. Empty when it is fine. `unsafe_words` returns the words
+    of a text that a small kid must not hear: the episodes module owns that list."""
     problems = []
+    texts = [("title", plan.title), ("setting", plan.setting), ("reveal", plan.reveal)]
+    for suspect in plan.suspects:
+        texts.append((f"the name of {suspect.id}", suspect.name))
+        texts.append((f"the description of {suspect.id}", suspect.description))
+    texts.extend((f"the clue of episode {clue.episode}", clue.text) for clue in plan.clues)
+    for name, text in texts:
+        found = sorted(set(unsafe_words(text)))
+        if found:
+            problems.append(
+                f"unsafe for small kids: {', '.join(found)} in {name}; leave the word out entirely"
+            )
     for clue in plan.clues:
         if len(clue.text) > CLUE_MAX_CHARS:
             problems.append(

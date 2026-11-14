@@ -20,6 +20,7 @@ from jumbaq.cases.domain import FIRST_CASE, CaseStatus, Clue, Plan, Suspect
 from jumbaq.cases.events import CaseOpened, CasePlanned
 from jumbaq.cases.uow import CasesUoWFactory
 from jumbaq.core.family import FamilyRef
+from jumbaq.episodes.public import banned_words
 from jumbaq.families.public import Family
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,9 @@ class CasePlanning:
             except AiBadOutputError:
                 logger.info("plan of the wrong shape, try %s", attempt)
                 continue
-            problems = domain.plan_problems(plan, SUSPECTS_PER_CASE, EPISODES_PER_CASE)
+            problems = domain.plan_problems(
+                plan, SUSPECTS_PER_CASE, EPISODES_PER_CASE, banned_words
+            )
             if not problems:
                 return plan
             logger.info("plan breaks the rules (%s), try %s", "; ".join(problems), attempt)
