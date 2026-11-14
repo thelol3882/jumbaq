@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useCurrentCase } from "@/features/cases";
 import { useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
@@ -14,9 +15,16 @@ export function Family() {
   const t = useTranslations("widget.family");
   const errorMessage = useApiErrorMessage();
   const { family, loading, missing, error, retry } = useFamily();
+  const { current } = useCurrentCase();
   const isMobile = useIsMobile();
 
-  if (family) return isMobile ? <FamilyMobile family={family} /> : <FamilyDesktop family={family} />;
+  if (family) {
+    return isMobile ? (
+      <FamilyMobile family={family} current={current} />
+    ) : (
+      <FamilyDesktop family={family} current={current} />
+    );
+  }
 
   return (
     <NotebookPage margin>

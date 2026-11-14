@@ -1,12 +1,6 @@
 {
   "wordmark": "jumbaq",
   "loading": "Finding your case file…",
-  "eyebrow": "case 1",
-  "title": "Your case file is open",
-  "next": {
-    "lead": "grown-ups only:",
-    "text": "the first evening is being written for your home. It will be here when it's ready."
-  },
   "missing": {
     "title": "No case file yet",
     "note": "This browser hasn't opened a case. It takes a minute.",
@@ -15,6 +9,29 @@
   "retry": "Try again",
   "tonight": "tonight",
   "boardLabel": "the case board",
-  "progress": "Evening 1 of 5",
-  "detectives": "detectives: {names}"
+  "detectives": "detectives: {names}",
+  "eveningOf": "tonight · evening {number} of {total}",
+  "read": "Read tonight's story",
+  "note": {
+    "lead": "grown-ups:",
+    "text": "about 15 minutes. Gather the detectives first."
+  },
+  "writing": {
+    "title": "Your case is being written",
+    "text": "It's written for your home and your detectives. It takes about a minute; this page updates by itself."
+  },
+  "doneTonight": "done for tonight",
+  "opens": "Evening {number} unlocks {when}.",
+  "openNow": "Can't wait? Open it now",
+  "allPlayed": "all five evenings played",
+  "accuseTitle": "Time to name the culprit",
+  "accuse": "Make the accusation",
+  "solved": "case closed",
+  "certificate": "See the certificate",
+  "failed": {
+    "title": "No new story tonight",
+    "text": "The storyteller has written enough for today. Come back tomorrow evening and the case goes on."
+  },
+  "suspects": "suspects",
+  "evidence": "evidence so far"
 }

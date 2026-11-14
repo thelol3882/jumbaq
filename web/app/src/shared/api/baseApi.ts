@@ -6,7 +6,7 @@ import { apiUrl } from "@/shared/config/env";
 export const CSRF_HEADER = "X-Requested-With";
 export const CSRF_VALUE = "jumbaq";
 
-export const TAG_TYPES = ["Family"] as const;
+export const TAG_TYPES = ["Family", "Case", "Episode", "Subscription"] as const;
 export type TagType = (typeof TAG_TYPES)[number];
 
 // The one API slice; features add endpoints with `baseApi.injectEndpoints()`.

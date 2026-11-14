@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { EveningBoxes, type Case } from "@/features/cases";
 import { FamilyBoard, type Family } from "@/features/families";
-import { HandNote, NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
+import { NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
+import { Board } from "./Board";
+import { Tonight, TonightPending } from "./Tonight";
 
 /** Design F3: tonight on the left page, the case board on the right. */
-export function FamilyDesktop({ family }: { family: Family }) {
+export function FamilyDesktop({ family, current }: { family: Family; current: Case | undefined }) {
   const t = useTranslations("widget.family");
   return (
     <NotebookPage width="wide">
@@ -12,7 +15,7 @@ export function FamilyDesktop({ family }: { family: Family }) {
         <Link href="/">
           <Wordmark text={t("wordmark")} size="sm" />
         </Link>
-        <span className="font-type text-case">{t("progress")}</span>
+        {current ? <EveningBoxes episodes={current.episodes} /> : null}
         <span className="font-type text-label text-ink-muted">
           {t("detectives", { names: family.kids.map((kid) => kid.nickname).join(", ") })}
         </span>
@@ -20,19 +23,8 @@ export function FamilyDesktop({ family }: { family: Family }) {
       <div className="mt-11">
         <NotebookSpread
           sideLabel={t("boardLabel")}
-          main={
-            <div className="flex flex-col">
-              <p className="font-type text-case text-accent-red">{t("tonight")}</p>
-              <h1 className="mt-2.5 max-w-2xl text-[2.875rem] leading-[1.12] font-bold">{t("title")}</h1>
-              <svg aria-hidden="true" width="300" height="12" viewBox="0 0 200 10" className="mt-1">
-                <path d="M2 5 C 50 8, 120 2, 198 6" stroke="var(--color-accent-red)" strokeWidth="2" fill="none" strokeLinecap="round" />
-              </svg>
-              <HandNote lead={t("next.lead")} className="mt-9 max-w-xl -rotate-1">
-                {t("next.text")}
-              </HandNote>
-            </div>
-          }
-          side={<FamilyBoard family={family} />}
+          main={current ? <Tonight current={current} large /> : <TonightPending large />}
+          side={current && current.suspects.length > 0 ? <Board current={current} /> : <FamilyBoard family={family} />}
         />
       </div>
     </NotebookPage>

@@ -1,0 +1,23 @@
+{
+  "lastTime": "last time:",
+  "readAloud": "read aloud",
+  "riddle": "the riddle",
+  "notAloud": "not for reading aloud",
+  "swap": "We don't have this",
+  "answer": {
+    "label": "What did they find?",
+    "placeholder": "type what they said",
+    "submit": "Log the answer",
+    "sending": "Logging…"
+  },
+  "hint": {
+    "show": "Need a hint",
+    "hide": "Hide the hint",
+    "lead": "a hint you can read out:"
+  },
+  "result": {
+    "logged": "answer logged:",
+    "continued": "to be continued tomorrow",
+    "exhibit": "exhibit {number}, filed tonight"
+  }
+}
