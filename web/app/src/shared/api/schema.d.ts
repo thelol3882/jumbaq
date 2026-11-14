@@ -73,6 +73,7 @@ export interface paths {
         /**
          * Get Family
          * @description The family of the cookie. No cookie, or an unknown one, gives 401 `family.no_session`.
+         *     `demo_mode` is true when the next episode may be opened at once.
          */
         get: operations["get_family_api_v1_family_get"];
         put?: never;
@@ -532,6 +533,27 @@ export interface components {
              */
             created_at: string;
         };
+        /** FamilyStateOut */
+        FamilyStateOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kids */
+            kids: components["schemas"]["KidOut"][];
+            /** Rooms */
+            rooms: string[];
+            /** Objects */
+            objects: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Demo Mode */
+            demo_mode: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -714,7 +736,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FamilyOut"];
+                    "application/json": components["schemas"]["FamilyStateOut"];
                 };
             };
             /** @description Validation Error */
