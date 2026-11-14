@@ -12,5 +12,7 @@
     "note": "This browser hasn't opened a case. It takes a minute.",
     "start": "Open a case file"
   },
-  "retry": "Try again"
+  "retry": "Try again",
+  "tonight": "tonight · evening 1 of 5",
+  "boardLabel": "the case board"
 }

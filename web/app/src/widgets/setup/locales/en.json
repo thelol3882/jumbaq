@@ -1,5 +1,12 @@
 {
   "wordmark": "jumbaq",
   "title": "Open a case file",
-  "subtitle": "one minute. no sign-up."
+  "subtitle": "one minute. no sign-up.",
+  "intro": "Three short questions. The first evening is written for your home.",
+  "previewLabel": "your case file so far",
+  "shortcut": "opens it from anywhere on the page",
+  "note": {
+    "lead": "grown-ups:",
+    "text": "the first evening is written for your home while you get the kids ready. It takes about a minute."
+  }
 }

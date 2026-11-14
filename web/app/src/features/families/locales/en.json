@@ -66,6 +66,13 @@
     "detectives": "the detectives",
     "age": "{age} years",
     "scene": "the scene",
-    "places": "{rooms, plural, one {# room} other {# rooms}}, {objects, plural, one {# thing} other {# things}} to search"
+    "places": "{rooms, plural, one {# room} other {# rooms}}, {objects, plural, one {# thing} other {# things}} to search",
+    "evidence": "the evidence"
+  },
+  "numberedTitle": "{number} · {title}",
+  "preview": {
+    "label": "case file no. 1 · not yet opened",
+    "empty": "not yet",
+    "kid": "{nickname}, {age}"
   }
 }
