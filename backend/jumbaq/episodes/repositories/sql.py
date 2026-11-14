@@ -152,13 +152,25 @@ def _episode(row: EpisodeRow) -> Episode:
     )
 
 
+def _riddle(data: dict[str, Any]) -> Riddle:
+    # An older payload has no hint and resolution_template in its riddles.
+    return Riddle(
+        text=data["text"],
+        target_object=data["target_object"],
+        answer_type=data["answer_type"],
+        parent_note=data["parent_note"],
+        hint=data.get("hint") or "",
+        resolution_template=data.get("resolution_template") or "",
+    )
+
+
 def _payload(data: dict[str, Any]) -> Payload:
     return Payload(
         recap=data["recap"],
         read_aloud=tuple(data["read_aloud"]),
-        riddle=Riddle(**data["riddle"]),
+        riddle=_riddle(data["riddle"]),
         hint=data["hint"],
-        fallback_riddle=Riddle(**data["fallback_riddle"]),
+        fallback_riddle=_riddle(data["fallback_riddle"]),
         resolution_template=data["resolution_template"],
         case_clue=data["case_clue"],
         cliffhanger=data["cliffhanger"],

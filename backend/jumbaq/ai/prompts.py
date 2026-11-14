@@ -199,7 +199,11 @@ off the object: answer_type tells what ({", ".join(t.value for t in AnswerType)}
 parent_note tells the parent in one sentence where to look and what counts as an answer.
 - hint: one sentence that makes the riddle easier.
 - fallback_riddle: a second, easier riddle with the same fields, about a different object from \
-the list, in case the first object is not at hand.
+the list, in case the first object is not at hand. The family plays it INSTEAD of the first \
+one, so it also has its own hint and its own resolution_template (the {ANSWER_SLOT} text \
+exactly once), written for this riddle and its object. The top-level hint and \
+resolution_template belong to the first riddle only: they may name its object, so the second \
+riddle never reuses them.
 - resolution_template: two or three sentences that weave the kids' answer into the story. It \
 contains the text {ANSWER_SLOT} exactly once, where the answer goes. ANY answer must fit, so do \
 not expect a particular value.
@@ -267,14 +271,14 @@ CASE_PLAN_SCHEMA = _object(
     }
 )
 
-_RIDDLE = _object(
-    {
-        "text": _TEXT,
-        "target_object": _TEXT,
-        "answer_type": {"type": "string", "enum": [t.value for t in AnswerType]},
-        "parent_note": _TEXT,
-    }
-)
+_RIDDLE_FIELDS = {
+    "text": _TEXT,
+    "target_object": _TEXT,
+    "answer_type": {"type": "string", "enum": [t.value for t in AnswerType]},
+    "parent_note": _TEXT,
+}
+_RIDDLE = _object(_RIDDLE_FIELDS)
+_FALLBACK_RIDDLE = _object({**_RIDDLE_FIELDS, "hint": _TEXT, "resolution_template": _TEXT})
 
 EPISODE_SCHEMA = _object(
     {
@@ -282,7 +286,7 @@ EPISODE_SCHEMA = _object(
         "read_aloud": {"type": "array", "items": _TEXT},
         "riddle": _RIDDLE,
         "hint": _TEXT,
-        "fallback_riddle": _RIDDLE,
+        "fallback_riddle": _FALLBACK_RIDDLE,
         "resolution_template": _TEXT,
         "case_clue": _TEXT,
         "cliffhanger": _TEXT,

@@ -176,7 +176,14 @@ def _task(
 
 
 def _riddle(draft: RiddleDraft) -> Riddle:
-    return Riddle(draft.text, draft.target_object, draft.answer_type.value, draft.parent_note)
+    return Riddle(
+        draft.text,
+        draft.target_object,
+        draft.answer_type.value,
+        draft.parent_note,
+        draft.hint,
+        draft.resolution_template,
+    )
 
 
 def _from_draft(draft: EpisodeDraft) -> Payload:
