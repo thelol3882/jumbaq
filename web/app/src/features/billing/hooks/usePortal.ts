@@ -1,6 +1,6 @@
 import { useOpenPortalMutation } from "../api/billingApi";
 
-/** Sends the parent to the Stripe page where the subscription is managed or cancelled. */
+/** Sends the parent to the Stripe page where the subscription is managed or canceled. */
 export function usePortal() {
   const [open, { isLoading, error }] = useOpenPortalMutation();
   const openPortal = async () => {
