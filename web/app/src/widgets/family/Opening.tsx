@@ -29,13 +29,13 @@ export function Opening({
   const format = useFormatter();
   const stamps = openingStamps(current);
   const step = current ? tonight(current, new Date()) : undefined;
-  const aloud = large ? "text-[1.625rem] leading-[1.6]" : "text-aloud";
+  const aloud = large ? "text-aloud-lg" : "text-aloud";
 
   return (
     <div className="flex flex-col gap-9">
       <div className="flex flex-col gap-4">
         <p className="font-type text-case text-accent-red">{t("opening.label")}</p>
-        <h1 className={`max-w-2xl ${large ? "text-[2.875rem] leading-[1.12]" : "text-title"} font-bold`}>
+        <h1 className={`max-w-2xl ${large ? "text-display-lg" : "text-title"} font-bold`}>
           {t("opening.title")}
         </h1>
         <div role="status">

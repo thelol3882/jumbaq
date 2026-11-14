@@ -23,7 +23,7 @@ export function EpisodeResultView({
   large?: boolean;
 }) {
   const t = useTranslations("episodes");
-  const aloud = large ? "text-[1.625rem] leading-[1.6]" : "text-aloud";
+  const aloud = large ? "text-aloud-lg" : "text-aloud";
   return (
     <div className="flex flex-col">
       <div className="flex items-center gap-3.5">
