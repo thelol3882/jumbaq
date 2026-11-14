@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jumbaq.ai.models import LlmCallRow
-from jumbaq.ai.prompts import Prompt
+from jumbaq.ai.prompts import CASE_PLAN_SCHEMA, Prompt
 from jumbaq.ai.providers.base import Reply
 from jumbaq.ai.providers.stub import StubProvider
 from jumbaq.ai.public import AiUnavailableError, Provider, build_story_writer
@@ -46,17 +46,18 @@ class WrongShape:
 
 
 class BadThenStub:
-    """A wrong shape first, then the stub's good plan."""
+    """A plan of the wrong shape first, then the stub's good plan. Episodes come from the stub."""
 
     name, model = "bad-then-stub", "test"
 
     def __init__(self) -> None:
-        self.calls = 0
+        self.plan_calls = 0
 
     async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
-        self.calls += 1
-        if self.calls == 1:
-            return Reply({"title": "no suspects"}, 0, 0)
+        if schema is CASE_PLAN_SCHEMA:
+            self.plan_calls += 1
+            if self.plan_calls == 1:
+                return Reply({"title": "no suspects"}, 0, 0)
         return await StubProvider().complete_json(prompt, schema)
 
 
@@ -138,7 +139,7 @@ async def test_one_bad_answer_is_asked_again(
 
     await deliver_all(sessionmaker, handlers_with(sessionmaker, provider))
 
-    assert provider.calls == 2
+    assert provider.plan_calls == 2
     assert (await case_1(sessionmaker, family_id))[:2] == ("active", False)
 
 
@@ -203,7 +204,9 @@ async def test_planning_twice_changes_nothing(
     # A planned case is left alone before the model is asked again.
     async with sessionmaker() as session:
         calls = await session.scalar(
-            select(func.count()).select_from(LlmCallRow).where(LlmCallRow.family_id == family_id)
+            select(func.count())
+            .select_from(LlmCallRow)
+            .where(LlmCallRow.family_id == family_id, LlmCallRow.kind == "case_plan")
         )
     assert calls == 1
 
@@ -228,9 +231,11 @@ async def test_the_current_case_shows_only_what_was_played(
     assert case["number"] == 1 and case["status"] == "active"
     assert [s["id"] for s in case["suspects"]] == ["s1", "s2", "s3"]
     assert case["clues"] == []
+    # Episode 1 is written as soon as the case is planned; the rest wait.
     assert [(e["number"], e["status"]) for e in case["episodes"]] == [
-        (n, "locked") for n in range(1, 6)
-    ]
+        (1, "ready"), *((n, "locked") for n in range(2, 6)),
+    ]  # fmt: skip
+    assert case["episodes"][0]["id"] and case["episodes"][1]["id"] is None
     assert "culprit" not in str(case) and STUB_REVEAL not in str(case)
 
     progress = CaseProgress(partial(CasesUoW, sessionmaker))

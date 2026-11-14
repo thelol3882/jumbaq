@@ -38,7 +38,7 @@ def stub_handlers(
     """The worker's handlers with the stub model, or the given writer."""
     if writer is None:
         writer = build_story_writer(sessionmaker, TEST_SETTINGS, SystemClock(), StubProvider())
-    return build_handlers(sessionmaker, writer)
+    return build_handlers(sessionmaker, writer, SystemClock())
 
 
 async def deliver_all(
