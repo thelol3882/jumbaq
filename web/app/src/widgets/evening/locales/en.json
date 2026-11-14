@@ -9,8 +9,7 @@
   "doneTonight": "Done for tonight",
   "toAccuse": "Time to accuse",
   "writing": {
-    "title": "Tonight's story is being written",
-    "text": "It takes about a minute. This page updates by itself."
+    "title": "Tonight's story is being written"
   },
   "later": {
     "title": "This evening isn't open yet",
@@ -22,5 +21,14 @@
     "noCase": "This browser has no case yet."
   },
   "boardLabel": "the case board",
-  "parentLabel": "for the grown-up, not for reading aloud"
+  "parentLabel": "for the grown-up, not for reading aloud",
+  "failed": {
+    "title": "This story couldn't be written",
+    "text": "Something went wrong on our side while writing it. It isn't something you did."
+  },
+  "noFamily": {
+    "title": "No case file yet",
+    "note": "This browser hasn't opened a case. It takes a minute.",
+    "start": "Open a case file"
+  }
 }
