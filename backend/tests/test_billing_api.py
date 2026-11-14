@@ -15,6 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jumbaq.billing.deps import build_payment_provider, get_payment_provider
+from jumbaq.billing.errors import BillingUnavailableError
 from jumbaq.billing.models import SubscriptionRow
 from jumbaq.billing.providers.stripe_provider import StripeProvider
 from jumbaq.billing.public import (
@@ -43,12 +44,17 @@ class FakeCheckout:
         self._real = real
         self.calls: list[tuple[uuid.UUID, str, str]] = []
         self.portal_calls: list[tuple[str, str]] = []
+        self.fail: Exception | None = None
 
     async def create_checkout(self, family_id: uuid.UUID, success_url: str, cancel_url: str) -> str:
+        if self.fail:
+            raise self.fail
         self.calls.append((family_id, success_url, cancel_url))
         return "https://checkout.stripe.com/c/pay/cs_test_fake"
 
     async def create_portal(self, customer_ref: str, return_url: str) -> str:
+        if self.fail:
+            raise self.fail
         self.portal_calls.append((customer_ref, return_url))
         return "https://billing.stripe.com/p/session/test_fake"
 
@@ -389,3 +395,42 @@ def test_one_family_never_opens_the_portal_of_another(
     live_client.cookies.set(FAMILY_COOKIE, payer_cookie)
     assert live_client.post("/api/v1/billing/portal").status_code == 200
     assert [call[0] for call in checkout.portal_calls] == ["cus_payer"]
+
+
+def subscribe(live_client: TestClient, stripe: TestClient, settings: Settings) -> None:
+    family_id, _ = create_family(live_client)
+    send(
+        stripe,
+        settings,
+        subscription_event(family_id, "active", subscription_id=sub_id(), customer="cus_mine"),
+    )
+
+
+def test_a_provider_that_is_down_gives_503_on_checkout_and_portal(
+    live_client: TestClient, checkout: FakeCheckout, stripe: TestClient, settings: Settings
+) -> None:
+    checkout.fail = BillingUnavailableError("APIConnectionError")
+
+    create_family(live_client)
+    unpaid = live_client.post("/api/v1/billing/checkout")
+    subscribe(live_client, stripe, settings)
+    paid = live_client.post("/api/v1/billing/portal")
+
+    for response in (unpaid, paid):
+        assert response.status_code == 503, response.text
+        assert response.json()["error"]["code"] == "billing.unavailable"
+
+
+def test_without_stripe_keys_checkout_and_portal_give_503(
+    live_client: TestClient, checkout: FakeCheckout, stripe: TestClient, settings: Settings
+) -> None:
+    subscribe(live_client, stripe, settings)  # the webhook still needs the real parser
+    unconfigured = StripeProvider(None, None, 799, "usd")
+    live_client.app.dependency_overrides[get_payment_provider] = lambda: unconfigured  # type: ignore[attr-defined]
+    portal = live_client.post("/api/v1/billing/portal")
+    create_family(live_client)
+    checkout_page = live_client.post("/api/v1/billing/checkout")
+
+    for response in (checkout_page, portal):
+        assert response.status_code == 503, response.text
+        assert response.json()["error"]["code"] == "billing.not_configured"
