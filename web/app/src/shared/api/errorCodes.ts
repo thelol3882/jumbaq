@@ -32,6 +32,7 @@ export const API_ERROR_CODES = [
   "episode.not_available_yet",
   "episode.already_swapped",
   "episode.demo_mode_off",
+  "episode.wrong_step",
   // Ours, not the API's: the request got no answer.
   "common.network_error",
 ] as const;

@@ -24,3 +24,7 @@ class RiddleAlreadySwappedError(ConflictError):
 
 class DemoModeOffError(ForbiddenError):
     code = ErrorCode.EPISODE_DEMO_MODE_OFF
+
+
+class EpisodeWrongStepError(ConflictError):
+    code = ErrorCode.EPISODE_WRONG_STEP

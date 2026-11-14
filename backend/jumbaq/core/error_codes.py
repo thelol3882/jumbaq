@@ -58,3 +58,5 @@ class ErrorCode(StrEnum):
     EPISODE_NOT_AVAILABLE_YET = "episode.not_available_yet"
     EPISODE_ALREADY_SWAPPED = "episode.already_swapped"
     EPISODE_DEMO_MODE_OFF = "episode.demo_mode_off"
+    # The step asked for is not the one the evening is in: already done, or not reached yet.
+    EPISODE_WRONG_STEP = "episode.wrong_step"

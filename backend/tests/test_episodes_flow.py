@@ -21,7 +21,7 @@ from jumbaq.episodes.models import EpisodeRow
 from jumbaq.episodes.public import EpisodeRequested
 from jumbaq.families.deps import FAMILY_COOKIE
 from tests.conftest import TEST_SETTINGS
-from tests.flows import create_family, deliver_all, stub_handlers
+from tests.flows import create_family, deliver_all, play_evening, stub_handlers
 
 pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
 
@@ -93,11 +93,10 @@ async def test_the_whole_game_on_the_stub(
         content = current["content"]
         assert content["riddle"]["text"] and content["read_aloud"] and content["result"] is None
 
-        answered = live_client.post(
-            f"/api/v1/episodes/{current['id']}/answer", json={"answer": f" blue {number}\n"}
+        played = await play_evening(
+            live_client, sessionmaker, current["id"], answer=f" blue {number}\n"
         )
-        assert answered.status_code == 200, answered.text
-        result = answered.json()["content"]["result"]
+        result = played["content"]["result"]
         assert result["answer"] == f"blue {number}"
         assert f"blue {number}" in result["resolution"]
         await deliver_all(sessionmaker)
@@ -138,7 +137,7 @@ async def test_the_next_evening_waits_without_the_demo(
     create_family(live_client)
     await deliver_all(sessionmaker)
     first = live_client.get("/api/v1/episodes/current").json()
-    live_client.post(f"/api/v1/episodes/{first['id']}/answer", json={"answer": "7"})
+    await play_evening(live_client, sessionmaker, first["id"])
     await deliver_all(sessionmaker)
 
     second = live_client.get("/api/v1/episodes/current").json()
@@ -174,7 +173,7 @@ async def test_an_episode_is_answered_once_and_swapped_once(
     assert live_client.post(f"{path}/answer", json={"answer": "red"}).status_code == 200
     twice = live_client.post(f"{path}/answer", json={"answer": "red"})
     assert twice.status_code == 409
-    assert twice.json()["error"]["code"] == "episode.not_ready"
+    assert twice.json()["error"]["code"] == "episode.wrong_step"
 
 
 @pytest.mark.parametrize("change", [unsafe, wrong_shape])
@@ -244,6 +243,8 @@ async def test_another_family_gets_404(live_client: TestClient, sessionmaker: Se
     for response in (
         live_client.get(f"/api/v1/episodes/{episode_id}"),
         live_client.post(f"/api/v1/episodes/{episode_id}/answer", json={"answer": "7"}),
+        live_client.post(f"/api/v1/episodes/{episode_id}/decode", json={"word": "FEATHER"}),
+        live_client.post(f"/api/v1/episodes/{episode_id}/strike", json={"suspect_id": "s2"}),
         live_client.post(f"/api/v1/episodes/{episode_id}/swap"),
         live_client.post(f"/api/v1/episodes/{episode_id}/open-now"),
     ):

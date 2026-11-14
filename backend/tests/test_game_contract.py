@@ -19,6 +19,8 @@ ENDPOINTS = [
     ("GET", "/api/v1/episodes/current", None),
     ("GET", f"/api/v1/episodes/{ANY}", None),
     ("POST", f"/api/v1/episodes/{ANY}/answer", {"answer": "7"}),
+    ("POST", f"/api/v1/episodes/{ANY}/decode", {"word": "FEATHER"}),
+    ("POST", f"/api/v1/episodes/{ANY}/strike", {"suspect_id": "s2"}),
     ("POST", f"/api/v1/episodes/{ANY}/swap", None),
     ("POST", f"/api/v1/episodes/{ANY}/open-now", None),
 ]
