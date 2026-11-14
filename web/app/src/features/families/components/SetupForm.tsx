@@ -1,18 +1,29 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useFormErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, StampButton } from "@/shared/components/notebook";
 import type { SetupFormState } from "../hooks/useSetupForm";
-import { MAX_AGE, MIN_AGE, MIN_OBJECTS } from "../services/setupForm";
+import { hasErrors, MAX_AGE, MIN_AGE, MIN_OBJECTS } from "../services/setupForm";
 import { OBJECT_PRESETS, ROOM_PRESETS } from "../services/presets";
 import { ChoiceChips } from "./ChoiceChips";
 
 /** The `<form>` around the fields and the submit, wherever the layout puts them. */
 export function SetupFormShell({ form, children }: { form: SetupFormState; children: ReactNode }) {
+  const ref = useRef<HTMLFormElement>(null);
+
+  // After a stopped try, bring the first problem into view: on a wide screen the stamp is
+  // far from the fields, and on a phone the problem can be above the fold.
+  useEffect(() => {
+    if (!form.blocked) return;
+    const first = ref.current?.querySelector<HTMLElement>("[data-setup-error]");
+    first?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [form.blocked]);
+
   return (
     <form
+      ref={ref}
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
@@ -80,7 +91,7 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
                 ) : null}
               </div>
               {error ? (
-                <p id={errorId} className="font-type text-label text-gentle-error-fg">
+                <p id={errorId} data-setup-error className="font-type text-label text-gentle-error-fg">
                   {t(`kids.errors.${error}`, { min: MIN_AGE, max: MAX_AGE })}
                 </p>
               ) : null}
@@ -88,7 +99,7 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
           );
         })}
         {errors.kids ? (
-          <p className="font-type text-label text-gentle-error-fg">{t("kids.errors.repeated")}</p>
+          <p data-setup-error className="font-type text-label text-gentle-error-fg">{t("kids.errors.repeated")}</p>
         ) : null}
         {form.canAddKid ? (
           <button
@@ -113,7 +124,7 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
           addButton={t("add")}
         />
         {errors.rooms ? (
-          <p className="font-type text-label text-gentle-error-fg">{t(`rooms.errors.${errors.rooms}`)}</p>
+          <p data-setup-error className="font-type text-label text-gentle-error-fg">{t(`rooms.errors.${errors.rooms}`)}</p>
         ) : null}
       </fieldset>
 
@@ -131,7 +142,7 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
           showMoreLabel={(count) => t("showMore", { count })}
         />
         {errors.objects ? (
-          <p className="font-type text-label text-gentle-error-fg">
+          <p data-setup-error className="font-type text-label text-gentle-error-fg">
             {t(`objects.errors.${errors.objects}`, { min: MIN_OBJECTS, count: form.draft.objects.length })}
           </p>
         ) : null}
@@ -146,6 +157,11 @@ export function SetupSubmit({ form }: { form: SetupFormState }) {
   const formError = useFormErrorMessage();
   return (
     <div className="flex flex-col gap-3">
+      {hasErrors(form.errors) ? (
+        <p role="alert" className="font-type text-label text-gentle-error-fg">
+          {t("checkAnswers")}
+        </p>
+      ) : null}
       {form.error ? (
         <p role="alert" className="border border-gentle-error-border bg-gentle-error-bg p-3 font-type text-label text-gentle-error-fg">
           {formError(form.error)}

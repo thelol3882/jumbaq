@@ -16,6 +16,8 @@ import {
 export function useSetupForm(onCreated: () => void) {
   const [draft, setDraft] = useState(emptyDraft);
   const [tried, setTried] = useState(false);
+  // Counts the tries that the checks stopped, so the form can show the first problem.
+  const [blocked, setBlocked] = useState(0);
   const [createFamily, { isLoading, error }] = useCreateFamilyMutation();
 
   const errors = useMemo(() => validateSetup(draft), [draft]);
@@ -39,7 +41,10 @@ export function useSetupForm(onCreated: () => void) {
 
   const submit = async () => {
     setTried(true);
-    if (hasErrors(errors)) return;
+    if (hasErrors(errors)) {
+      setBlocked((n) => n + 1);
+      return;
+    }
     try {
       await createFamily(toFamilyCreate(draft)).unwrap();
     } catch {
@@ -53,6 +58,7 @@ export function useSetupForm(onCreated: () => void) {
     draft,
     // Shown only after the first try, so an empty form does not start in red.
     errors: tried ? errors : {},
+    blocked,
     canAddKid: draft.kids.length < MAX_KIDS,
     setKid,
     addKid,
