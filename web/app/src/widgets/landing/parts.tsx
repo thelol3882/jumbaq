@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import type { CaseProgress } from "@/features/cases";
 import { EvidenceTag, HandNote, PlansLink, StampLink, Wordmark } from "@/shared/components/notebook";
 
 const STEPS = ["read", "hunt", "type"] as const;
@@ -62,6 +63,35 @@ export function ExampleCase() {
     <div className="w-60 rotate-[2.5deg]">
       <EvidenceTag label={t("example.label")}>{t("example.title")}</EvidenceTag>
     </div>
+  );
+}
+
+/** What the landing knows of a returning family: its names, already formatted, and where its case stands. */
+export type Welcome = { names: string; count: number; progress: CaseProgress | undefined };
+
+/** Instead of the call to action: the family this browser remembers, its case and the way back in. */
+export function WelcomeCard({ welcome }: { welcome: Welcome }) {
+  const t = useTranslations("widget.landing");
+  const { progress } = welcome;
+  return (
+    <section aria-labelledby="welcome-back" className="flex flex-col gap-3 border-[1.5px] border-dashed border-rule-divider px-5.5 py-5">
+      <h2 id="welcome-back" className="font-story text-body font-semibold">
+        {t("welcome.title", { count: welcome.count, names: welcome.names })}
+      </h2>
+      {progress ? (
+        <p className="font-type text-case font-normal">
+          {t("welcome.progress", {
+            kind: progress.kind,
+            case: progress.number,
+            evening: progress.kind === "evening" ? progress.evening : 0,
+            total: progress.kind === "evening" ? progress.total : 0,
+          })}
+        </p>
+      ) : null}
+      <div className="mt-2">
+        <StampLink href="/family">{t("welcome.continue")}</StampLink>
+      </div>
+    </section>
   );
 }
 

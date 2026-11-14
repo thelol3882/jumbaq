@@ -20,6 +20,11 @@
   },
   "start": "Start tonight's case",
   "free": "No sign-up. First case free, then $7.99 a month.",
+  "welcome": {
+    "title": "{count, plural, one {Welcome back, Detective {names}} other {Welcome back, Detectives {names}}}",
+    "progress": "{kind, select, evening {Case {case} · evening {evening} of {total}} accuse {Case {case} · time to name the culprit} solved {Case {case} · solved} failed {Case {case}} other {Case {case} is being written}}",
+    "continue": "Continue"
+  },
   "reviewers": {
     "title": "For reviewers",
     "login": "No login needed.",
