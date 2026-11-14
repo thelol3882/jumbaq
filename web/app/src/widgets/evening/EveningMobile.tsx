@@ -20,7 +20,7 @@ export function EveningMobile({
       <div className="mt-8 flex flex-col gap-9">
         {step === "done" && result ? (
           <>
-            <EpisodeResultView result={result} />
+            <EpisodeResultView result={result} last={episode.number === current.episodes.length} />
             <AfterTheAnswer current={current} episode={episode} />
           </>
         ) : step === "decode" || step === "strike" ? (

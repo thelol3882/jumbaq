@@ -34,7 +34,7 @@ export function EveningDesktop({
             <article className="relative pl-14">
               <span aria-hidden="true" className="absolute -top-10 -bottom-14 left-7.5 border-l-[1.5px] border-rule-margin" />
               {done ? (
-                <EpisodeResultView result={result} large />
+                <EpisodeResultView result={result} last={episode.number === current.episodes.length} large />
               ) : step === "decode" || step === "strike" ? (
                 <StepMain current={current} episode={episode} codeBreaker={codeBreaker} large />
               ) : (
