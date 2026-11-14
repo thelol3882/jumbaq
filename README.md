@@ -24,6 +24,7 @@ The API is on http://localhost:8000/api/v1, its docs on http://localhost:8000/ap
 backend/   FastAPI API and arq worker (package jumbaq)
 infra/     the local Docker Compose stack and the database setup
 deploy/    the server: its Docker Compose file and nginx behind Cloudflare
+brand/     logo, colours, type and tokens for the web app
 ```
 
 How the backend is built and the rules for changing it: [backend/AGENTS.md](backend/AGENTS.md).

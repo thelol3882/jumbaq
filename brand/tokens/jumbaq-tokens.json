@@ -1,0 +1,817 @@
+{
+  "color": {
+    "paper": {
+      "default": {
+        "$value": "#F4F3EC",
+        "$type": "color"
+      },
+      "dots": {
+        "$value": "#C2C5CB",
+        "$type": "color"
+      },
+      "card": {
+        "$value": "#FFFFFC",
+        "$type": "color"
+      },
+      "table": {
+        "$value": "#FBFAF5",
+        "$type": "color"
+      }
+    },
+    "ink": {
+      "default": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      },
+      "muted": {
+        "$value": "#55555A",
+        "$type": "color"
+      },
+      "faint": {
+        "$value": "#6E6E73",
+        "$type": "color"
+      }
+    },
+    "rule": {
+      "margin": {
+        "$value": "#D98A80",
+        "$type": "color"
+      },
+      "riddle": {
+        "$value": "#BFD0E4",
+        "$type": "color"
+      },
+      "card": {
+        "$value": "#D7D6CE",
+        "$type": "color"
+      },
+      "divider": {
+        "$value": "#9A9AA0",
+        "$type": "color"
+      },
+      "strong": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      }
+    },
+    "accent": {
+      "red": {
+        "$value": "#B3261E",
+        "$type": "color"
+      },
+      "blue": {
+        "$value": "#24478A",
+        "$type": "color"
+      }
+    },
+    "tag": {
+      "manila": {
+        "$value": "#E3C98F",
+        "$type": "color"
+      },
+      "ink": {
+        "$value": "#5A4A22",
+        "$type": "color"
+      },
+      "edge": {
+        "$value": "#9A8350",
+        "$type": "color"
+      },
+      "tape": {
+        "$value": "#EBE1A9",
+        "$type": "color"
+      }
+    },
+    "primary": {
+      "fg": {
+        "$value": "#B3261E",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#F4F3EC",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#B3261E",
+        "$type": "color"
+      },
+      "pressed-fg": {
+        "$value": "#F4F3EC",
+        "$type": "color"
+      },
+      "pressed-bg": {
+        "$value": "#B3261E",
+        "$type": "color"
+      }
+    },
+    "secondary": {
+      "fg": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#F4F3EC",
+        "$type": "color"
+      },
+      "underline": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      }
+    },
+    "aloud": {
+      "fg": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#F4F3EC",
+        "$type": "color"
+      },
+      "label": {
+        "$value": "#B3261E",
+        "$type": "color"
+      }
+    },
+    "note": {
+      "fg": {
+        "$value": "#24478A",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#F4F3EC",
+        "$type": "color"
+      }
+    },
+    "riddle": {
+      "fg": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#FFFFFC",
+        "$type": "color"
+      },
+      "label": {
+        "$value": "#B3261E",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#D7D6CE",
+        "$type": "color"
+      },
+      "line": {
+        "$value": "#BFD0E4",
+        "$type": "color"
+      }
+    },
+    "evidence": {
+      "fg": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#E3C98F",
+        "$type": "color"
+      },
+      "label": {
+        "$value": "#5A4A22",
+        "$type": "color"
+      },
+      "edge": {
+        "$value": "#9A8350",
+        "$type": "color"
+      }
+    },
+    "suspect": {
+      "fg": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#FBFAF5",
+        "$type": "color"
+      },
+      "note": {
+        "$value": "#24478A",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#2B2B2B",
+        "$type": "color"
+      }
+    },
+    "cleared": {
+      "fg": {
+        "$value": "#6E6E73",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#FBFAF5",
+        "$type": "color"
+      },
+      "note": {
+        "$value": "#24478A",
+        "$type": "color"
+      },
+      "strike": {
+        "$value": "#B3261E",
+        "$type": "color"
+      }
+    },
+    "success": {
+      "fg": {
+        "$value": "#B3261E",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#F4F3EC",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#B3261E",
+        "$type": "color"
+      }
+    },
+    "gentle-error": {
+      "fg": {
+        "$value": "#24478A",
+        "$type": "color"
+      },
+      "bg": {
+        "$value": "#FFFFFC",
+        "$type": "color"
+      },
+      "border": {
+        "$value": "#24478A",
+        "$type": "color"
+      }
+    },
+    "focus-ring": {
+      "$value": "#24478A",
+      "$type": "color"
+    }
+  },
+  "font": {
+    "family": {
+      "type": {
+        "$value": "'Courier Prime', 'Courier New', ui-monospace, monospace",
+        "$type": "fontFamily",
+        "nextFontVariable": "--font-courier-prime",
+        "use": "labels, case data, buttons, wordmark"
+      },
+      "story": {
+        "$value": "'Literata', 'Literata Variable', Georgia, serif",
+        "$type": "fontFamily",
+        "nextFontVariable": "--font-literata",
+        "use": "read-aloud story text, headings"
+      },
+      "hand": {
+        "$value": "'Kalam', 'Comic Sans MS', cursive",
+        "$type": "fontFamily",
+        "nextFontVariable": "--font-kalam",
+        "use": "short grown-up notes only"
+      }
+    },
+    "role": {
+      "aloud": {
+        "family": "story",
+        "size": "22px",
+        "lineHeight": 1.6,
+        "weight": 400
+      },
+      "riddle": {
+        "family": "story",
+        "size": "24px",
+        "lineHeight": 1.5,
+        "weight": 500,
+        "style": "italic"
+      },
+      "body": {
+        "family": "story",
+        "size": "20px",
+        "lineHeight": 1.5,
+        "weight": 400
+      },
+      "body-sm": {
+        "family": "story",
+        "size": "17px",
+        "lineHeight": 1.4,
+        "weight": 400
+      },
+      "title": {
+        "family": "story",
+        "size": "28px",
+        "lineHeight": 1.15,
+        "weight": 700
+      },
+      "display": {
+        "family": "story",
+        "size": "34px",
+        "lineHeight": 1.12,
+        "weight": 700
+      },
+      "clue": {
+        "family": "story",
+        "size": "24px",
+        "lineHeight": 1.25,
+        "weight": 700
+      },
+      "note": {
+        "family": "hand",
+        "size": "19px",
+        "lineHeight": 1.35,
+        "weight": 400
+      },
+      "note-sm": {
+        "family": "hand",
+        "size": "16px",
+        "lineHeight": 1.3,
+        "weight": 400
+      },
+      "note-answer": {
+        "family": "hand",
+        "size": "40px",
+        "lineHeight": 1.0,
+        "weight": 700
+      },
+      "label": {
+        "family": "type",
+        "size": "14px",
+        "lineHeight": 1.4,
+        "weight": 400
+      },
+      "label-sm": {
+        "family": "type",
+        "size": "13px",
+        "lineHeight": 1.4,
+        "weight": 400
+      },
+      "case": {
+        "family": "type",
+        "size": "15px",
+        "lineHeight": 1.4,
+        "weight": 700
+      },
+      "suspect": {
+        "family": "type",
+        "size": "18px",
+        "lineHeight": 1.3,
+        "weight": 700
+      },
+      "pick": {
+        "family": "type",
+        "size": "21px",
+        "lineHeight": 1.2,
+        "weight": 700
+      },
+      "button": {
+        "family": "type",
+        "size": "23px",
+        "lineHeight": 1.0,
+        "weight": 700,
+        "tracking": "0.02em"
+      },
+      "wordmark": {
+        "family": "type",
+        "size": "46px",
+        "lineHeight": 1.0,
+        "weight": 700,
+        "tracking": "-0.01em"
+      }
+    }
+  },
+  "space": {
+    "0": {
+      "$value": "0px",
+      "$type": "dimension"
+    },
+    "1": {
+      "$value": "4px",
+      "$type": "dimension"
+    },
+    "2": {
+      "$value": "8px",
+      "$type": "dimension"
+    },
+    "3": {
+      "$value": "12px",
+      "$type": "dimension"
+    },
+    "4": {
+      "$value": "16px",
+      "$type": "dimension"
+    },
+    "5": {
+      "$value": "20px",
+      "$type": "dimension"
+    },
+    "6": {
+      "$value": "24px",
+      "$type": "dimension"
+    },
+    "7": {
+      "$value": "28px",
+      "$type": "dimension"
+    },
+    "8": {
+      "$value": "32px",
+      "$type": "dimension"
+    },
+    "10": {
+      "$value": "40px",
+      "$type": "dimension"
+    },
+    "11": {
+      "$value": "44px",
+      "$type": "dimension"
+    },
+    "12": {
+      "$value": "48px",
+      "$type": "dimension"
+    },
+    "14": {
+      "$value": "56px",
+      "$type": "dimension"
+    },
+    "16": {
+      "$value": "64px",
+      "$type": "dimension"
+    }
+  },
+  "radius": {
+    "none": {
+      "$value": "0",
+      "$type": "dimension"
+    },
+    "sm": {
+      "$value": "2px",
+      "$type": "dimension"
+    },
+    "md": {
+      "$value": "4px",
+      "$type": "dimension"
+    },
+    "full": {
+      "$value": "9999px",
+      "$type": "dimension"
+    }
+  },
+  "border": {
+    "hairline": {
+      "$value": "1px",
+      "$type": "dimension"
+    },
+    "rule": {
+      "$value": "1.5px",
+      "$type": "dimension"
+    },
+    "default": {
+      "$value": "2px",
+      "$type": "dimension"
+    },
+    "stamp": {
+      "$value": "3px",
+      "$type": "dimension"
+    },
+    "stamp-inner": {
+      "$value": "1px",
+      "$type": "dimension"
+    },
+    "stamp-inner-offset": {
+      "$value": "-8px",
+      "$type": "dimension"
+    }
+  },
+  "focus": {
+    "width": {
+      "$value": "3px"
+    },
+    "offset": {
+      "$value": "2px"
+    },
+    "color": {
+      "$value": "#24478A"
+    }
+  },
+  "layout": {
+    "margin-rule-left": {
+      "$value": "42px",
+      "$type": "dimension"
+    },
+    "page-pad-left": {
+      "$value": "58px",
+      "$type": "dimension"
+    },
+    "page-pad-x": {
+      "$value": "22px",
+      "$type": "dimension"
+    },
+    "tap-min": {
+      "$value": "48px",
+      "$type": "dimension"
+    },
+    "button-min": {
+      "$value": "66px",
+      "$type": "dimension"
+    },
+    "dot-grid-size": {
+      "$value": "22px",
+      "$type": "dimension"
+    },
+    "dot-grid-offset": {
+      "$value": "11px",
+      "$type": "dimension"
+    },
+    "dot-radius": {
+      "$value": "1.25px",
+      "$type": "dimension"
+    }
+  },
+  "background": {
+    "dot-grid": {
+      "color": "#F4F3EC",
+      "dot": "#C2C5CB",
+      "size": "22px",
+      "dotRadius": "1.25px",
+      "css": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='11' cy='11' r='1.25' fill='%23C2C5CB'/%3E%3C/svg%3E\")"
+    }
+  },
+  "$meta": {
+    "name": "jumbaq",
+    "version": "0.1.0",
+    "direction": "Field notebook",
+    "theme": "light only",
+    "rules": "No gradients, glows, soft shadows or glossy effects.",
+    "adjusted": [
+      {
+        "token": "color.ink.faint",
+        "design": "#75757A",
+        "now": "#6E6E73",
+        "why": "The design grey failed AA for small text (4.12:1 on paper, 4.39:1 on the table). Darkened to the lightest grey that passes on both."
+      },
+      {
+        "token": "color.tag.tape",
+        "design": "rgba(232,220,150,.78)",
+        "now": "#EBE1A9",
+        "why": "Flattened the translucent tape to a solid colour (the same result on paper)."
+      }
+    ],
+    "contrast": [
+      {
+        "fg": "ink",
+        "bg": "paper",
+        "fgHex": "#2B2B2B",
+        "bgHex": "#F4F3EC",
+        "use": "read-aloud text, titles",
+        "kind": "text",
+        "ratio": 12.73,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "ink-muted",
+        "bg": "paper",
+        "fgHex": "#55555A",
+        "bgHex": "#F4F3EC",
+        "use": "Courier labels",
+        "kind": "text",
+        "ratio": 6.66,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "ink-faint",
+        "bg": "paper",
+        "fgHex": "#6E6E73",
+        "bgHex": "#F4F3EC",
+        "use": "unfinished evening numbers",
+        "kind": "text",
+        "ratio": 4.56,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "ink-faint",
+        "bg": "paper-table",
+        "fgHex": "#6E6E73",
+        "bgHex": "#FBFAF5",
+        "use": "cleared suspect name",
+        "kind": "text",
+        "ratio": 4.85,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "ink-faint-design",
+        "bg": "paper",
+        "fgHex": "#75757A",
+        "bgHex": "#F4F3EC",
+        "use": "design value, cleared/unfinished (replaced)",
+        "kind": "text",
+        "ratio": 4.12,
+        "required": 4.5,
+        "pass": false,
+        "replaced": true
+      },
+      {
+        "fg": "ink-faint-design",
+        "bg": "paper-table",
+        "fgHex": "#75757A",
+        "bgHex": "#FBFAF5",
+        "use": "design value, cleared name (replaced)",
+        "kind": "text",
+        "ratio": 4.39,
+        "required": 4.5,
+        "pass": false,
+        "replaced": true
+      },
+      {
+        "fg": "red",
+        "bg": "paper",
+        "fgHex": "#B3261E",
+        "bgHex": "#F4F3EC",
+        "use": "primary action, 'read aloud' label, success",
+        "kind": "text",
+        "ratio": 5.88,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "paper",
+        "bg": "red",
+        "fgHex": "#F4F3EC",
+        "bgHex": "#B3261E",
+        "use": "primary action pressed",
+        "kind": "text",
+        "ratio": 5.88,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "red",
+        "bg": "paper-card",
+        "fgHex": "#B3261E",
+        "bgHex": "#FFFFFC",
+        "use": "riddle label",
+        "kind": "text",
+        "ratio": 6.52,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "ink",
+        "bg": "paper-card",
+        "fgHex": "#2B2B2B",
+        "bgHex": "#FFFFFC",
+        "use": "riddle text",
+        "kind": "text",
+        "ratio": 14.13,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "blue",
+        "bg": "paper",
+        "fgHex": "#24478A",
+        "bgHex": "#F4F3EC",
+        "use": "grown-up note",
+        "kind": "text",
+        "ratio": 8.06,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "blue",
+        "bg": "paper-card",
+        "fgHex": "#24478A",
+        "bgHex": "#FFFFFC",
+        "use": "gentle error",
+        "kind": "text",
+        "ratio": 8.95,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "blue",
+        "bg": "paper-table",
+        "fgHex": "#24478A",
+        "bgHex": "#FBFAF5",
+        "use": "suspect note",
+        "kind": "text",
+        "ratio": 8.58,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "ink",
+        "bg": "paper-table",
+        "fgHex": "#2B2B2B",
+        "bgHex": "#FBFAF5",
+        "use": "suspect name",
+        "kind": "text",
+        "ratio": 13.55,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "ink",
+        "bg": "manila",
+        "fgHex": "#2B2B2B",
+        "bgHex": "#E3C98F",
+        "use": "evidence text",
+        "kind": "text",
+        "ratio": 8.78,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "manila-ink",
+        "bg": "manila",
+        "fgHex": "#5A4A22",
+        "bgHex": "#E3C98F",
+        "use": "evidence label",
+        "kind": "text",
+        "ratio": 5.34,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "ink",
+        "bg": "paper",
+        "fgHex": "#2B2B2B",
+        "bgHex": "#F4F3EC",
+        "use": "secondary action",
+        "kind": "text",
+        "ratio": 12.73,
+        "required": 4.5,
+        "pass": true
+      },
+      {
+        "fg": "red",
+        "bg": "paper",
+        "fgHex": "#B3261E",
+        "bgHex": "#F4F3EC",
+        "use": "stamp button border",
+        "kind": "ui",
+        "ratio": 5.88,
+        "required": 3.0,
+        "pass": true
+      },
+      {
+        "fg": "ink",
+        "bg": "paper-table",
+        "fgHex": "#2B2B2B",
+        "bgHex": "#FBFAF5",
+        "use": "table and pick borders",
+        "kind": "ui",
+        "ratio": 13.55,
+        "required": 3.0,
+        "pass": true
+      },
+      {
+        "fg": "blue",
+        "bg": "paper",
+        "fgHex": "#24478A",
+        "bgHex": "#F4F3EC",
+        "use": "focus ring",
+        "kind": "ui",
+        "ratio": 8.06,
+        "required": 3.0,
+        "pass": true
+      },
+      {
+        "fg": "red",
+        "bg": "manila",
+        "fgHex": "#B3261E",
+        "bgHex": "#E3C98F",
+        "use": "red dot on tag (logo)",
+        "kind": "ui",
+        "ratio": 4.05,
+        "required": 3.0,
+        "pass": true
+      },
+      {
+        "fg": "ink",
+        "bg": "manila",
+        "fgHex": "#2B2B2B",
+        "bgHex": "#E3C98F",
+        "use": "question mark on tag (logo)",
+        "kind": "ui",
+        "ratio": 8.78,
+        "required": 3.0,
+        "pass": true
+      },
+      {
+        "fg": "manila",
+        "bg": "ink",
+        "fgHex": "#E3C98F",
+        "bgHex": "#2B2B2B",
+        "use": "tag on graphite (app icon)",
+        "kind": "ui",
+        "ratio": 8.78,
+        "required": 3.0,
+        "pass": true
+      }
+    ]
+  }
+}
