@@ -22,6 +22,8 @@ class SubscriptionRow(Base):
     status: Mapped[str]
     # The provider's time of the event that set the status, to ignore older events.
     changed_at: Mapped[datetime]
+    # Set while the subscription is still paid but will end: the parent canceled it at period end.
+    cancels_at: Mapped[datetime | None]
     created_at: Mapped[datetime]
 
 

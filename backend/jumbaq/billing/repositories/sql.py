@@ -27,6 +27,7 @@ class SqlSubscriptionRepository:
                     SubscriptionRow.customer_ref,
                     SubscriptionRow.status,
                     SubscriptionRow.changed_at,
+                    SubscriptionRow.cancels_at,
                 )
                 .where(
                     SubscriptionRow.family_id == family.family_id,
@@ -44,6 +45,7 @@ class SqlSubscriptionRepository:
             row.customer_ref,
             SubscriptionStatus(row.status),
             row.changed_at,
+            row.cancels_at,
         )
 
     async def get_for_update(self, family: FamilyRef, provider_ref: str) -> Subscription | None:
@@ -53,6 +55,7 @@ class SqlSubscriptionRepository:
                     SubscriptionRow.customer_ref,
                     SubscriptionRow.status,
                     SubscriptionRow.changed_at,
+                    SubscriptionRow.cancels_at,
                 )
                 .where(
                     SubscriptionRow.family_id == family.family_id,
@@ -69,6 +72,7 @@ class SqlSubscriptionRepository:
             row.customer_ref,
             SubscriptionStatus(row.status),
             row.changed_at,
+            row.cancels_at,
         )
 
     async def add(self, subscription: Subscription, created_at: datetime) -> None:
@@ -79,6 +83,7 @@ class SqlSubscriptionRepository:
                 customer_ref=subscription.customer_ref,
                 status=subscription.status,
                 changed_at=subscription.changed_at,
+                cancels_at=subscription.cancels_at,
                 created_at=created_at,
             )
         )
@@ -89,6 +94,7 @@ class SqlSubscriptionRepository:
         provider_ref: str,
         status: SubscriptionStatus,
         changed_at: datetime,
+        cancels_at: datetime | None,
     ) -> None:
         await self._session.execute(
             update(SubscriptionRow)
@@ -96,7 +102,7 @@ class SqlSubscriptionRepository:
                 SubscriptionRow.family_id == family.family_id,
                 SubscriptionRow.provider_ref == provider_ref,
             )
-            .values(status=status, changed_at=changed_at)
+            .values(status=status, changed_at=changed_at, cancels_at=cancels_at)
         )
 
     async def remember_event(

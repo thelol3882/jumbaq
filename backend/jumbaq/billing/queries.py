@@ -2,6 +2,7 @@
 
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,8 @@ from jumbaq.billing.models import SubscriptionRow
 class SubscriptionView:
     status: SubscriptionStatus | None
     active: bool
+    # Only while active: the day the paid period ends after a cancel.
+    cancels_at: datetime | None = None
 
 
 class BillingQueries:
@@ -22,16 +25,19 @@ class BillingQueries:
 
     async def subscription(self, family_id: uuid.UUID) -> SubscriptionView:
         """The subscription that gives access if there is one, else the newest."""
-        status = await self._session.scalar(
-            select(SubscriptionRow.status)
-            .where(SubscriptionRow.family_id == family_id)
-            .order_by(
-                SubscriptionRow.status.in_(list(ACCESS_STATUSES)).desc(),
-                SubscriptionRow.changed_at.desc(),
+        row = (
+            await self._session.execute(
+                select(SubscriptionRow.status, SubscriptionRow.cancels_at)
+                .where(SubscriptionRow.family_id == family_id)
+                .order_by(
+                    SubscriptionRow.status.in_(list(ACCESS_STATUSES)).desc(),
+                    SubscriptionRow.changed_at.desc(),
+                )
+                .limit(1)
             )
-            .limit(1)
-        )
-        if status is None:
+        ).first()
+        if row is None:
             return SubscriptionView(None, False)
-        found = SubscriptionStatus(status)
-        return SubscriptionView(found, found in ACCESS_STATUSES)
+        found = SubscriptionStatus(row.status)
+        active = found in ACCESS_STATUSES
+        return SubscriptionView(found, active, row.cancels_at if active else None)

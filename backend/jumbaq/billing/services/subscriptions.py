@@ -75,7 +75,7 @@ class SubscriptionService:
                 activated = domain.gives_access(change.status)
             elif domain.is_newer(stored, change):
                 await uow.subscriptions.set_status(
-                    family, change.provider_ref, change.status, change.changed_at
+                    family, change.provider_ref, change.status, change.changed_at, change.cancels_at
                 )
                 activated = domain.gives_access(change.status) and not domain.gives_access(
                     stored.status
@@ -98,4 +98,5 @@ def _subscription(change: SubscriptionChange) -> Subscription:
         customer_ref=change.customer_ref,
         status=change.status,
         changed_at=change.changed_at,
+        cancels_at=change.cancels_at,
     )
