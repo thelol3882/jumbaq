@@ -207,6 +207,38 @@ def banned_words(text: str) -> list[str]:
     return [" ".join(re.split(r"[\s-]+", word)) for word in found]
 
 
+_WORDS = re.compile(r"[^\W\d_]+")
+COMMON_ENGLISH = frozenset({
+    "the", "and", "a", "to", "is", "you", "it", "of", "in", "was", "he", "she", "that", "they",
+    "her", "his", "with", "for", "on", "at", "as", "we", "i", "an", "are", "this", "but", "not",
+})  # fmt: skip
+# Under this many words a text says too little to judge.
+ENGLISH_MIN_WORDS = 8
+# Of the words of a story, at least this share are very common English ones (real stories have
+# about a third; German or French stories with a few of the same short words stay far below).
+ENGLISH_MIN_SHARE = 0.2
+# Accents on lower-case words are rare in English; a story in another language has many.
+ENGLISH_MAX_NON_ASCII = 0.02
+
+
+def is_english(text: str) -> bool:
+    """A cheap check, not a language detector: the prompt asks for English and this catches a
+    story in another language. Texts too short to judge pass."""
+    # A capitalized word with accents or in another script is a name, like Zoë or a kid's
+    # nickname: it counts for nothing either way.
+    words = [w for w in _WORDS.findall(text) if w.isascii() or not w[0].isupper()]
+    letters = sum(len(word) for word in words)
+    if not letters:
+        return True
+    non_ascii = sum(1 for word in words for char in word if not char.isascii())
+    if non_ascii / letters > ENGLISH_MAX_NON_ASCII:
+        return False
+    if len(words) < ENGLISH_MIN_WORDS:
+        return True
+    common = sum(1 for word in words if word.lower() in COMMON_ENGLISH)
+    return common / len(words) >= ENGLISH_MIN_SHARE
+
+
 def draft_problems(
     payload: Payload,
     objects: tuple[str, ...],
@@ -256,6 +288,8 @@ def draft_problems(
                 f"gives the clue away: {', '.join(word.lower() for word in given_away)} in "
                 f"{name} is a word the kids decode later; tell the story without it"
             )
+    if not is_english(" ".join(payload.read_aloud)):
+        problems.append("write in English: the read_aloud text is not English")
     return problems
 
 
