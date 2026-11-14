@@ -109,7 +109,7 @@ forest school, a bakery of animals), unless the data gives you the world.
 one line that a child remembers.
 - One culprit, given by its id.
 - Exactly {EPISODES_PER_CASE} clues, one for each episode 1 to {EPISODES_PER_CASE}. Each clue \
-names one suspect by name in its text (never "a striped animal" or "someone": the kids \
+names its suspect by name in its text (never "a striped animal" or "someone": the kids \
 must know who the clue is about) and either points at that suspect (points_at true) or rules \
 them out (points_at false).
 
