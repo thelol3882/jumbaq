@@ -57,7 +57,7 @@ export function useSetupForm(onCreated: () => void) {
 
   return {
     draft,
-    // Shown only after the first try, so an empty form does not start in red.
+    // Shown only after the first try, so an empty form does not start full of errors.
     errors: tried ? errors : {},
     blocked,
     nicknames,
