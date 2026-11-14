@@ -9,6 +9,7 @@ from jumbaq.ai.public import (
     EPISODES_PER_CASE,
     AiBadOutputError,
     AiDailyLimitError,
+    AiUnavailableError,
     ClueDraft,
     EpisodeDraft,
     EpisodeInput,
@@ -22,6 +23,7 @@ from jumbaq.ai.public import (
 )
 from jumbaq.cases.public import EpisodeBrief
 from jumbaq.core.clock import Clock
+from jumbaq.core.context import is_last_attempt
 from jumbaq.core.family import FamilyRef
 from jumbaq.episodes import domain
 from jumbaq.episodes.domain import Episode, EpisodeStatus, Payload, Riddle
@@ -59,7 +61,8 @@ class EpisodeWriting:
     async def write(self, family: FamilyRef, episode_id: uuid.UUID) -> None:
         """Safe to run twice: a ready or played episode is left alone.
 
-        AiUnavailableError goes up, so the outbox tries again later.
+        AiUnavailableError goes up, so the outbox tries again later. On the last attempt the
+        episode gets the built-in text, so it never stays in generating.
         """
         async with self._uow() as uow:
             episode = await uow.episodes.get(family, episode_id, for_update=True)
@@ -117,6 +120,11 @@ class EpisodeWriting:
             except AiDailyLimitError:
                 # A built-in episode keeps the evening going; a failed one would stop the case.
                 logger.warning("episode %s: the family reached the daily cap", episode.id)
+                break
+            except AiUnavailableError:
+                if not is_last_attempt():
+                    raise
+                logger.exception("episode %s: the model failed for good, built-in", episode.id)
                 break
             payload = domain.with_plan_clue(_from_draft(draft), brief.clue.text)
             problems = domain.draft_problems(payload, home.objects, youngest, ANSWER_SLOT)
