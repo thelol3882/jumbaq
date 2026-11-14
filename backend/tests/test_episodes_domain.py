@@ -93,6 +93,23 @@ def test_safe_words_that_only_look_alike_pass() -> None:
     assert domain.banned_words(text) == []
 
 
+@pytest.mark.parametrize(
+    ("text", "found"),
+    [
+        ("Find the scissor.", ["scissor"]),
+        ("Two pairs of scissors", ["scissors"]),
+        ("Go through the front-door now", ["front door"]),
+        ("Go through the front door now", ["front door"]),
+        ("Play outdoors today", ["outdoors"]),
+        ("Take your medication", ["medication"]),
+        ("a burnt matchstick", ["matchstick"]),
+        ("the matchsticks", ["matchsticks"]),
+    ],
+)
+def test_more_unsafe_words_and_their_forms_are_caught(text: str, found: list[str]) -> None:
+    assert domain.banned_words(text) == found
+
+
 def test_the_reviewer_s_text_is_caught_in_every_form() -> None:
     text = "windows, sockets and plugs; climbed; leave the house"
     assert domain.banned_words(text) == [
