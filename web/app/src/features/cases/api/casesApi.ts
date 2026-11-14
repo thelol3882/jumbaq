@@ -1,5 +1,6 @@
 import { baseApi } from "@/shared/api/baseApi";
-import type { Accusation, Case, Certificate } from "../types";
+import { listTags } from "@/shared/api/tags";
+import type { Accusation, Case, Certificate, SolvedCase } from "../types";
 
 export const casesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -22,6 +23,11 @@ export const casesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Case"],
     }),
+    // The solved cases, newest first: past cases and their certificates.
+    getSolvedCases: builder.query<SolvedCase[], void>({
+      query: () => "/cases",
+      providesTags: (result) => listTags("Case", result),
+    }),
     getCertificate: builder.query<Certificate, string>({
       query: (caseId) => `/cases/${caseId}/certificate`,
       providesTags: (_result, _error, caseId) => [{ type: "Case", id: caseId }],
@@ -29,5 +35,10 @@ export const casesApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetCurrentCaseQuery, useStartNextCaseMutation, useAccuseMutation, useGetCertificateQuery } =
-  casesApi;
+export const {
+  useGetCurrentCaseQuery,
+  useStartNextCaseMutation,
+  useAccuseMutation,
+  useGetCertificateQuery,
+  useGetSolvedCasesQuery,
+} = casesApi;

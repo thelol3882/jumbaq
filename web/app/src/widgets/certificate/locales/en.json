@@ -1,0 +1,16 @@
+{
+  "wordmark": "jumbaq",
+  "loading": "Finding the certificate…",
+  "retry": "Try again",
+  "print": "Print certificate",
+  "back": "Back to the case file",
+  "noFamily": {
+    "title": "No case file yet",
+    "note": "This browser hasn't opened a case. It takes a minute.",
+    "start": "Open a case file"
+  },
+  "notFound": {
+    "title": "No certificate for this case",
+    "text": "A certificate comes when the detectives solve a case."
+  }
+}

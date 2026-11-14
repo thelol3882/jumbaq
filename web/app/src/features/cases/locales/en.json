@@ -28,6 +28,11 @@
       "check": "Check again"
     }
   },
+  "past": {
+    "title": "past cases",
+    "case": "Case {number}: {title}",
+    "certificate": "See the certificate"
+  },
   "ranks": {
     "chief_detective": "Chief Detective",
     "detective": "Detective",

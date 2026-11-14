@@ -1,11 +1,12 @@
 export { AccuseForm } from "./components/AccuseForm";
 export { CertificateCard } from "./components/CertificateCard";
+export { PastCases } from "./components/PastCases";
 export { EveningBoxes } from "./components/EveningBoxes";
 export { EvidenceList } from "./components/EvidenceList";
 export { RankStamp } from "./components/RankStamp";
 export { SuspectTable } from "./components/SuspectTable";
 export { WritingProgress } from "./components/WritingProgress";
-export { useGetCertificateQuery } from "./api/casesApi";
+export { useGetCertificateQuery, useGetSolvedCasesQuery } from "./api/casesApi";
 export { useCurrentCase } from "./hooks/useCurrentCase";
 export { useStartNextCase } from "./hooks/useStartNextCase";
 export { nextEvening, opensLater, playedCount } from "./services/caseBoard";
