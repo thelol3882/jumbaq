@@ -32,9 +32,16 @@ describe("suspects", () => {
   it("are cleared only by a clue that rules them out", () => {
     const clues = [clue(1, "bram", true), clue(2, "pickle", false)];
     expect(suspectMark("bram", clues)).toBe("cleared");
-    expect(suspectMark("pickle", clues)).toBe("suspect");
+    expect(suspectMark("pickle", clues)).not.toBe("cleared");
     expect(suspectMark("tess", clues)).toBe("suspect");
     expect(clearingClue("bram", clues)?.episode).toBe(1);
+  });
+
+  it("are pointed at by a clue that does not rule them out", () => {
+    const clues = [clue(1, "pickle", false), clue(2, "bram", false), clue(3, "bram", true)];
+    expect(suspectMark("pickle", clues)).toBe("pointed");
+    expect(suspectMark("bram", clues)).toBe("cleared");
+    expect(suspectMark("tess", clues)).toBe("suspect");
   });
 });
 

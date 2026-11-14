@@ -1,10 +1,15 @@
 import type { Case, CaseEpisode, Clue } from "../types";
 
-export type SuspectMark = "cleared" | "suspect";
+export type SuspectMark = "cleared" | "pointed" | "suspect";
 
-/** Cleared once a played clue rules the suspect out. The culprit is never ruled out. */
+/**
+ * Cleared once a played clue rules the suspect out. The culprit is never ruled out. A clue that
+ * points at the suspect marks them as pointed at, unless another clue cleared them.
+ */
 export function suspectMark(suspectId: string, clues: readonly Clue[]): SuspectMark {
-  return clues.some((c) => c.suspect_id === suspectId && c.rules_out) ? "cleared" : "suspect";
+  const about = clues.filter((c) => c.suspect_id === suspectId);
+  if (about.some((c) => c.rules_out)) return "cleared";
+  return about.length > 0 ? "pointed" : "suspect";
 }
 
 /** The clue that cleared the suspect, for the note next to the name. */

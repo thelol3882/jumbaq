@@ -2,7 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import type { Clue, Suspect } from "../types";
-import { suspectMark } from "../services/caseBoard";
+import { suspectMark, type SuspectMark } from "../services/caseBoard";
+
+const MARK_TEXT = { cleared: "cleared", pointed: "pointedAt", suspect: "stillSuspect" } as const satisfies Record<SuspectMark, string>;
 
 /** The suspects as the kids see them: a red pencil line through each one a clue cleared. */
 export function SuspectTable({ suspects, clues }: { suspects: readonly Suspect[]; clues: readonly Clue[] }) {
@@ -10,7 +12,8 @@ export function SuspectTable({ suspects, clues }: { suspects: readonly Suspect[]
   return (
     <ul className="rotate-[0.4deg] border-2 border-suspect-border bg-suspect-bg">
       {suspects.map((s) => {
-        const cleared = suspectMark(s.id, clues) === "cleared";
+        const mark = suspectMark(s.id, clues);
+        const cleared = mark === "cleared";
         return (
           <li key={s.id} className="flex items-center justify-between gap-3 border-b-[1.5px] border-suspect-border px-3.5 py-3 last:border-b-0">
             <span className={`relative font-type text-suspect ${cleared ? "text-cleared-fg" : "text-suspect-fg"}`}>
@@ -21,7 +24,7 @@ export function SuspectTable({ suspects, clues }: { suspects: readonly Suspect[]
                 </svg>
               ) : null}
             </span>
-            <span className="font-hand text-note-sm text-suspect-note">{cleared ? t("cleared") : t("stillSuspect")}</span>
+            <span className="font-hand text-note-sm text-suspect-note">{t(MARK_TEXT[mark])}</span>
           </li>
         );
       })}
