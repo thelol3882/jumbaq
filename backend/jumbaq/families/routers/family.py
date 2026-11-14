@@ -5,7 +5,7 @@ from fastapi import APIRouter, Response, status
 from jumbaq.core.deps import SettingsDep
 from jumbaq.families.deps import FAMILY_COOKIE, FamilyDep, FamilyServiceDep
 from jumbaq.families.domain import NewKid
-from jumbaq.families.schemas import FamilyCreate, FamilyOut
+from jumbaq.families.schemas import FamilyCreate, FamilyOut, FamilyStateOut
 
 router = APIRouter(tags=["families"])
 
@@ -35,6 +35,10 @@ async def create_family(
 
 
 @router.get("/family")
-async def get_family(family: FamilyDep, families: FamilyServiceDep) -> FamilyOut:
-    """The family of the cookie. No cookie, or an unknown one, gives 401 `family.no_session`."""
-    return FamilyOut.model_validate(await families.get(family))
+async def get_family(
+    family: FamilyDep, families: FamilyServiceDep, settings: SettingsDep
+) -> FamilyStateOut:
+    """The family of the cookie. No cookie, or an unknown one, gives 401 `family.no_session`.
+    `demo_mode` is true when the next episode may be opened at once."""
+    found = FamilyOut.model_validate(await families.get(family))
+    return FamilyStateOut(**found.model_dump(), demo_mode=settings.demo_mode)

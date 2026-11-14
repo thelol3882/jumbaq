@@ -41,3 +41,8 @@ class FamilyOut(BaseModel):
     rooms: list[str]
     objects: list[str]
     created_at: datetime
+
+
+class FamilyStateOut(FamilyOut):
+    # Tells the web app whether to show "open it now" (the server decides, not the build).
+    demo_mode: bool
