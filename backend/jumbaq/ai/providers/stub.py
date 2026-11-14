@@ -21,15 +21,24 @@ def _data(prompt: Prompt) -> dict[str, Any]:
     return json.loads(found.group(1))
 
 
+# Who plays s1, s2 and s3 in each case, so a family's cases never share a suspect name.
+_CASTS = [
+    (("Felix", "Fox"), ("Olga", "Owl"), ("Boris", "Bear")),
+    (("Pip", "Pig"), ("Wanda", "Wolf"), ("Gus", "Goat")),
+    (("Lena", "Lamb"), ("Dora", "Duck"), ("Hugo", "Hen")),
+]
+
+
 def _plan(case_number: int) -> dict[str, Any]:
-    # s2 did it. Clues 1 and 3 rule out s1, clue 2 rules out s3, and only the last two point at s2.
-    return {
+    # s2 did it. Clue 1 rules out s1, clue 2 is the false trail at s3 and clue 3 clears s3. Only
+    # the last two point at s2.
+    plan = {
         "title": f"Case {case_number}: the missing honey cake",
         "setting": "The honey cake vanished from the forest bakery before the party.",
         "suspects": [
-            {"id": "s1", "name": "Felix the Fox", "description": "loves sweets more than anyone"},
-            {"id": "s2", "name": "Olga the Owl", "description": "awake all night, sees it all"},
-            {"id": "s3", "name": "Boris the Bear", "description": "the baker, sleepy and kind"},
+            {"id": "s1", "name": "Felix the Fox", "description": "wants the cake for a picnic"},
+            {"id": "s2", "name": "Olga the Owl", "description": "wants the cake for a party"},
+            {"id": "s3", "name": "Boris the Bear", "description": "wants the cake for a snack"},
         ],
         "culprit_id": "s2",
         "clues": [
@@ -41,25 +50,25 @@ def _plan(case_number: int) -> dict[str, Any]:
             },
             {
                 "episode": 2,
-                "text": "Boris snored in the back room the whole night.",
+                "text": "Boris left big muddy paw prints beside the empty plate.",
+                "suspect_id": "s3",
+                "points_at": True,
+            },
+            {
+                "episode": 3,
+                "text": "Boris snored in the back room all night, so the mud is from his walk.",
                 "suspect_id": "s3",
                 "points_at": False,
             },
             {
-                "episode": 3,
-                "text": "Felix was at his grandma's all evening.",
-                "suspect_id": "s1",
-                "points_at": False,
-            },
-            {
                 "episode": 4,
-                "text": "Owl footprints lead away through the crumbs.",
+                "text": "Owl footprints lead away through the crumbs, says Olga's neighbor.",
                 "suspect_id": "s2",
                 "points_at": True,
             },
             {
                 "episode": 5,
-                "text": "Cake crumbs lead up to the hollow of the old oak.",
+                "text": "Cake crumbs lead up to the hollow of the old oak where Olga lives.",
                 "suspect_id": "s2",
                 "points_at": True,
             },
@@ -67,6 +76,13 @@ def _plan(case_number: int) -> dict[str, Any]:
         "reveal": "Olga the Owl took the cake at night to surprise her owlets. The feather "
         "and the crumbs to her oak gave her away.",
     }
+    if case_number == 1:
+        return plan
+    text = json.dumps(plan)
+    for old, new in zip(_CASTS[0], _CASTS[(case_number - 1) % len(_CASTS)], strict=True):
+        for before, after in zip(old, new, strict=True):
+            text = text.replace(before, after)
+    return json.loads(text)
 
 
 def _riddle(objects: list[str], index: int) -> dict[str, Any]:
