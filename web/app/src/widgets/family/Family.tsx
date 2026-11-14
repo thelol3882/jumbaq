@@ -15,14 +15,23 @@ export function Family() {
   const t = useTranslations("widget.family");
   const errorMessage = useApiErrorMessage();
   const { family, loading, missing, error, retry } = useFamily();
-  const { current, slow, retry: check } = useCurrentCase();
+  const { current, slow, error: caseError, retry: check } = useCurrentCase();
   const isMobile = useIsMobile();
 
   if (family) {
+    const waiting = { slow, onCheck: () => void check() };
+    // A failed poll keeps the case it already has on screen; only a case that never loaded is an error.
+    const problem =
+      caseError && !current ? (
+        <div role="alert" className="flex flex-col items-start gap-3">
+          <p className="text-body">{errorMessage(caseError)}</p>
+          <TypedButton onClick={() => void check()}>{t("retry")}</TypedButton>
+        </div>
+      ) : undefined;
     return isMobile ? (
-      <FamilyMobile family={family} current={current} waiting={{ slow, onCheck: () => void check() }} />
+      <FamilyMobile family={family} current={current} waiting={waiting} problem={problem} />
     ) : (
-      <FamilyDesktop family={family} current={current} waiting={{ slow, onCheck: () => void check() }} />
+      <FamilyDesktop family={family} current={current} waiting={waiting} problem={problem} />
     );
   }
 

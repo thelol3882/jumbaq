@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, inOpening, type Case } from "@/features/cases";
 import { FamilyBoard, type FamilyState } from "@/features/families";
@@ -11,10 +12,13 @@ export function FamilyDesktop({
   family,
   current,
   waiting,
+  problem,
 }: {
   family: FamilyState;
   current: Case | undefined;
   waiting: Waiting;
+  /** Shown instead of tonight when the case did not load. */
+  problem?: ReactNode;
 }) {
   const t = useTranslations("widget.family");
   const detectives = family.kids.map((kid) => kid.nickname);
@@ -32,7 +36,7 @@ export function FamilyDesktop({
       <div className="mt-11">
         <NotebookSpread
           sideLabel={t("boardLabel")}
-          main={current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} large /> : <TonightPending waiting={waiting} detectives={detectives} large />}
+          main={problem ?? (current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} large /> : <TonightPending waiting={waiting} detectives={detectives} large />)}
           side={current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilyBoard family={family} />}
         />
       </div>
