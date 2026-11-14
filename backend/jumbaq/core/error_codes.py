@@ -49,3 +49,12 @@ class ErrorCode(StrEnum):
     CASE_NOT_ACCUSING = "case.not_accusing"
     CASE_NOT_SOLVED = "case.not_solved"
     CASE_UNKNOWN_SUSPECT = "case.unknown_suspect"
+
+    # episodes
+    EPISODE_NOT_FOUND = "episode.not_found"
+    # Still being written, or already played.
+    EPISODE_NOT_READY = "episode.not_ready"
+    # One episode per evening: this one opens later.
+    EPISODE_NOT_AVAILABLE_YET = "episode.not_available_yet"
+    EPISODE_ALREADY_SWAPPED = "episode.already_swapped"
+    EPISODE_DEMO_MODE_OFF = "episode.demo_mode_off"
