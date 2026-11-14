@@ -28,6 +28,13 @@
         "daily_limit_reached": "That's enough mysteries for today. Come back tomorrow evening.",
         "bad_output": "Tonight's story got muddled. Try again in a moment.",
         "unavailable": "The storyteller is busy. Try again in a moment."
+      },
+      "billing": {
+        "payment_required": "This case needs a subscription. The first case stays free.",
+        "already_subscribed": "This family already has a subscription.",
+        "bad_signature": "The payment notice could not be checked.",
+        "not_configured": "Payments are not set up yet. The free case still works.",
+        "unavailable": "Payments are not answering right now. Try again in a moment."
       }
     },
     "fieldErrors": {

@@ -18,6 +18,11 @@ export const API_ERROR_CODES = [
   "ai.daily_limit_reached",
   "ai.bad_output",
   "ai.unavailable",
+  "billing.payment_required",
+  "billing.already_subscribed",
+  "billing.bad_signature",
+  "billing.not_configured",
+  "billing.unavailable",
   // Ours, not the API's: the request got no answer.
   "common.network_error",
 ] as const;
