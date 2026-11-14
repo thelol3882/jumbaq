@@ -7,15 +7,28 @@
     "note": "Nicknames are fine. You'll read them out loud, so make them easy to say.",
     "nickname": "Detective {number}",
     "age": "Age",
-    "add": "Add another detective",
-    "remove": "Remove detective {number}",
     "errors": {
       "nicknameMissing": "Give this detective a name.",
       "nicknameTooLong": "That name is too long to read out.",
       "ageInvalid": "Kids from {min} to {max}. Grown-ups don't need to be listed.",
       "repeated": "Two detectives have the same name. Give each one their own."
     },
-    "removeShort": "remove"
+    "count": "How many detectives?",
+    "name": "Detective name",
+    "own": "Write my own",
+    "ownLabel": "Type a name for detective {number}",
+    "ownPlaceholder": "type a name",
+    "taken": "already taken by another detective",
+    "presets": {
+      "fox": "Fox",
+      "owl": "Owl",
+      "eagleEye": "Eagle Eye",
+      "ace": "Ace",
+      "scout": "Scout",
+      "shadow": "Shadow",
+      "comet": "Comet",
+      "pepper": "Pepper"
+    }
   },
   "rooms": {
     "title": "the scene",
@@ -33,7 +46,8 @@
     "errors": {
       "missing": "Pick at least one room.",
       "tooMany": "That's a lot of rooms. Pick the ones for tonight."
-    }
+    },
+    "addLink": "add another room"
   },
   "objects": {
     "title": "the evidence",
@@ -50,7 +64,6 @@
       "plant": "plant",
       "lamp": "lamp",
       "tv": "TV",
-      "window": "window",
       "pillow": "pillow",
       "shoes": "shoes",
       "teddyBear": "teddy bear",
@@ -61,7 +74,8 @@
     "errors": {
       "tooFew": "Tick at least {min}. You have {count}.",
       "tooMany": "That's too many. Keep the ones that are easy to find."
-    }
+    },
+    "addLink": "add something else"
   },
   "summary": {
     "detectives": "the detectives",

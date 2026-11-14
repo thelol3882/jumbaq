@@ -1,13 +1,46 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ComponentProps, type ReactNode } from "react";
 import { useFormErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, StampButton } from "@/shared/components/notebook";
 import type { SetupFormState } from "../hooks/useSetupForm";
-import { hasErrors, MAX_AGE, MIN_AGE, MIN_OBJECTS } from "../services/setupForm";
-import { OBJECT_PRESETS, ROOM_PRESETS } from "../services/presets";
+import { KID_COUNTS, OBJECT_PRESETS, ROOM_PRESETS } from "../services/presets";
+import { hasErrors, isNicknameTaken, MAX_AGE, MAX_NICKNAME, MIN_AGE, MIN_OBJECTS } from "../services/setupForm";
 import { ChoiceChips } from "./ChoiceChips";
+
+const AGES = Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => MIN_AGE + i);
+
+/** A tap target of 44 px. A picked one has a tick and a red pencil border; a disabled one is faint. */
+function Chip({
+  picked,
+  square = false,
+  className = "",
+  children,
+  ...props
+}: Omit<ComponentProps<"button">, "type"> & { picked: boolean; square?: boolean }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={picked}
+      className={
+        "min-h-11 rounded-sm border bg-paper-card font-type text-case font-normal " +
+        "disabled:border-dashed disabled:text-ink-faint disabled:line-through " +
+        (square ? "min-w-11 px-2 " : "px-3 ") +
+        (picked ? "border-accent-red text-accent-red " : "border-rule-card text-ink ") +
+        className
+      }
+      {...props}
+    >
+      {picked ? (
+        <span aria-hidden="true" className="mr-1 inline-block">
+          {"✓"}
+        </span>
+      ) : null}
+      {children}
+    </button>
+  );
+}
 
 /** The `<form>` around the fields and the submit, wherever the layout puts them. */
 export function SetupFormShell({ form, children }: { form: SetupFormState; children: ReactNode }) {
@@ -38,57 +71,91 @@ export function SetupFormShell({ form, children }: { form: SetupFormState; child
 /** The three questions of the setup: detectives, scene, evidence. */
 export function SetupFields({ form, numbered = false }: { form: SetupFormState; numbered?: boolean }) {
   const t = useTranslations("families");
+  const countId = useId();
   const { errors } = form;
   const legend = (key: "kids" | "rooms" | "objects", number: number) =>
     numbered ? t("numberedTitle", { number, title: t(`${key}.title`) }) : t(`${key}.title`);
 
   return (
     <div className="flex flex-col gap-9">
-      <fieldset className="flex flex-col gap-3">
+      <fieldset className="flex flex-col gap-4">
         <legend className="font-type text-case text-accent-red">{legend("kids", 1)}</legend>
         <HandNote className="text-note-sm">{t("kids.note")}</HandNote>
+        <div role="group" aria-labelledby={countId} className="flex flex-col gap-2">
+          <p id={countId} className="font-type text-label-sm text-ink-muted">
+            {t("kids.count")}
+          </p>
+          <div className="flex gap-2">
+            {KID_COUNTS.map((count) => (
+              <Chip key={count} picked={form.draft.kids.length === count} onClick={() => form.setKidsCount(count)} square>
+                {count}
+              </Chip>
+            ))}
+          </div>
+        </div>
         {form.draft.kids.map((kid, index) => {
           const error = errors.kid?.[kid.key];
           const errorId = `${kid.key}-error`;
+          const nameId = `${kid.key}-name`;
+          const ageId = `${kid.key}-age`;
           return (
-            <div key={kid.key} className="flex flex-col gap-1">
-              <div className="flex items-end gap-2">
-                <label className="min-w-0 flex-1">
-                  <span className="font-type text-label-sm text-ink-muted">
-                    {t("kids.nickname", { number: index + 1 })}
-                  </span>
+            <div key={kid.key} className="flex flex-col gap-3 border-t border-dashed border-rule-card pt-4">
+              <p className="font-type text-case font-bold">{t("kids.nickname", { number: index + 1 })}</p>
+              <div role="group" aria-labelledby={nameId} className="flex flex-col gap-2">
+                <p id={nameId} className="font-type text-label-sm text-ink-muted">
+                  {t("kids.name")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {form.nicknames.map((nickname) => {
+                    const picked = !kid.custom && kid.nickname === nickname;
+                    const taken = !picked && isNicknameTaken(form.draft.kids, kid.key, nickname);
+                    return (
+                      <Chip
+                        key={nickname}
+                        picked={picked}
+                        disabled={taken}
+                        onClick={() => form.setKid(kid.key, { nickname, custom: false })}
+                      >
+                        {nickname}
+                        {taken ? <span className="sr-only"> ({t("kids.taken")})</span> : null}
+                      </Chip>
+                    );
+                  })}
+                  <Chip picked={kid.custom} onClick={() => form.setKid(kid.key, { nickname: "", custom: true })}>
+                    {t("kids.own")}
+                  </Chip>
+                </div>
+                {kid.custom ? (
                   <input
                     value={kid.nickname}
-                    maxLength={40}
+                    maxLength={MAX_NICKNAME}
                     autoComplete="off"
+                    aria-label={t("kids.ownLabel", { number: index + 1 })}
+                    placeholder={t("kids.ownPlaceholder")}
                     aria-invalid={error === "nicknameMissing" || error === "nicknameTooLong"}
                     aria-describedby={error ? errorId : undefined}
                     onChange={(e) => form.setKid(kid.key, { nickname: e.target.value })}
-                    className="mt-1 h-12 w-full rounded-sm border border-rule-card bg-paper-card px-3 font-story text-body"
+                    className="h-12 w-full rounded-sm border border-rule-card bg-paper-card px-3 font-story text-body placeholder:text-ink-faint"
                   />
-                </label>
-                <label className="w-20">
-                  <span className="font-type text-label-sm text-ink-muted">{t("kids.age")}</span>
-                  <input
-                    value={kid.age}
-                    inputMode="numeric"
-                    maxLength={2}
-                    aria-invalid={error === "ageInvalid"}
-                    aria-describedby={error ? errorId : undefined}
-                    onChange={(e) => form.setKid(kid.key, { age: e.target.value })}
-                    className="mt-1 h-12 w-full rounded-sm border border-rule-card bg-paper-card px-3 font-story text-body"
-                  />
-                </label>
-                {form.draft.kids.length > 1 ? (
-                  <button
-                    type="button"
-                    onClick={() => form.removeKid(kid.key)}
-                    aria-label={t("kids.remove", { number: index + 1 })}
-                    className="h-12 shrink-0 px-1 font-type text-label text-ink-muted underline decoration-dotted decoration-2 underline-offset-[5px]"
-                  >
-                    {t("kids.removeShort")}
-                  </button>
                 ) : null}
+              </div>
+              <div role="group" aria-labelledby={ageId} className="flex flex-col gap-2">
+                <p id={ageId} className="font-type text-label-sm text-ink-muted">
+                  {t("kids.age")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {AGES.map((age) => (
+                    <Chip
+                      key={age}
+                      picked={kid.age === String(age)}
+                      onClick={() => form.setKid(kid.key, { age: String(age) })}
+                      aria-describedby={error === "ageInvalid" ? errorId : undefined}
+                      square
+                    >
+                      {age}
+                    </Chip>
+                  ))}
+                </div>
               </div>
               {error ? (
                 <p id={errorId} data-setup-error className="font-type text-label text-gentle-error-fg">
@@ -101,15 +168,6 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
         {errors.kids ? (
           <p data-setup-error className="font-type text-label text-gentle-error-fg">{t("kids.errors.repeated")}</p>
         ) : null}
-        {form.canAddKid ? (
-          <button
-            type="button"
-            onClick={form.addKid}
-            className="self-start font-type text-case font-normal underline decoration-dotted decoration-2 underline-offset-[5px]"
-          >
-            {t("kids.add")}
-          </button>
-        ) : null}
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
@@ -119,6 +177,7 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
           options={ROOM_PRESETS.map((key) => ({ value: key, label: t(`rooms.presets.${key}`) }))}
           selected={form.draft.rooms}
           onToggle={form.toggleRoom}
+          addLink={t("rooms.addLink")}
           addLabel={t("rooms.addLabel")}
           addPlaceholder={t("rooms.addPlaceholder")}
           addButton={t("add")}
@@ -135,6 +194,7 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
           options={OBJECT_PRESETS.map((key) => ({ value: key, label: t(`objects.presets.${key}`) }))}
           selected={form.draft.objects}
           onToggle={form.toggleObject}
+          addLink={t("objects.addLink")}
           addLabel={t("objects.addLabel")}
           addPlaceholder={t("objects.addPlaceholder")}
           addButton={t("add")}
@@ -151,25 +211,45 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
   );
 }
 
-/** The error of the last try and the stamp that opens the case file. */
-export function SetupSubmit({ form }: { form: SetupFormState }) {
+/** The error of the last try and the stamp that opens the case file. With `sticky` the stamp stays
+ * at the bottom of the phone screen; the errors stay in the flow above it, never under it. */
+export function SetupSubmit({ form, sticky = false }: { form: SetupFormState; sticky?: boolean }) {
   const t = useTranslations("families");
   const formError = useFormErrorMessage();
+  const messages =
+    hasErrors(form.errors) || form.error ? (
+      <div className="flex flex-col gap-3">
+        {hasErrors(form.errors) ? (
+          <p role="alert" className="font-type text-label text-gentle-error-fg">
+            {t("checkAnswers")}
+          </p>
+        ) : null}
+        {form.error ? (
+          <p role="alert" className="border border-gentle-error-border bg-gentle-error-bg p-3 font-type text-label text-gentle-error-fg">
+            {formError(form.error)}
+          </p>
+        ) : null}
+      </div>
+    ) : null;
+  const stamp = (
+    <StampButton type="submit" disabled={form.saving}>
+      {form.saving ? t("submitting") : t("submit")}
+    </StampButton>
+  );
+
+  if (!sticky) {
+    return (
+      <div className="flex flex-col gap-3">
+        {messages}
+        {stamp}
+      </div>
+    );
+  }
+  // A fragment, so the sticky bar is a child of the long column and can stick along all of it.
   return (
-    <div className="flex flex-col gap-3">
-      {hasErrors(form.errors) ? (
-        <p role="alert" className="font-type text-label text-gentle-error-fg">
-          {t("checkAnswers")}
-        </p>
-      ) : null}
-      {form.error ? (
-        <p role="alert" className="border border-gentle-error-border bg-gentle-error-bg p-3 font-type text-label text-gentle-error-fg">
-          {formError(form.error)}
-        </p>
-      ) : null}
-      <StampButton type="submit" disabled={form.saving}>
-        {form.saving ? t("submitting") : t("submit")}
-      </StampButton>
-    </div>
+    <>
+      {messages}
+      <div className="sticky bottom-0 z-10 bg-paper pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">{stamp}</div>
+    </>
   );
 }

@@ -11,7 +11,15 @@ export const MAX_OBJECTS = 100;
 export const MAX_NICKNAME = 40;
 export const MAX_LABEL = 60;
 
-export type KidDraft = { key: string; nickname: string; age: string };
+// `custom`: the parent chose "Write my own", so the nickname is typed, not tapped.
+export type KidDraft = { key: string; nickname: string; age: string; custom: boolean };
+
+/** The localized texts a new draft starts with. Services cannot translate, so the hook passes them. */
+export type DraftDefaults = {
+  nicknames: readonly string[];
+  rooms: readonly string[];
+  objects: readonly string[];
+};
 
 export type SetupDraft = {
   kids: KidDraft[];
@@ -27,8 +35,39 @@ export type SetupErrors = {
   objects?: "tooFew" | "tooMany";
 };
 
-export function emptyDraft(): SetupDraft {
-  return { kids: [{ key: "kid-0", nickname: "", age: "" }], rooms: [], objects: [] };
+export function emptyDraft(defaults: DraftDefaults): SetupDraft {
+  return {
+    kids: [newKid("kid-0", defaults.nicknames[0] ?? "")],
+    rooms: [...defaults.rooms],
+    objects: [...defaults.objects],
+  };
+}
+
+// The age stays empty on purpose: a parent must pick it, and validateSetup asks for it.
+function newKid(key: string, nickname: string): KidDraft {
+  return { key, nickname, age: "", custom: false };
+}
+
+function sameText(a: string, b: string): boolean {
+  return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
+}
+
+/** Another kid already has this nickname, so it is not free to pick. */
+export function isNicknameTaken(kids: KidDraft[], key: string, nickname: string): boolean {
+  return kids.some((k) => k.key !== key && sameText(k.nickname, nickname));
+}
+
+/** Changes the number of kids: drops the last ones, or adds kids with the first preset nobody uses. */
+export function setKidCount(draft: SetupDraft, count: number, nicknames: readonly string[]): SetupDraft {
+  const target = Math.min(Math.max(count, 1), MAX_KIDS);
+  if (target <= draft.kids.length) return { ...draft, kids: draft.kids.slice(0, target) };
+  const kids = [...draft.kids];
+  while (kids.length < target) {
+    const free = nicknames.find((n) => !kids.some((k) => sameText(k.nickname, n)));
+    const kid = newKid(nextKidKey(kids), free ?? "");
+    kids.push(free === undefined ? { ...kid, custom: true } : kid);
+  }
+  return { ...draft, kids };
 }
 
 /** A key no kid of the draft has. Counted, not random, so the server and the browser agree. */

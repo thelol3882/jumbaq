@@ -1,11 +1,12 @@
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { setFamilyHint } from "@/shared/session/familyHint";
 import { useCreateFamilyMutation } from "../api/familiesApi";
+import { DEFAULT_OBJECTS, DEFAULT_ROOMS, NICKNAME_PRESETS } from "../services/presets";
 import {
   emptyDraft,
   hasErrors,
-  MAX_KIDS,
-  nextKidKey,
+  setKidCount,
   toFamilyCreate,
   toggleLabel,
   validateSetup,
@@ -14,7 +15,15 @@ import {
 
 /** The one-minute setup: the draft, its checks and the submit. */
 export function useSetupForm(onCreated: () => void) {
-  const [draft, setDraft] = useState(emptyDraft);
+  const t = useTranslations("families");
+  const nicknames = NICKNAME_PRESETS.map((key) => t(`kids.presets.${key}`));
+  const [draft, setDraft] = useState(() =>
+    emptyDraft({
+      nicknames,
+      rooms: DEFAULT_ROOMS.map((key) => t(`rooms.presets.${key}`)),
+      objects: DEFAULT_OBJECTS.map((key) => t(`objects.presets.${key}`)),
+    }),
+  );
   const [tried, setTried] = useState(false);
   // Counts the tries that the checks stopped, so the form can show the first problem.
   const [blocked, setBlocked] = useState(0);
@@ -25,15 +34,7 @@ export function useSetupForm(onCreated: () => void) {
   const setKid = (key: string, changes: Partial<Omit<KidDraft, "key">>) =>
     setDraft((d) => ({ ...d, kids: d.kids.map((k) => (k.key === key ? { ...k, ...changes } : k)) }));
 
-  const addKid = () =>
-    setDraft((d) =>
-      d.kids.length >= MAX_KIDS
-        ? d
-        : { ...d, kids: [...d.kids, { key: nextKidKey(d.kids), nickname: "", age: "" }] },
-    );
-
-  const removeKid = (key: string) =>
-    setDraft((d) => (d.kids.length <= 1 ? d : { ...d, kids: d.kids.filter((k) => k.key !== key) }));
+  const setKidsCount = (count: number) => setDraft((d) => setKidCount(d, count, nicknames));
 
   const toggleRoom = (label: string) => setDraft((d) => ({ ...d, rooms: toggleLabel(d.rooms, label) }));
   const toggleObject = (label: string) =>
@@ -59,10 +60,9 @@ export function useSetupForm(onCreated: () => void) {
     // Shown only after the first try, so an empty form does not start in red.
     errors: tried ? errors : {},
     blocked,
-    canAddKid: draft.kids.length < MAX_KIDS,
+    nicknames,
     setKid,
-    addKid,
-    removeKid,
+    setKidsCount,
     toggleRoom,
     toggleObject,
     submit,
