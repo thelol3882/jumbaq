@@ -23,7 +23,12 @@
   },
   "doneTonight": "done for tonight",
   "opens": "Evening {number} unlocks {when}.",
-  "openNow": "Demo: open the next evening now",
+  "demo": {
+    "title": "Demo controls",
+    "note": "For reviewers. Families wait until the next evening.",
+    "openNow": "Demo: open the next evening now",
+    "skip": "Demo: skip this evening"
+  },
   "allPlayed": "all five evenings played",
   "accuseTitle": "Time to name the culprit",
   "accuse": "Make the accusation",

@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, SuspectTable, type Case } from "@/features/cases";
-import { ClueTag, DecodeStep, StrikeStep, type Episode } from "@/features/episodes";
-import { HandNote, PlansLink, StampLink, Wordmark } from "@/shared/components/notebook";
+import { ClueTag, DecodeStep, StrikeStep, useSkipEvening, type Episode } from "@/features/episodes";
+import { useFamily } from "@/features/families";
+import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
+import { DemoControls, HandNote, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { withTonightsClue } from "./services/tonightsClues";
 
 export type ShownEpisode = Episode & { content: NonNullable<Episode["content"]> };
@@ -91,4 +93,25 @@ export function StepMain({
     );
   }
   return null;
+}
+
+/** For reviewers: plays the evening out from the answer, decode or strike step. */
+export function EveningDemo({ episode }: { episode: ShownEpisode }) {
+  const t = useTranslations("widget.evening");
+  const errorMessage = useApiErrorMessage();
+  const { family } = useFamily();
+  const skipper = useSkipEvening();
+  if (!family?.demo_mode || skipper.refused || episode.content.step === "done") return null;
+  return (
+    <DemoControls title={t("demo.title")} note={t("demo.note")}>
+      <TypedButton disabled={skipper.skipping} onClick={() => void skipper.skip(episode.id)}>
+        {t("demo.skip")}
+      </TypedButton>
+      {skipper.error ? (
+        <p role="alert" className="font-type text-label text-gentle-error-fg">
+          {errorMessage(skipper.error)}
+        </p>
+      ) : null}
+    </DemoControls>
+  );
 }

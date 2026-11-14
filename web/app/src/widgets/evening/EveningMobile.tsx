@@ -1,7 +1,7 @@
 import type { Case } from "@/features/cases";
 import { AnswerForm, DecodeParentNote, EpisodeResultView, ParentNote, StoryText } from "@/features/episodes";
 import { NotebookPage } from "@/shared/components/notebook";
-import { AfterTheAnswer, EveningHeader, StepMain, type ShownEpisode } from "./parts";
+import { AfterTheAnswer, EveningDemo, EveningHeader, StepMain, type ShownEpisode } from "./parts";
 import { useStepScroll } from "./useStepScroll";
 
 /** Designs D2 and D3: one page, read top to bottom. */
@@ -37,6 +37,7 @@ export function EveningMobile({
             <AnswerForm episodeId={episode.id} content={episode.content} />
           </>
         )}
+        <EveningDemo episode={episode} />
       </div>
     </NotebookPage>
   );

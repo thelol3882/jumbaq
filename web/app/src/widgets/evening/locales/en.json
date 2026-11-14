@@ -31,5 +31,10 @@
     "note": "This browser hasn't opened a case. It takes a minute.",
     "start": "Open a case file"
   },
+  "demo": {
+    "title": "Demo controls",
+    "note": "For reviewers. Families wait until the next evening.",
+    "skip": "Demo: skip this evening"
+  },
   "revealedSuspect": "The clue was about {name}."
 }

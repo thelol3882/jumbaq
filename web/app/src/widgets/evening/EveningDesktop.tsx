@@ -9,7 +9,7 @@ import {
   StoryText,
 } from "@/features/episodes";
 import { NotebookPage, NotebookSpread } from "@/shared/components/notebook";
-import { AfterTheAnswer, EveningHeader, StepMain, type ShownEpisode } from "./parts";
+import { AfterTheAnswer, EveningDemo, EveningHeader, StepMain, type ShownEpisode } from "./parts";
 import { useStepScroll } from "./useStepScroll";
 
 /** Designs F4 and F5: the story and the steps on the left, the parent's page on the right. */
@@ -67,6 +67,9 @@ export function EveningDesktop({
             )
           }
         />
+      </div>
+      <div className="mt-10 pl-14">
+        <EveningDemo episode={episode} />
       </div>
     </NotebookPage>
   );

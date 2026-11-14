@@ -5,5 +5,6 @@ export { ParentNote } from "./components/ParentNote";
 export { StrikeStep } from "./components/StrikeStep";
 export { StoryText } from "./components/StoryText";
 export { useOpenNowMutation } from "./api/episodesApi";
+export { useSkipEvening } from "./hooks/useSkipEvening";
 export { useEpisode } from "./hooks/useEpisode";
 export type * from "./types";
