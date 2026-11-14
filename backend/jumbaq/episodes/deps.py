@@ -19,7 +19,7 @@ EpisodesUoWFactoryDep = Annotated[EpisodesUoWFactory, Depends(get_uow_factory)]
 def get_episode_service(
     uow: EpisodesUoWFactoryDep, clock: ClockDep, settings: SettingsDep
 ) -> EpisodeService:
-    return EpisodeService(uow, clock, settings.demo_mode)
+    return EpisodeService(uow, clock, settings.demo_mode, settings.episode_gap_hours)
 
 
 EpisodeServiceDep = Annotated[EpisodeService, Depends(get_episode_service)]

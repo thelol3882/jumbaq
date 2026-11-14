@@ -27,6 +27,11 @@ export const API_ERROR_CODES = [
   "case.not_accusing",
   "case.not_solved",
   "case.unknown_suspect",
+  "episode.not_found",
+  "episode.not_ready",
+  "episode.not_available_yet",
+  "episode.already_swapped",
+  "episode.demo_mode_off",
   // Ours, not the API's: the request got no answer.
   "common.network_error",
 ] as const;

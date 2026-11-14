@@ -41,6 +41,13 @@
         "not_accusing": "The detectives can name the culprit after the last evening.",
         "not_solved": "Solve this case first to open the next one.",
         "unknown_suspect": "This is not one of the suspects."
+      },
+      "episode": {
+        "not_found": "This evening's story is not ready yet. Try again in a moment.",
+        "not_ready": "This story is still being written, or it was already played.",
+        "not_available_yet": "The next evening opens later. Come back tomorrow, detectives.",
+        "already_swapped": "The other riddle is already in use.",
+        "demo_mode_off": "Opening an evening early works only in the demo."
       }
     },
     "fieldErrors": {
