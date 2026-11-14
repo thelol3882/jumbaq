@@ -532,3 +532,12 @@ async def test_an_episode_still_being_written_gives_409_not_ready(
     ):
         assert error_code(response) == "episode.not_ready"
     assert (await stored(sessionmaker, episode_id)).answered_at is None
+
+
+async def test_open_now_of_a_played_episode_gives_409_wrong_step(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    _, path = await ready_episode(live_client, sessionmaker)
+    assert content(live_client.post(f"{path}/skip"))["step"] == "done"
+
+    assert error_code(live_client.post(f"{path}/open-now")) == "episode.wrong_step"

@@ -72,7 +72,7 @@ async def open_episode_now(
     episode_id: uuid.UUID, family: FamilyDep, episodes: EpisodeServiceDep
 ) -> EpisodeOut:
     """Opens a waiting episode at once, so the jury can play a case in minutes. Only in demo
-    mode (403 `episode.demo_mode_off`)."""
+    mode (403 `episode.demo_mode_off`). A played episode gives 409 `episode.wrong_step`."""
     return EpisodeOut.model_validate(await episodes.open_now(family, episode_id))
 
 
