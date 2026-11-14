@@ -15,6 +15,7 @@ from jumbaq.core.db import create_engine, create_sessionmaker
 from jumbaq.core.exception_handlers import register_exception_handlers
 from jumbaq.core.logging import setup_logging
 from jumbaq.core.middleware import RequestContextMiddleware
+from jumbaq.families.routers import family as family_routers
 
 API_PREFIX = "/api/v1"
 
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
 
     api = APIRouter(prefix=API_PREFIX, dependencies=[Depends(require_csrf_header_on_change)])
     api.include_router(health.router)
+    api.include_router(family_routers.router)
     app.include_router(api)
 
     app.add_middleware(RequestContextMiddleware)

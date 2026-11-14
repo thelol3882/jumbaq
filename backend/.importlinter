@@ -44,3 +44,95 @@ forbidden_modules =
     jumbaq.health
     jumbaq.worker
     jumbaq.models
+    jumbaq.families
+
+[importlinter:contract:models-without-web-framework]
+name = Models know nothing about FastAPI or Starlette
+type = forbidden
+source_modules =
+    jumbaq.*.models
+forbidden_modules =
+    fastapi
+    starlette
+
+# Layers of a domain module: routers -> services -> repositories.
+
+[importlinter:contract:routers-without-sql]
+name = Routers do not use repositories or SQLAlchemy directly
+type = forbidden
+source_modules =
+    jumbaq.*.routers
+forbidden_modules =
+    jumbaq.*.repositories
+    sqlalchemy
+# Routers get repositories and units of work through dependencies (deps.py).
+allow_indirect_imports = True
+
+[importlinter:contract:services-without-web-framework]
+name = Services and handlers know nothing about FastAPI or Starlette
+type = forbidden
+source_modules =
+    jumbaq.*.services
+    jumbaq.*.handlers
+forbidden_modules =
+    fastapi
+    starlette
+
+[importlinter:contract:services-without-sql]
+name = Services and handlers do not write SQL, repositories do
+type = forbidden
+source_modules =
+    jumbaq.*.services
+    jumbaq.*.handlers
+forbidden_modules =
+    sqlalchemy
+# Services use UnitOfWork from core.db, which imports SQLAlchemy itself.
+allow_indirect_imports = True
+
+[importlinter:contract:domain-is-plain-python]
+name = Domain objects and module errors know nothing about the web framework or the database
+type = forbidden
+source_modules =
+    jumbaq.*.domain
+    jumbaq.*.errors
+forbidden_modules =
+    fastapi
+    starlette
+    sqlalchemy
+
+[importlinter:contract:handlers-only-in-the-worker]
+name = Only the worker imports handlers
+type = forbidden
+source_modules =
+    jumbaq.main
+    jumbaq.health
+    jumbaq.models
+    jumbaq.core
+    jumbaq.families
+forbidden_modules =
+    jumbaq.*.handlers
+allow_indirect_imports = True
+
+[importlinter:contract:queries-only-read]
+name = Queries do not import services or repositories
+type = forbidden
+source_modules =
+    jumbaq.*.queries
+forbidden_modules =
+    jumbaq.*.services
+    jumbaq.*.repositories
+allow_indirect_imports = True
+
+[importlinter:contract:family-deps-only-in-routers-and-deps]
+name = Only routers and deps.py read the session cookie; other code gets a FamilyRef
+type = forbidden
+source_modules =
+    jumbaq.core
+    jumbaq.worker
+forbidden_modules =
+    jumbaq.families.deps
+allow_indirect_imports = True
+# When a module's routers or deps.py start to use FamilyDep, they are added here by name:
+# ignore_imports =
+#     jumbaq.cases.routers.* -> jumbaq.families.deps
+#     jumbaq.cases.deps -> jumbaq.families.deps
