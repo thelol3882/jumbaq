@@ -16,7 +16,7 @@ export function SetupMobile({ form }: { form: SetupFormState }) {
         <SetupFormShell form={form}>
           <div className="flex flex-col gap-9">
             <SetupFields form={form} />
-            <SetupSubmit form={form} />
+            <SetupSubmit form={form} sticky />
           </div>
         </SetupFormShell>
       </div>

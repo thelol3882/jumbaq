@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { TypedButton } from "@/shared/components/notebook";
 
 type Option = { value: string; label: string };
 
@@ -9,6 +10,7 @@ export function ChoiceChips({
   options,
   selected,
   onToggle,
+  addLink,
   addLabel,
   addPlaceholder,
   addButton,
@@ -18,6 +20,8 @@ export function ChoiceChips({
   options: Option[];
   selected: string[];
   onToggle: (label: string) => void;
+  /** The quiet link that reveals the input. */
+  addLink: string;
   addLabel: string;
   addPlaceholder: string;
   addButton: string;
@@ -28,6 +32,7 @@ export function ChoiceChips({
   const inputId = useId();
   const [own, setOwn] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [adding, setAdding] = useState(false);
   const isPicked = (label: string) => selected.some((s) => s.toLocaleLowerCase() === label.toLocaleLowerCase());
   const offered = new Set(options.map((o) => o.label.toLocaleLowerCase()));
   const extra = selected.filter((s) => !offered.has(s.toLocaleLowerCase()));
@@ -78,34 +83,41 @@ export function ChoiceChips({
           </li>
         ) : null}
       </ul>
-      <div className="mt-3 flex items-end gap-2">
-        <div className="min-w-0 flex-1">
-          <label htmlFor={inputId} className="font-type text-label-sm text-ink-muted">
-            {addLabel}
-          </label>
-          <input
-            id={inputId}
-            value={own}
-            maxLength={60}
-            placeholder={addPlaceholder}
-            onChange={(e) => setOwn(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addOwn();
-              }
-            }}
-            className="mt-1 h-11 w-full rounded-sm border border-rule-card bg-paper-card px-3 font-story text-body-sm placeholder:text-ink-faint"
-          />
+      {adding ? (
+        <div className="mt-3 flex items-end gap-2">
+          <div className="min-w-0 flex-1">
+            <label htmlFor={inputId} className="font-type text-label-sm text-ink-muted">
+              {addLabel}
+            </label>
+            <input
+              id={inputId}
+              autoFocus
+              value={own}
+              maxLength={60}
+              placeholder={addPlaceholder}
+              onChange={(e) => setOwn(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addOwn();
+                }
+              }}
+              className="mt-1 h-11 w-full rounded-sm border border-rule-card bg-paper-card px-3 font-story text-body-sm placeholder:text-ink-faint"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={addOwn}
+            className="h-11 shrink-0 rounded-sm border border-ink px-3 font-type text-case"
+          >
+            {addButton}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={addOwn}
-          className="h-11 shrink-0 rounded-sm border border-ink px-3 font-type text-case"
-        >
-          {addButton}
-        </button>
-      </div>
+      ) : (
+        <TypedButton onClick={() => setAdding(true)} className="mt-1 text-left">
+          {addLink}
+        </TypedButton>
+      )}
     </div>
   );
 }

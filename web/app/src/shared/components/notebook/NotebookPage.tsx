@@ -15,7 +15,8 @@ export function NotebookPage({
 }) {
   const column = width === "narrow" ? "max-w-[26rem]" : "max-w-5xl";
   return (
-    <div className="relative min-h-dvh overflow-x-hidden bg-dot-grid font-story text-ink">
+    // clip, not hidden: hidden makes this a scroll box, and a sticky action would stick to it.
+    <div className="relative min-h-dvh overflow-x-clip bg-dot-grid font-story text-ink">
       <main
         className={`relative mx-auto flex min-h-dvh w-full ${column} flex-col px-5.5 pt-5 pb-7 ${margin ? "pl-14" : ""}`}
       >
