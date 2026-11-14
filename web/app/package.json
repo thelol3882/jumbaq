@@ -1,0 +1,49 @@
+{
+  "name": "jumbaq-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "node .next/standalone/server.js",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "i18n": "lexen",
+    "i18n:check": "lexen check",
+    "api:types": "node scripts/api-types.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.13.0",
+    "next": "16.4.3",
+    "next-intl": "^4.14.9",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-redux": "^9.3.1"
+  },
+  "devDependencies": {
+    "@fontsource-variable/literata": "^5.2.8",
+    "@fontsource/courier-prime": "^5.2.8",
+    "@fontsource/kalam": "^5.2.8",
+    "@tailwindcss/postcss": "^4",
+    "@thelol3882/lexen": "^0.3.2",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "eslint-plugin-i18next": "^6.1.5",
+    "openapi-typescript": "^7.13.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^5.0.5"
+  },
+  "packageManager": "pnpm@10.15.1",
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@parcel/watcher",
+      "@swc/core",
+      "unrs-resolver"
+    ]
+  }
+}
