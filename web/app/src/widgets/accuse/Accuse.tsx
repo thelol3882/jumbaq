@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { playedCount, useCurrentCase, type Accusation } from "@/features/cases";
+import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
@@ -20,6 +21,7 @@ export function Accuse({ caseNumber }: { caseNumber: number }) {
     current?.status === "active" && current.episodes.length > 0 && playedCount(current.episodes) === current.episodes.length;
   // The reveal comes only with the right accusation, so it lives here until the page closes.
   const [solved, setSolved] = useState<Accusation | null>(null);
+  const noFamily = error !== undefined && toApiError(error).code === "family.no_session";
 
   if (current && current.number === caseNumber && (current.status === "accusing" || current.status === "solved")) {
     const View = isMobile ? AccuseMobile : AccuseDesktop;
@@ -34,6 +36,12 @@ export function Accuse({ caseNumber }: { caseNumber: number }) {
           <p role="status" className="font-type text-case font-normal text-ink-muted">
             {t("loading")}
           </p>
+        ) : noFamily ? (
+          <>
+            <h1 className="text-title">{t("noFamily.title")}</h1>
+            <HandNote>{t("noFamily.note")}</HandNote>
+            <StampLink href="/setup">{t("noFamily.start")}</StampLink>
+          </>
         ) : error ? (
           <div role="alert" className="flex flex-col items-start gap-3">
             <p className="text-body">{errorMessage(error)}</p>

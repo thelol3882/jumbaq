@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useCurrentCase, type Case } from "@/features/cases";
+import { useCurrentCase, WritingProgress, type Case } from "@/features/cases";
 import { useEpisode, type Episode } from "@/features/episodes";
+import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
@@ -15,9 +17,9 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
   const t = useTranslations("widget.evening");
   const errorMessage = useApiErrorMessage();
   const isMobile = useIsMobile();
-  const { current, loading: caseLoading, error: caseError, retry } = useCurrentCase();
+  const { current, loading: caseLoading, error: caseError, slow: caseSlow, retry } = useCurrentCase();
   const slot = current?.number === caseNumber ? current.episodes.find((e) => e.number === evening) : undefined;
-  const { episode, loading, writing, error } = useEpisode(slot?.id ?? null);
+  const { episode, loading, writing, slow, error, retry: retryEpisode } = useEpisode(slot?.id ?? null);
 
   const ready = current && episode?.content ? { current, episode } : null;
   if (ready) {
@@ -27,24 +29,38 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
 
   return (
     <NotebookPage margin>
-      <Wordmark text={t("wordmark")} size="sm" />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <Link href="/family" aria-label={t("toCaseFile")}>
+          <Wordmark text={t("wordmark")} size="sm" />
+        </Link>
+        {current && slot ? (
+          <span className="font-type text-case">{t("eveningOf", { number: evening, total: current.episodes.length })}</span>
+        ) : null}
+      </div>
       <div className="mt-10 flex flex-col gap-6">
         <Notice
           t={t}
           state={
             caseLoading || loading
               ? { kind: "loading" }
-              : caseError || error
-                ? { kind: "error", message: errorMessage(caseError ?? error) }
-                : !current || !slot
-                  ? { kind: "missing" }
-                  : writing || slot.status === "requested" || slot.status === "generating"
-                    ? { kind: "writing" }
-                    : slot.available_at
-                      ? { kind: "later", when: formatOpening(slot.available_at) }
-                      : { kind: "missing" }
+              : caseError && toApiError(caseError).code === "family.no_session"
+                ? { kind: "noFamily" }
+                : caseError || error
+                  ? { kind: "error", message: errorMessage(caseError ?? error) }
+                  : !current || !slot
+                    ? { kind: "missing" }
+                    : slot.status === "failed" || episode?.status === "failed"
+                      ? { kind: "failed" }
+                      : writing || slot.status === "requested" || slot.status === "generating"
+                        ? { kind: "writing", slow: slow || caseSlow }
+                        : slot.available_at
+                          ? { kind: "later", when: formatOpening(slot.available_at) }
+                          : { kind: "missing" }
           }
-          retry={() => void retry()}
+          retry={() => {
+            void retry();
+            if (slot?.id) void retryEpisode();
+          }}
           current={current}
         />
       </div>
@@ -56,7 +72,9 @@ type NoticeState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "missing" }
-  | { kind: "writing" }
+  | { kind: "noFamily" }
+  | { kind: "failed" }
+  | { kind: "writing"; slow: boolean }
   | { kind: "later"; when: string };
 
 function Notice({
@@ -84,11 +102,30 @@ function Notice({
           <TypedButton onClick={retry}>{t("retry")}</TypedButton>
         </div>
       );
+    case "noFamily":
+      return (
+        <div className="flex flex-col gap-6">
+          <h1 className="text-title">{t("noFamily.title")}</h1>
+          <HandNote>{t("noFamily.note")}</HandNote>
+          <StampLink href="/setup">{t("noFamily.start")}</StampLink>
+        </div>
+      );
+    case "failed":
+      return (
+        <div className="flex flex-col gap-6">
+          <h1 className="text-title">{t("failed.title")}</h1>
+          <HandNote>{t("failed.text")}</HandNote>
+          <StampLink href="/family">{t("back")}</StampLink>
+        </div>
+      );
     case "writing":
       return (
-        <div role="status" className="flex flex-col gap-4">
-          <h1 className="text-title">{t("writing.title")}</h1>
-          <HandNote>{t("writing.text")}</HandNote>
+        <div role="status" className="flex flex-col gap-7">
+          <div>
+            {current?.title ? <p className="font-type text-case text-accent-red">{current.title}</p> : null}
+            <h1 className="mt-2.5 text-title">{t("writing.title")}</h1>
+          </div>
+          <WritingProgress current={current} slow={state.slow} onCheck={retry} />
         </div>
       );
     case "later":

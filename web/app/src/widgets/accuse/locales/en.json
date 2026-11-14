@@ -16,6 +16,11 @@
     "start": "Start Case {number} · $7.99 a month",
     "terms": "Cancel anytime. The cases you played stay yours."
   },
+  "noFamily": {
+    "title": "No case file yet",
+    "note": "This browser hasn't opened a case. It takes a minute.",
+    "start": "Open a case file"
+  },
   "notYet": {
     "title": "Not time to accuse yet",
     "text": "The accusation comes after the fifth evening. Keep collecting clues."
