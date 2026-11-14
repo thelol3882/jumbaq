@@ -14,10 +14,13 @@ from arq import cron, func
 from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from jumbaq.ai.public import StoryWriter, build_story_writer
 from jumbaq.billing.public import SubscriptionActivated
 from jumbaq.cases.handlers import CasesHandlers
+from jumbaq.cases.public import CaseOpened, CasePlanned, CaseSolved
 from jumbaq.cases.services.planning import CasePlanning
 from jumbaq.cases.uow import CasesUoW
+from jumbaq.core.clock import SystemClock
 from jumbaq.core.config import Settings
 from jumbaq.core.db import create_engine, create_sessionmaker
 from jumbaq.core.events import Event
@@ -31,12 +34,19 @@ logger = logging.getLogger(__name__)
 
 
 def build_handlers(
-    sessionmaker: async_sessionmaker[AsyncSession],
+    sessionmaker: async_sessionmaker[AsyncSession], writer: StoryWriter
 ) -> dict[type[Event], list[Handler]]:
-    """Which handlers run for which event. Handlers come from the `handlers.py` of each module."""
-    cases = CasesHandlers(CasePlanning(partial(CasesUoW, sessionmaker)))
+    """Which handlers run for which event. Handlers come from the `handlers.py` of each module.
+
+    The writer is built once in `startup` and shared, like the engine.
+    """
+    cases = CasesHandlers(CasePlanning(partial(CasesUoW, sessionmaker), writer))
     return {
         FamilyCreated: [cases.family_created],
+        CaseOpened: [cases.case_opened],
+        # Registered without handlers until episodes reacts to them.
+        CasePlanned: [],
+        CaseSolved: [],
         # Registered without handlers, so its rows are marked processed and do not fail.
         # cases will react to it.
         SubscriptionActivated: [],
@@ -49,7 +59,8 @@ async def startup(ctx: dict[str, Any]) -> None:
     ctx["settings"] = settings
     ctx["engine"] = create_engine(settings.database_url)
     ctx["sessionmaker"] = create_sessionmaker(ctx["engine"])
-    ctx["outbox"] = OutboxDelivery(ctx["sessionmaker"], build_handlers(ctx["sessionmaker"]))
+    writer = build_story_writer(ctx["sessionmaker"], settings, SystemClock())
+    ctx["outbox"] = OutboxDelivery(ctx["sessionmaker"], build_handlers(ctx["sessionmaker"], writer))
     logger.info("worker started")
 
 
