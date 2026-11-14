@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useConfirmedSubscription } from "@/features/billing";
 import { useDetectivesLabel } from "@/features/families";
-import { useCurrentCase, useStartNextCaseMutation } from "@/features/cases";
-import { toApiError } from "@/shared/api/errors";
+import { useCurrentCase, useStartNextCase } from "@/features/cases";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import {
   DetectivesTag,
@@ -52,9 +51,8 @@ function Paid() {
   const errorMessage = useApiErrorMessage();
   const { current } = useCurrentCase();
   const subscription = useConfirmedSubscription();
-  const [startNext, starting] = useStartNextCaseMutation();
+  const { start, starting, notYet, error } = useStartNextCase({ onStarted: () => router.push("/family") });
   const next = current?.status === "solved" ? current.number + 1 : null;
-  const notYet = starting.error && toApiError(starting.error).code === "billing.payment_required";
 
   if (!subscription.active) {
     return (
@@ -81,25 +79,15 @@ function Paid() {
       <h1 className="text-title">{t("success.title")}</h1>
       <HandNote>{t("success.text")}</HandNote>
       {next ? (
-        <StampButton
-          disabled={starting.isLoading}
-          onClick={async () => {
-            try {
-              await startNext().unwrap();
-              router.push("/family");
-            } catch {
-              // shown below
-            }
-          }}
-        >
+        <StampButton disabled={starting} onClick={() => void start()}>
           {t("success.start", { number: next })}
         </StampButton>
       ) : (
         <StampLink href="/family">{t("back")}</StampLink>
       )}
-      {starting.error ? (
+      {notYet || error ? (
         <p role="alert" className="font-type text-label text-gentle-error-fg">
-          {notYet ? t("success.notYet") : errorMessage(starting.error)}
+          {notYet ? t("success.notYet") : errorMessage(error)}
         </p>
       ) : null}
     </>
