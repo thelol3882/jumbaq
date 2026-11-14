@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from jumbaq.core.family import FamilyRef
 from jumbaq.families.domain import Family, Kid, NewFamily
 from jumbaq.families.models import FamilyRow, KidRow
 
@@ -43,4 +44,28 @@ class SqlFamilyRepository:
     async def id_by_session(self, session_token_hash: str) -> uuid.UUID | None:
         return await self._session.scalar(
             select(FamilyRow.id).where(FamilyRow.session_token_hash == session_token_hash)
+        )
+
+
+class SqlFamilyLookup:
+    """For other modules, on their session: the family as the setup saved it."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get(self, family: FamilyRef) -> Family | None:
+        row = await self._session.get(FamilyRow, family.family_id)
+        if row is None:
+            return None
+        kids = await self._session.execute(
+            select(KidRow.id, KidRow.nickname, KidRow.age)
+            .where(KidRow.family_id == family.family_id)
+            .order_by(KidRow.age, KidRow.nickname, KidRow.id)
+        )
+        return Family(
+            id=row.id,
+            rooms=tuple(row.rooms),
+            objects=tuple(row.objects),
+            kids=tuple(Kid(*kid) for kid in kids),
+            created_at=row.created_at,
         )
