@@ -85,8 +85,8 @@ def _plan(case_number: int) -> dict[str, Any]:
     return json.loads(text)
 
 
-def _riddle(objects: list[str], index: int) -> dict[str, Any]:
-    target = objects[index % len(objects)]
+def _riddle(objects: list[str], index: int, target: str | None = None) -> dict[str, Any]:
+    target = target or objects[index % len(objects)]
     answer_type = _ANSWER_TYPES[index % len(_ANSWER_TYPES)]
     return {
         "text": f"I am somewhere in your home and my name is {target}. Find me!",
@@ -144,10 +144,10 @@ def _episode(data: dict[str, Any]) -> dict[str, Any]:
     return {
         "recap": recap,
         "read_aloud": _read_aloud(names, number, data),
-        "riddle": _riddle(objects, number - 1),
+        "riddle": _riddle(objects, number - 1, data.get("required_target_object")),
         "hint": "Look in the room where you spend the most time.",
         "fallback_riddle": {
-            **_riddle(objects, number),
+            **_riddle(objects, number, data.get("required_fallback_target_object")),
             "hint": "Look in the room where you eat your snacks.",
             "resolution_template": f"Second riddle solved: {ANSWER_SLOT}. The door opened!",
         },

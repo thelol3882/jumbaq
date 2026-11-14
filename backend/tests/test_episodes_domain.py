@@ -776,3 +776,79 @@ def test_the_check_is_skipped_without_the_brief() -> None:
     payload = with_story("Daisy Duck was not in the bakery that evening.")
 
     assert clue_problems(payload, domain.DraftContext()) == []
+
+
+HOME_OBJECTS = ("fridge", "sofa", "bookshelf", "kettle")
+
+
+def written(target: str, swapped: bool = False) -> Episode:
+    riddle = Riddle("Find me. What color am I?", target, "colour", "Look.")
+    other = Riddle("Find me. What color am I?", "elsewhere", "colour", "Look.")
+    return episode(
+        payload=replace(GOOD, riddle=other if swapped else riddle,
+                        fallback_riddle=riddle if swapped else other),
+        used_fallback_riddle=swapped,
+    )  # fmt: skip
+
+
+def test_the_first_evening_starts_with_the_first_object() -> None:
+    assert domain.pick_targets(HOME_OBJECTS, []) == ("fridge", "sofa")
+
+
+def test_the_targets_go_through_the_home_before_one_comes_again() -> None:
+    earlier: list[Episode] = []
+    seen = []
+    for _ in range(4):
+        target, fallback = domain.pick_targets(HOME_OBJECTS, earlier)
+        assert target is not None and fallback is not None and target != fallback
+        seen.append(target)
+        earlier.append(written(target))
+
+    assert sorted(seen) == sorted(HOME_OBJECTS)
+
+
+def test_an_object_used_before_is_chosen_last_and_the_pick_is_deterministic() -> None:
+    earlier = [written("sofa"), written("fridge"), written("kettle")]
+
+    first = domain.pick_targets(HOME_OBJECTS, earlier)
+
+    assert first[0] == "bookshelf"
+    assert first == domain.pick_targets(HOME_OBJECTS, earlier)
+
+
+def test_the_played_riddle_counts_as_used_not_the_unplayed_one() -> None:
+    swapped = written("kettle", swapped=True)
+
+    assert domain.pick_targets(("kettle", "lamp"), [swapped]) == ("lamp", "kettle")
+
+
+def test_the_pick_never_uses_an_unsafe_object_and_has_none_for_an_unsafe_home() -> None:
+    assert domain.pick_targets(("kitchen knife", "lamp", "sofa"), []) == ("lamp", "sofa")
+    assert domain.pick_targets(("kitchen knife", "oven"), []) == (None, None)
+
+
+def test_a_riddle_about_another_object_than_the_picked_one_is_refused() -> None:
+    context = domain.DraftContext(target_object="sofa", fallback_object="kettle")
+
+    found = domain.draft_problems(GOOD, OBJECTS, 7, ANSWER_SLOT, context=context)
+
+    assert any("riddle must point at 'sofa' tonight, not 'fridge'" in f for f in found)
+    assert any("fallback riddle must point at 'kettle' tonight, not 'sofa'" in f for f in found)
+    right = replace(
+        GOOD,
+        riddle=replace(GOOD.riddle, target_object="sofa"),
+        fallback_riddle=replace(GOOD.fallback_riddle, target_object="kettle"),
+    )
+    assert domain.draft_problems(right, OBJECTS, 7, ANSWER_SLOT, context=context) == []
+
+
+def test_the_built_in_episode_uses_the_picked_objects() -> None:
+    payload = domain.built_in_payload(
+        "A", "C.", HOME_OBJECTS, 1, False, ANSWER_SLOT,
+        target_object="kettle", fallback_object="sofa",
+    )  # fmt: skip
+
+    assert (payload.riddle.target_object, payload.fallback_riddle.target_object) == (
+        "kettle",
+        "sofa",
+    )

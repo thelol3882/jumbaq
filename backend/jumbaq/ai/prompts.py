@@ -181,6 +181,28 @@ def _secret_rule(words: tuple[str, ...]) -> str:
     )
 
 
+def _targets(task: EpisodeInput) -> str:
+    if task.target_object is None:
+        return (
+            'target_object is copied exactly, letter by letter, from the "objects" list in the '
+            "data."
+        )
+    return (
+        "Tonight the riddle is about the object named in required_target_object in the data: "
+        "target_object is that text copied exactly, letter by letter. Code picked it so the "
+        "evenings use the whole home, and refuses a riddle about another object."
+    )
+
+
+def _fallback_target(task: EpisodeInput) -> str:
+    if task.fallback_object is None:
+        return ""
+    return (
+        "Its target_object is the text of required_fallback_target_object in the data, copied "
+        "exactly."
+    )
+
+
 def _read_aloud(rules: TextRules | None, youngest: int) -> str:
     if rules is None or not rules.words_max:
         return "three to five short paragraphs."
@@ -210,14 +232,15 @@ The episode:
 - recap: two or three sentences about the story so far, using what the kids answered before. \
 For episode 1, a short welcome to the case instead.
 - read_aloud: {_read_aloud(task.rules, youngest)} Use the kids' nicknames as the detectives.
-- riddle: a riddle that leads the kids to exactly one household object. target_object is \
-copied exactly, letter by letter, from the "objects" list in the data. The kids read something \
-off the object: answer_type tells what ({", ".join(t.value for t in AnswerType)}). \
+- riddle: a riddle that leads the kids to exactly one household object. \
+{_targets(task)} The kids read something off the object: \
+answer_type tells what ({", ".join(t.value for t in AnswerType)}). \
 parent_note tells the parent in one sentence where to look and what counts as an answer.
 - hint: one sentence that makes the riddle easier.
 - fallback_riddle: a second, easier riddle with the same fields, about a different object from \
-the list, in case the first object is not at hand. The family plays it INSTEAD of the first \
-one, so it also has its own hint and its own resolution_template (the {ANSWER_SLOT} text \
+the list, in case the first object is not at hand. \
+{_fallback_target(task)} The family plays it INSTEAD of the first one, so it also has \
+its own hint and its own resolution_template (the {ANSWER_SLOT} text \
 exactly once), written for this riddle and its object. The top-level hint and \
 resolution_template belong to the first riddle only: they may name its object, so the second \
 riddle never reuses them.
@@ -252,6 +275,10 @@ Never say or hint who the culprit is beyond what the clues say.
         },
         "earlier_episodes": [asdict(played) for played in task.played],
     }
+    if task.target_object is not None:
+        data["required_target_object"] = task.target_object
+    if task.fallback_object is not None:
+        data["required_fallback_target_object"] = task.fallback_object
     if task.rules is not None and task.rules.words_max:
         data["read_aloud_budget"] = {
             "words_min": task.rules.words_min,

@@ -3,7 +3,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Select, select, update
+from sqlalchemy import Select, select, tuple_, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,6 +65,18 @@ class SqlEpisodeRepository:
                 EpisodeRow.status == EpisodeStatus.PLAYED,
             )
             .order_by(EpisodeRow.number)
+        )
+        return [_episode(row) for row in rows]
+
+    async def earlier(self, family: FamilyRef, case_number: int, number: int) -> list[Episode]:
+        rows = await self._session.scalars(
+            select(EpisodeRow)
+            .where(
+                EpisodeRow.family_id == family.family_id,
+                EpisodeRow.payload.is_not(None),
+                tuple_(EpisodeRow.case_number, EpisodeRow.number) < (case_number, number),
+            )
+            .order_by(EpisodeRow.case_number, EpisodeRow.number)
         )
         return [_episode(row) for row in rows]
 
