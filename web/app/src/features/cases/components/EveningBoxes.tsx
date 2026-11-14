@@ -12,7 +12,7 @@ function Tick() {
   );
 }
 
-/** Five boxes, ticked when played; the next evening has a red frame. */
+/** One box per evening, ticked when played; the next evening has a red frame. */
 export function EveningBoxes({ episodes }: { episodes: readonly CaseEpisode[] }) {
   const t = useTranslations("cases");
   const next = nextEvening(episodes)?.number;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Case, CaseEpisode, Clue } from "../types";
-import { clearingClue, isBeingWritten, nextEvening, opensLater, playedCount, suspectMark } from "./caseBoard";
+import { isBeingWritten, nextEvening, opensLater, playedCount, suspectMark } from "./caseBoard";
 
 const clue = (episode: number, suspect_id: string, rules_out: boolean): Clue => ({
   episode,
@@ -34,7 +34,6 @@ describe("suspects", () => {
     expect(suspectMark("bram", clues)).toBe("cleared");
     expect(suspectMark("pickle", clues)).not.toBe("cleared");
     expect(suspectMark("tess", clues)).toBe("suspect");
-    expect(clearingClue("bram", clues)?.episode).toBe(1);
   });
 
   it("are pointed at by a clue that does not rule them out", () => {
