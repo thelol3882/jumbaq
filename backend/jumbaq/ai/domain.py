@@ -23,6 +23,8 @@ class CallOutcome(StrEnum):
     OK = "ok"
     BAD_OUTPUT = "bad_output"
     UNAVAILABLE = "unavailable"
+    # The reply had the right shape but the caller's rules refused the draft.
+    REFUSED = "refused"
 
 
 class AnswerType(StrEnum):
@@ -91,6 +93,8 @@ class CaseDraft:
     culprit_id: str
     clues: tuple[ClueDraft, ...]
     reveal: str
+    # The record of the model call that wrote it, set by the writer, never by the model.
+    call_id: uuid.UUID | None = None
 
 
 @dataclass(frozen=True)
@@ -160,6 +164,7 @@ class EpisodeDraft:
     resolution_template: str
     case_clue: str
     cliffhanger: str
+    call_id: uuid.UUID | None = None
 
 
 @dataclass(frozen=True)

@@ -454,3 +454,34 @@ async def test_each_evening_points_at_the_next_unused_object_of_the_home(
         ).one()
     assert row.payload is not None and row.payload["riddle"]["target_object"] == "sofa"
     assert row.payload["fallback_riddle"]["target_object"] == "bookshelf"
+
+
+async def episode_outcomes(sessionmaker: Sessionmaker, family_id: uuid.UUID) -> list[str]:
+    async with sessionmaker() as session:
+        rows = await session.scalars(
+            select(LlmCallRow.outcome)
+            .where(LlmCallRow.family_id == family_id, LlmCallRow.kind == "episode")
+            .order_by(LlmCallRow.created_at, LlmCallRow.id)
+        )
+        return list(rows)
+
+
+async def test_a_refused_episode_draft_is_logged_as_refused(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, UnsafeFirstDraft()))
+
+    assert await episode_outcomes(sessionmaker, family_id) == ["refused", "ok"]
+
+
+async def test_two_refused_episode_drafts_are_both_logged_as_refused(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, EpisodeChanger(unsafe)))
+
+    assert await episode_outcomes(sessionmaker, family_id) == ["refused", "refused"]
+    assert (await episode_1(sessionmaker, family_id)).is_fallback

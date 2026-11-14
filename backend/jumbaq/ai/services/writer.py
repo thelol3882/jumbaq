@@ -2,7 +2,9 @@
 daily cap of all families together."""
 
 import time
+import uuid
 from collections.abc import Callable
+from dataclasses import replace
 from typing import Any
 
 from jumbaq.ai import domain, parsing, prompts
@@ -39,22 +41,32 @@ class StoryWriter:
         self._global_daily_limit = global_daily_limit
 
     async def plan_case(self, family: FamilyRef, task: CasePlanInput) -> CaseDraft:
-        return await self._call(
+        draft, call_id = await self._call(
             family,
             TaskKind.CASE_PLAN,
             prompts.case_plan_prompt(task),
             prompts.CASE_PLAN_SCHEMA,
             parsing.case_draft,
         )
+        return replace(draft, call_id=call_id)
 
     async def write_episode(self, family: FamilyRef, task: EpisodeInput) -> EpisodeDraft:
-        return await self._call(
+        draft, call_id = await self._call(
             family,
             TaskKind.EPISODE,
             prompts.episode_prompt(task),
             prompts.EPISODE_SCHEMA,
             parsing.episode_draft,
         )
+        return replace(draft, call_id=call_id)
+
+    async def mark_refused(self, family: FamilyRef, call_id: uuid.UUID | None) -> None:
+        """The caller's rules refused a draft: its call was not a good one after all."""
+        if call_id is None:
+            return
+        async with self._uow() as uow:
+            await uow.calls.mark_refused(family, call_id)
+            await uow.commit()
 
     async def _call[T](
         self,
@@ -63,7 +75,7 @@ class StoryWriter:
         prompt: Prompt,
         schema: dict[str, Any],
         parse: Callable[[dict[str, Any]], T],
-    ) -> T:
+    ) -> tuple[T, uuid.UUID]:
         await self._check_limit(family)
         # The call runs outside any transaction, so a slow model holds no connection.
         # Two calls at the same moment can both pass the cap; it limits cost, not access.
@@ -82,8 +94,10 @@ class StoryWriter:
         except AiUnavailableError:
             await self._record(family, kind, CallOutcome.UNAVAILABLE, started, 0, 0)
             raise
-        await self._record(family, kind, CallOutcome.OK, started, input_tokens, output_tokens)
-        return result
+        call_id = await self._record(
+            family, kind, CallOutcome.OK, started, input_tokens, output_tokens
+        )
+        return result, call_id
 
     async def _check_limit(self, family: FamilyRef) -> None:
         now = self._clock.now()
@@ -104,7 +118,7 @@ class StoryWriter:
         started: float,
         input_tokens: int,
         output_tokens: int,
-    ) -> None:
+    ) -> uuid.UUID:
         call = LlmCall(
             family_id=family.family_id,
             kind=kind,
@@ -118,5 +132,6 @@ class StoryWriter:
             created_at=self._clock.now(),
         )
         async with self._uow() as uow:
-            await uow.calls.add(call)
+            call_id = await uow.calls.add(call)
             await uow.commit()
+        return call_id

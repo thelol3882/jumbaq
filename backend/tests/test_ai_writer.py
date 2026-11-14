@@ -167,3 +167,44 @@ async def test_the_global_cap_counts_the_calls_of_all_families(
         await capped.plan_case(FamilyRef(second_id), TASK)
 
     assert await calls_of(sessionmaker, second_id) == []
+
+
+async def test_a_refused_draft_marks_its_call_refused_and_nothing_else(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    other_id, _ = create_family(live_client)
+    story = writer(sessionmaker, FixedClock(MORNING), StubProvider())
+    family = FamilyRef(family_id)
+    refused = await story.plan_case(family, TASK)
+    kept = await story.plan_case(family, TASK)
+    theirs = await story.plan_case(FamilyRef(other_id), TASK)
+    assert refused.call_id is not None and kept.call_id != refused.call_id
+
+    await story.mark_refused(family, refused.call_id)
+    # Another family cannot refuse this call, and a call with no id is ignored.
+    await story.mark_refused(FamilyRef(other_id), kept.call_id)
+    await story.mark_refused(family, None)
+
+    outcomes = [row[2] for row in await calls_of(sessionmaker, family_id)]
+    assert outcomes == ["refused", "ok"]
+    assert [row[2] for row in await calls_of(sessionmaker, other_id)] == ["ok"]
+    assert theirs.call_id is not None
+
+
+async def test_a_failed_call_is_not_turned_into_a_refused_one(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    family = FamilyRef(family_id)
+    with pytest.raises(AiBadOutputError):
+        await writer(sessionmaker, FixedClock(MORNING), WrongShape()).plan_case(family, TASK)
+    async with sessionmaker() as session:
+        call_id = await session.scalar(
+            select(LlmCallRow.id).where(LlmCallRow.family_id == family_id)
+        )
+    assert call_id is not None
+
+    await writer(sessionmaker, FixedClock(MORNING), StubProvider()).mark_refused(family, call_id)
+
+    assert [row[2] for row in await calls_of(sessionmaker, family_id)] == ["bad_output"]
