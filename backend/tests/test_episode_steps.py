@@ -20,7 +20,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
 Sessionmaker = async_sessionmaker[AsyncSession]
 # The stub plans clue 1 about s1 and rules it out; the clue is the grey feather one.
 RIGHT, WRONG = "s1", "s2"
-SECRET = {"shift": "GREY FEATHER LIES", "number_code": "FEATHER", "count": None}
+SECRET = {"shift": "GREY FEATHER LIES", "number_code": "FEATHER", "count": "EMPTY"}
 
 
 async def ready_episode(
@@ -261,30 +261,75 @@ async def test_the_number_code_level_shows_numbers_and_three_buttons(
     assert content(decode(live_client, path, "FEATHER"))["step"] == "strike"
 
 
-async def test_the_count_level_takes_any_body(
+async def test_the_count_level_shows_five_numbered_boxes_with_the_secret_in_box_n(
     live_client: TestClient, sessionmaker: Sessionmaker
 ) -> None:
     _, path = await ready_episode(live_client, sessionmaker, (4, 5))
 
     cipher = content(live_client.post(f"{path}/answer", json={"answer": "seven 7"}))["decode"]
 
-    assert cipher["level"] == "count" and cipher["key"] == 7 and cipher["count"] == 7
-    assert (cipher["code"], cipher["clue_with_gap"], cipher["options"]) == (None, None, [])
-    assert (cipher["start"], cipher["shift"]) == (None, None)
-    after = content(decode(live_client, path, None))
-    assert after["step"] == "strike"
-    assert after["strike"]["decoded_word"] is None and after["strike"]["revealed_word"] is False
+    assert cipher["level"] == "count" and cipher["key"] == 7 and cipher["count"] == 2
+    assert (cipher["code"], cipher["clue_with_gap"]) == (None, None)
+    assert len(cipher["options"]) == 5 and len(set(cipher["options"])) == 5
+    assert cipher["options"][1] == SECRET["count"]
+    # The same boxes after a reload.
+    reloaded = content(live_client.get(path))["decode"]
+    assert reloaded["options"] == cipher["options"]
 
 
-async def test_the_count_level_accepts_any_word_and_an_empty_body(
+async def test_the_count_level_checks_the_picked_box_like_the_other_levels(
     live_client: TestClient, sessionmaker: Sessionmaker
 ) -> None:
-    _, path = await ready_episode(live_client, sessionmaker, (4,))
+    episode_id, path = await ready_episode(live_client, sessionmaker, (4, 5))
     live_client.post(f"{path}/answer", json={"answer": "blue"})
 
-    after = live_client.post(f"{path}/decode", json={})
+    wrong = content(decode(live_client, path, None))
 
-    assert content(after)["step"] == "strike"
+    assert wrong["step"] == "decode" and wrong["decode"]["attempts"] == 1
+    options = wrong["decode"]["options"]
+    other = next(option for option in options if option != SECRET["count"])
+    # A decoy is wrong too, and the second wrong pick gives the word away.
+    after = content(decode(live_client, path, other))
+    assert after["step"] == "strike"
+    assert after["strike"]["revealed_word"] is True
+    assert after["strike"]["decoded_word"] == SECRET["count"]
+    row = await stored(sessionmaker, episode_id)
+    assert row.decode_attempts == 2 and row.decoded_at is not None
+
+
+async def test_the_count_level_passes_the_right_box(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    _, path = await ready_episode(live_client, sessionmaker, (4, 5))
+    live_client.post(f"{path}/answer", json={"answer": "seven 7"})
+
+    after = content(decode(live_client, path, " empty "))
+
+    assert after["step"] == "strike"
+    assert after["strike"]["decoded_word"] == SECRET["count"]
+    assert after["strike"]["revealed_word"] is False
+
+
+async def test_a_count_episode_with_no_secret_takes_any_body(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    episode_id, path = await ready_episode(live_client, sessionmaker, (4,))
+    async with sessionmaker() as session:
+        await session.execute(
+            text(
+                "UPDATE episode SET payload = payload || "
+                '\'{"cipher_secret": null, "cipher_decoys": []}\'::jsonb WHERE id = :id'
+            ),
+            {"id": uuid.UUID(episode_id)},
+        )
+        await session.commit()
+
+    cipher = content(live_client.post(f"{path}/answer", json={"answer": "seven 7"}))["decode"]
+
+    assert cipher["count"] == 2 and cipher["options"] == []
+    after = content(live_client.post(f"{path}/decode", json={}))
+    assert after["step"] == "strike"
+    assert after["strike"]["decoded_word"] is None and after["strike"]["revealed_word"] is False
 
 
 async def test_an_episode_written_before_the_steps_is_played_by_the_answer(

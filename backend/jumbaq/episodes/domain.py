@@ -85,6 +85,9 @@ SHIFT_AGE = 8
 # Wrong picks in one step before the server shows the right answer and moves on.
 MAX_ATTEMPTS = 2
 SECRET_WORD_LENGTHS = range(4, 8)
+# The count level hides a short word: the kids point at a box, not read a cipher.
+COUNT_WORD_LENGTHS = range(3, 7)
+COUNT_BOXES = 5
 GAP = "____"
 STOPWORDS = frozenset({
     "the", "and", "was", "were", "with", "from", "that", "this", "they", "there", "where",
@@ -492,18 +495,45 @@ def _length_order(texts: list[str], like: str) -> list[str]:
 
 
 def _decoys(
-    candidates: list[str], fallback: tuple[str, ...], secret: str, seen: set[str]
+    candidates: list[str],
+    fallback: tuple[str, ...],
+    secret: str,
+    seen: set[str],
+    how_many: int = 2,
 ) -> tuple[str, ...]:
-    """Two wrong buttons. None of their words is in the clue, because the kids would see that
+    """The wrong buttons, two unless told otherwise. None of their words is in the clue, because the kids would see that
     it is not the missing one."""
     chosen: list[str] = []
     for text in _length_order(candidates, secret) + _length_order(list(fallback), secret):
         if text == secret or text in chosen or any(word in seen for word in text.split()):
             continue
         chosen.append(text)
-        if len(chosen) == 2:
+        if len(chosen) == how_many:
             break
     return tuple(chosen)
+
+
+def _count_plan(words: list[str], others: list[list[str]]) -> CipherPlan:
+    """The longest short word of the clue is the secret; the four other boxes hold short words
+    of the case's other clues, then kid words, and none of them is in this clue. A clue with no
+    such word gives a count level with no secret: any pick passes."""
+    best: str | None = None
+    for word in words:
+        if len(word) not in COUNT_WORD_LENGTHS or word.lower() in FILLER_WORDS:
+            continue
+        if best is None or len(word) > len(best):
+            best = word
+    if best is None:
+        return CipherPlan(CipherLevel.COUNT, None, ())
+    found = [
+        word
+        for other in others
+        for word in other
+        if len(word) in COUNT_WORD_LENGTHS and word.lower() not in FILLER_WORDS
+    ]
+    short = tuple(word for word in KID_WORDS if len(word) in COUNT_WORD_LENGTHS)
+    decoys = _decoys(found, short, best, set(words), COUNT_BOXES - 1)
+    return CipherPlan(CipherLevel.COUNT, best, decoys)
 
 
 def plan_cipher(clue: str, oldest_age: int, other_clues: tuple[str, ...] = ()) -> CipherPlan:
@@ -512,11 +542,11 @@ def plan_cipher(clue: str, oldest_age: int, other_clues: tuple[str, ...] = ()) -
     this clue. A clue with no secret that works gives the level count, which needs none."""
     level = cipher_level_for(oldest_age)
     words = _clue_words(clue)
-    index = _secret_index(words)
-    if index is None:
-        return CipherPlan(CipherLevel.COUNT, None, ())
-    seen = set(words)
     others = [_clue_words(other) for other in other_clues]
+    index = _secret_index(words)
+    if level == CipherLevel.COUNT or index is None:
+        return _count_plan(words, others)
+    seen = set(words)
     if level == CipherLevel.NUMBER_CODE:
         secret = words[index]
         found = [
@@ -541,7 +571,7 @@ def plan_cipher(clue: str, oldest_age: int, other_clues: tuple[str, ...] = ()) -
                 and other[s + size - 1].lower() not in FILLER_WORDS
             ]
             return CipherPlan(level, secret, _decoys(found, KID_PHRASES[size], secret, seen))
-    return CipherPlan(CipherLevel.COUNT, None, ())
+    return _count_plan(words, others)
 
 
 def secret_words(secret: str | None) -> tuple[str, ...]:
@@ -584,7 +614,15 @@ def shift_text(key: int, secret: str) -> str:
 
 
 def count_target(key: int) -> int:
-    return (key - 1) % 10 + 1
+    """How many claps, and the number of the box to point at: 1 to 5."""
+    return (key - 1) % COUNT_BOXES + 1
+
+
+def count_options(secret: str, decoys: tuple[str, ...], target: int) -> list[str]:
+    """The words of boxes 1 to 5 in this order, the secret in box `target`."""
+    options = list(decoys)
+    options.insert(target - 1, secret)
+    return options
 
 
 def clue_with_gap(clue: str, secret: str) -> str:

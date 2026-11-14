@@ -281,10 +281,12 @@ def test_the_first_of_two_longest_words_wins() -> None:
 
 
 def test_stopwords_and_odd_lengths_are_not_secrets() -> None:
-    # "there" and "where" are stopwords, "elephants" is too long, "cat" too short.
+    # "there" and "where" are stopwords, "elephants" is too long, "cat" too short for a cipher:
+    # the level falls back to count, which hides a short word.
     plan = domain.plan_cipher("There where elephants cat", 7)
 
-    assert plan == CipherPlan(CipherLevel.COUNT, None, ())
+    assert plan.level == CipherLevel.COUNT and plan.secret == "CAT"
+    assert domain.plan_cipher("There where elephants", 7) == CipherPlan(CipherLevel.COUNT, None, ())
 
 
 def test_decoys_come_from_the_kid_words_when_the_other_clues_have_too_few() -> None:
@@ -355,7 +357,9 @@ def test_an_apostrophe_keeps_a_word_whole() -> None:
 
 
 def test_a_clue_of_one_word_gives_count_at_any_age() -> None:
-    assert domain.plan_cipher("Kettle", 9) == CipherPlan(CipherLevel.COUNT, None, ())
+    plan = domain.plan_cipher("Kettle", 9)
+
+    assert (plan.level, plan.secret) == (CipherLevel.COUNT, "KETTLE")
 
 
 def test_a_clue_of_two_words_gives_a_two_word_secret_at_the_shift_level() -> None:
@@ -365,8 +369,31 @@ def test_a_clue_of_two_words_gives_a_two_word_secret_at_the_shift_level() -> Non
     assert all(len(decoy.split()) == 2 for decoy in plan.decoys)
 
 
-def test_the_young_get_count_with_no_secret() -> None:
-    assert domain.plan_cipher(CLUE, 4) == CipherPlan(CipherLevel.COUNT, None, ())
+def test_the_young_get_count_with_a_short_secret_and_four_decoys() -> None:
+    plan = domain.plan_cipher(CLUE, 4)
+
+    assert plan.level == CipherLevel.COUNT
+    assert plan.secret == "EMPTY"
+    assert len(plan.decoys) == 4 and len(set(plan.decoys)) == 4
+
+
+def test_the_count_secret_is_short_and_not_a_filler_word() -> None:
+    plan = domain.plan_cipher("The big FEATHER and the cat saw them", 5)
+
+    # "feather" has 7 letters, "them" and "the" are filler words, "saw" and "cat" have 3.
+    assert plan.secret in {"BIG", "CAT", "SAW"}
+    assert 3 <= len(plan.secret or "") <= 6
+
+
+def test_the_count_decoys_are_never_words_of_the_clue() -> None:
+    clue = "The apple and the cloud sat by the moon and the star"
+
+    plan = domain.plan_cipher(clue, 4)
+
+    words = clue.upper().split()
+    assert plan.secret in words
+    assert len(plan.decoys) == 4
+    assert not set(plan.decoys) & set(words)
 
 
 def test_secret_and_decoys_are_distinct_upper_case_letters() -> None:
@@ -405,9 +432,19 @@ def test_a_shift_moves_letters_forward_and_keeps_spaces() -> None:
     assert domain.shift_text(26, "ABC") == domain.shift_text(1, "ABC")
 
 
-@pytest.mark.parametrize(("key", "target"), [(1, 1), (10, 10), (11, 1), (25, 5)])
-def test_the_count_target_is_between_1_and_10(key: int, target: int) -> None:
+@pytest.mark.parametrize(("key", "target"), [(1, 1), (5, 5), (6, 1), (10, 5), (11, 1), (42, 2)])
+def test_the_count_target_is_between_1_and_5(key: int, target: int) -> None:
     assert domain.count_target(key) == target
+
+
+@pytest.mark.parametrize("target", range(1, 6))
+def test_the_count_boxes_keep_their_order_with_the_secret_in_the_target_box(target: int) -> None:
+    decoys = ("A", "B", "C", "D")
+
+    options = domain.count_options("X", decoys, target)
+
+    assert len(options) == 5 and options[target - 1] == "X"
+    assert [o for o in options if o != "X"] == list(decoys)
 
 
 def test_the_gap_hides_the_secret_in_any_case_and_keeps_the_rest() -> None:

@@ -67,6 +67,8 @@ export function DecodeStep({
   const errorMessage = useApiErrorMessage();
   const { pick, sending, error } = useDecode(episodeId);
   const counting = decode.level === "count";
+  // A count episode with no word to pick (an older one) only asks the kids to count.
+  const boxes = counting && decode.options.length > 0;
 
   return (
     <div className="flex flex-col gap-7">
@@ -74,7 +76,12 @@ export function DecodeStep({
         <p>{resolution}</p>
         {codeBreaker ? <p>{t("decode.codeBreaker", { name: codeBreaker })}</p> : null}
         {counting ? (
-          <p>{t("decode.countIntro", { key: decode.key, count: decode.count ?? 0 })}</p>
+          <p>
+            {t(boxes ? "decode.countIntro" : "decode.countIntroPlain", {
+              key: decode.key,
+              count: decode.count ?? 0,
+            })}
+          </p>
         ) : (
           <>
             <p>{decode.level === "number_code" ? t("decode.numberIntro") : t("decode.shiftIntro")}</p>
@@ -89,7 +96,23 @@ export function DecodeStep({
       ) : null}
       {inlineKey ? <CipherKey decode={decode} /> : null}
       {decode.attempts > 0 ? <HandNote>{t("decode.wrong")}</HandNote> : null}
-      {counting ? (
+      {boxes ? (
+        <ol className="grid max-w-[40rem] grid-cols-1 gap-3 sm:grid-cols-2">
+          {decode.options.map((option, index) => (
+            <li key={option}>
+              <PickButton disabled={sending} onClick={() => void pick(option)}>
+                <span className="flex items-center gap-4">
+                  <span aria-hidden="true" className="font-type text-[2rem] leading-none font-bold">
+                    {index + 1}
+                  </span>
+                  <span className="sr-only">{t("decode.box", { number: index + 1 })}</span>
+                  <span>{option}</span>
+                </span>
+              </PickButton>
+            </li>
+          ))}
+        </ol>
+      ) : counting ? (
         <StampButton disabled={sending} onClick={() => void pick(null)}>
           {t("decode.weDidIt")}
         </StampButton>
