@@ -4,22 +4,26 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, SuspectTable, type Case } from "@/features/cases";
 import { ClueTag, DecodeStep, StrikeStep, useSkipEvening, type Episode } from "@/features/episodes";
-import { useFamily } from "@/features/families";
+import { useDetectivesLabel, useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { DemoControls, HandNote, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
+import { DemoControls, DetectivesTag, HandNote, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { withTonightsClue } from "./services/tonightsClues";
 
 export type ShownEpisode = Episode & { content: NonNullable<Episode["content"]> };
 
 export function EveningHeader({ current, episode, wide = false }: { current: Case; episode: ShownEpisode; wide?: boolean }) {
   const t = useTranslations("widget.evening");
+  const detectivesLabel = useDetectivesLabel();
   return (
     <header
       className={`flex flex-wrap items-center justify-between gap-4 ${wide ? "border-b-[1.5px] border-rule-strong pb-4.5" : ""}`}
     >
-      <Link href="/family" aria-label={t("toCaseFile")}>
-        <Wordmark text={t("wordmark")} size="sm" />
-      </Link>
+      <div className="flex flex-col items-start">
+        <Link href="/family" aria-label={t("toCaseFile")}>
+          <Wordmark text={t("wordmark")} size="sm" />
+        </Link>
+        {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
+      </div>
       <div className="flex items-center gap-3">
         <span className="font-type text-case">
           {t("eveningOf", { number: episode.number, total: current.episodes.length })}

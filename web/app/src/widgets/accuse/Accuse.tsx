@@ -3,9 +3,10 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { playedCount, useCurrentCase, type Accusation } from "@/features/cases";
+import { useDetectivesLabel } from "@/features/families";
 import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { AccuseDesktop } from "./AccuseDesktop";
 import { AccuseMobile } from "./AccuseMobile";
@@ -15,6 +16,7 @@ export function Accuse({ caseNumber }: { caseNumber: number }) {
   const t = useTranslations("widget.accuse");
   const errorMessage = useApiErrorMessage();
   const isMobile = useIsMobile();
+  const detectivesLabel = useDetectivesLabel();
   const { current, loading, error, slow, retry } = useCurrentCase();
   // Right after the last answer the worker still has to move the case to the accusation.
   const almost =
@@ -25,13 +27,16 @@ export function Accuse({ caseNumber }: { caseNumber: number }) {
 
   if (current && current.number === caseNumber && (current.status === "accusing" || current.status === "solved")) {
     const View = isMobile ? AccuseMobile : AccuseDesktop;
-    return <View current={current} solved={solved} onSolved={setSolved} />;
+    return <View current={current} solved={solved} onSolved={setSolved} detectivesLabel={detectivesLabel} />;
   }
 
   return (
     <NotebookPage margin>
       <div className="flex items-center justify-between gap-4">
-        <Wordmark text={t("wordmark")} size="sm" />
+        <div className="flex flex-col items-start">
+          <Wordmark text={t("wordmark")} size="sm" />
+          {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
+        </div>
         <PlansLink />
       </div>
       <div className="mt-10 flex flex-col gap-6">

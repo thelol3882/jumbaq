@@ -9,7 +9,6 @@
   "retry": "Try again",
   "tonight": "tonight",
   "boardLabel": "the case board",
-  "detectives": "detectives: {names}",
   "eveningOf": "tonight · evening {number} of {total}",
   "read": "Read tonight's story",
   "note": {

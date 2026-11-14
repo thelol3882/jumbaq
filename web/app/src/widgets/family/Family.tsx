@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { inOpening, tonight, useCurrentCase } from "@/features/cases";
-import { useFamily } from "@/features/families";
+import { useDetectivesLabel, useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
@@ -16,6 +16,7 @@ export function Family() {
   const t = useTranslations("widget.family");
   const errorMessage = useApiErrorMessage();
   const { family, loading, missing, error, retry } = useFamily();
+  const detectivesLabel = useDetectivesLabel();
   const { current, slow, error: caseError, retry: check } = useCurrentCase();
   const isMobile = useIsMobile();
   const step = current && !inOpening(current) ? tonight(current, new Date()) : undefined;
@@ -32,9 +33,9 @@ export function Family() {
         </div>
       ) : undefined;
     return isMobile ? (
-      <FamilyMobile family={family} current={current} waiting={waiting} problem={problem} />
+      <FamilyMobile family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} />
     ) : (
-      <FamilyDesktop family={family} current={current} waiting={waiting} problem={problem} />
+      <FamilyDesktop family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} />
     );
   }
 

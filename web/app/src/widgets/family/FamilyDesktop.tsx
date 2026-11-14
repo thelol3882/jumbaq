@@ -3,18 +3,20 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, inOpening, type Case } from "@/features/cases";
 import { FamilyBoard, type FamilyState } from "@/features/families";
-import { NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
 import { Tonight, TonightPending, type Waiting } from "./Tonight";
 
 /** Design F3: tonight on the left page, the case board on the right. */
 export function FamilyDesktop({
   family,
+  detectivesLabel,
   current,
   waiting,
   problem,
 }: {
   family: FamilyState;
+  detectivesLabel: string | undefined;
   current: Case | undefined;
   waiting: Waiting;
   /** Shown instead of tonight when the case did not load. */
@@ -29,9 +31,7 @@ export function FamilyDesktop({
           <Wordmark text={t("wordmark")} size="sm" />
         </Link>
         {current ? <EveningBoxes episodes={current.episodes} /> : null}
-        <span className="font-type text-label text-ink-muted">
-          {t("detectives", { names: family.kids.map((kid) => kid.nickname).join(", ") })}
-        </span>
+        {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
         <PlansLink />
       </header>
       <div className="mt-11">

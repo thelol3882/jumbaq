@@ -1,4 +1,5 @@
 export { DemoControls } from "./DemoControls";
+export { DetectivesTag } from "./DetectivesTag";
 export { EvidenceTag } from "./EvidenceTag";
 export { HandNote } from "./HandNote";
 export { NotebookPage } from "./NotebookPage";

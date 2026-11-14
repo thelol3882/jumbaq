@@ -2,18 +2,23 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useDetectivesLabel } from "@/features/families";
 import { useCurrentCase, useStartNextCaseMutation } from "@/features/cases";
 import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, NotebookPage, PlansLink, StampButton, StampLink, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, HandNote, NotebookPage, PlansLink, StampButton, StampLink, Wordmark } from "@/shared/components/notebook";
 
 /** Where Stripe sends the parent back. One column on every screen. */
 export function BillingReturn({ outcome }: { outcome: "success" | "cancel" }) {
   const t = useTranslations("widget.billing-return");
+  const detectivesLabel = useDetectivesLabel();
   return (
     <NotebookPage>
       <div className="flex items-center justify-between gap-4">
-        <Wordmark text={t("wordmark")} size="sm" />
+        <div className="flex flex-col items-start">
+          <Wordmark text={t("wordmark")} size="sm" />
+          {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
+        </div>
         <PlansLink />
       </div>
       <div className="mt-12 flex flex-col gap-6">

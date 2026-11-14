@@ -1,19 +1,22 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { AccuseForm, EveningBoxes, EvidenceList } from "@/features/cases";
-import { NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { CertificateAndNext, SolvedStory, type AccuseViewProps } from "./parts";
 
 /** Design F6: the evidence to read aloud on the left, the pick on the right; then the win. */
-export function AccuseDesktop({ current, solved, onSolved }: AccuseViewProps) {
+export function AccuseDesktop({ current, solved, onSolved, detectivesLabel }: AccuseViewProps) {
   const t = useTranslations("widget.accuse");
   const isSolved = current.status === "solved";
   return (
     <NotebookPage width="wide">
       <header className="flex flex-wrap items-center justify-between gap-6 border-b-[1.5px] border-rule-strong pb-4.5">
-        <Link href="/family" aria-label={t("back")}>
-          <Wordmark text={t("wordmark")} size="sm" />
-        </Link>
+        <div className="flex flex-col items-start">
+          <Link href="/family" aria-label={t("back")}>
+            <Wordmark text={t("wordmark")} size="sm" />
+          </Link>
+          {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
+        </div>
         <EveningBoxes episodes={current.episodes} />
         <PlansLink />
       </header>

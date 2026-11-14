@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useCurrentCase, WritingProgress, type Case } from "@/features/cases";
 import { useEpisode, type Episode } from "@/features/episodes";
-import { useFamily } from "@/features/families";
+import { useDetectivesLabel, useFamily } from "@/features/families";
 import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { useRefetchAt } from "@/shared/hooks/useRefetchAt";
 import { formatOpening } from "@/shared/lib/dates";
@@ -29,6 +29,7 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
   const slot = current?.number === caseNumber ? current.episodes.find((e) => e.number === evening) : undefined;
   const { episode, loading, writing, slow, error, retry: retryEpisode } = useEpisode(slot?.id ?? null);
   const { family } = useFamily();
+  const detectivesLabel = useDetectivesLabel();
 
   const recheck = () => {
     void retry();
@@ -61,9 +62,12 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
   return (
     <NotebookPage margin>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Link href="/family" aria-label={t("toCaseFile")}>
-          <Wordmark text={t("wordmark")} size="sm" />
-        </Link>
+        <div className="flex flex-col items-start">
+          <Link href="/family" aria-label={t("toCaseFile")}>
+            <Wordmark text={t("wordmark")} size="sm" />
+          </Link>
+          {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
+        </div>
         <div className="flex items-center gap-4">
           {current && slot ? (
             <span className="font-type text-case">{t("eveningOf", { number: evening, total: current.episodes.length })}</span>
