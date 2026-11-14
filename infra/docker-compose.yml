@@ -11,6 +11,8 @@ x-backend: &backend
     JUMBAQ_REDIS_URL: redis://redis:6379/0
     JUMBAQ_FAMILY_COOKIE_SECURE: ${JUMBAQ_FAMILY_COOKIE_SECURE:-true}
     JUMBAQ_CORS_ORIGINS: ${JUMBAQ_CORS_ORIGINS:-}
+    JUMBAQ_AI_PROVIDER: ${JUMBAQ_AI_PROVIDER:-stub}
+    JUMBAQ_AI_API_KEY: ${JUMBAQ_AI_API_KEY:-}
   depends_on:
     migrate:
       condition: service_completed_successfully
