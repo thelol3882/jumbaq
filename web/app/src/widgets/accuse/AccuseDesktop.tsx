@@ -5,7 +5,7 @@ import { DetectivesTag, NotebookPage, NotebookSpread, PlansLink, Wordmark } from
 import { CertificateAndNext, SolvedStory, type AccuseViewProps } from "./parts";
 
 /** Design F6: the evidence to read aloud on the left, the pick on the right; then the win. */
-export function AccuseDesktop({ current, solved, onSolved, detectivesLabel, certificate }: AccuseViewProps) {
+export function AccuseDesktop({ current, solved, onSolved, detectivesLabel, certificate, subscription }: AccuseViewProps) {
   const t = useTranslations("widget.accuse");
   const isSolved = current.status === "solved";
   return (
@@ -25,7 +25,7 @@ export function AccuseDesktop({ current, solved, onSolved, detectivesLabel, cert
           <NotebookSpread
             sideLabel={t("certificateLabel")}
             main={<SolvedStory current={current} solved={solved} large />}
-            side={<CertificateAndNext current={current} certificate={certificate} />}
+            side={<CertificateAndNext current={current} certificate={certificate} subscription={subscription} />}
           />
         ) : (
           <NotebookSpread

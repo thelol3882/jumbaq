@@ -5,7 +5,7 @@ import { DetectivesTag, NotebookPage, PlansLink, Wordmark } from "@/shared/compo
 import { CertificateAndNext, SolvedStory, type AccuseViewProps } from "./parts";
 
 /** Design D4: evidence, the pick and the stamp; after the right pick, the win and the certificate. */
-export function AccuseMobile({ current, solved, onSolved, detectivesLabel, certificate }: AccuseViewProps) {
+export function AccuseMobile({ current, solved, onSolved, detectivesLabel, certificate, subscription }: AccuseViewProps) {
   const t = useTranslations("widget.accuse");
   return (
     <NotebookPage margin>
@@ -22,7 +22,7 @@ export function AccuseMobile({ current, solved, onSolved, detectivesLabel, certi
         {current.status === "solved" ? (
           <>
             <SolvedStory current={current} solved={solved} />
-            <CertificateAndNext current={current} certificate={certificate} />
+            <CertificateAndNext current={current} certificate={certificate} subscription={subscription} />
           </>
         ) : (
           <>
