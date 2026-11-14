@@ -36,14 +36,18 @@ export function Headline({ large = false }: { large?: boolean }) {
   );
 }
 
-export function Steps() {
+export function Steps({ large = false }: { large?: boolean }) {
   const t = useTranslations("widget.landing");
+  const text = large ? "text-[1.375rem] leading-[1.45]" : "text-[1.1875rem] leading-[1.4]";
   return (
-    <ol className="flex flex-col gap-3">
+    <ol className={`flex flex-col ${large ? "gap-3.5" : "gap-3"}`}>
       {STEPS.map((step, index) => (
-        <li key={step} className={`grid grid-cols-[30px_minmax(0,1fr)] items-baseline ${STEP_INDENT[index]}`}>
-          <span className="font-type text-lg font-bold">{index + 1}.</span>
-          <span className="text-[1.1875rem] leading-[1.4]">{t(`steps.${step}`)}</span>
+        <li
+          key={step}
+          className={`grid ${large ? "grid-cols-[36px_minmax(0,1fr)]" : "grid-cols-[30px_minmax(0,1fr)]"} items-baseline ${STEP_INDENT[index]}`}
+        >
+          <span className={`font-type font-bold ${large ? "text-xl" : "text-lg"}`}>{index + 1}.</span>
+          <span className={text}>{t(`steps.${step}`)}</span>
         </li>
       ))}
     </ol>
@@ -55,6 +59,15 @@ export function ExampleCase() {
   return (
     <div className="w-60 rotate-[2.5deg]">
       <EvidenceTag label={t("example.label")}>{t("example.title")}</EvidenceTag>
+    </div>
+  );
+}
+
+export function ExampleExhibit() {
+  const t = useTranslations("widget.landing");
+  return (
+    <div className="w-70 rotate-[2.5deg]">
+      <EvidenceTag label={t("example.exhibitLabel")}>{t("example.exhibit")}</EvidenceTag>
     </div>
   );
 }
