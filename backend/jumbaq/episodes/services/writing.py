@@ -145,7 +145,7 @@ def _task(
         home=HomeInput(
             kids=tuple(KidInput(kid.nickname, kid.age) for kid in home.kids),
             rooms=home.rooms,
-            objects=home.objects,
+            objects=domain.safe_objects(home.objects),
         ),
         case_title=brief.title,
         setting=brief.setting,

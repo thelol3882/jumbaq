@@ -20,7 +20,7 @@ from jumbaq.cases.domain import FIRST_CASE, CaseStatus, Clue, Plan, Suspect
 from jumbaq.cases.events import CaseOpened, CasePlanned
 from jumbaq.cases.uow import CasesUoWFactory
 from jumbaq.core.family import FamilyRef
-from jumbaq.episodes.public import banned_words
+from jumbaq.episodes.public import banned_words, safe_objects
 from jumbaq.families.public import Family
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ def _home(family: Family) -> HomeInput:
     return HomeInput(
         kids=tuple(KidInput(kid.nickname, kid.age) for kid in family.kids),
         rooms=family.rooms,
-        objects=family.objects,
+        objects=safe_objects(family.objects),
     )
 
 
