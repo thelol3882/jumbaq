@@ -69,16 +69,16 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
 
   return (
     <NotebookPage margin>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex flex-col items-start">
           <Link href="/family" aria-label={t("toCaseFile")}>
             <Wordmark text={t("wordmark")} size="sm" />
           </Link>
           {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="contents sm:flex sm:items-center sm:gap-4">
           {current && slot ? (
-            <span className="font-type text-case">{t("eveningOf", { number: evening, total: current.episodes.length })}</span>
+            <span className="order-last basis-full font-type text-case sm:order-none sm:basis-auto">{t("eveningOf", { number: evening, total: current.episodes.length })}</span>
           ) : null}
           <PlansLink />
         </div>
