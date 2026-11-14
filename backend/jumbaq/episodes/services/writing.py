@@ -70,6 +70,7 @@ class EpisodeWriting:
             brief = await uow.cases.episode_brief(family, episode.case_id, episode.number)
             home = await uow.families.get(family)
             played = await uow.episodes.played(family, episode.case_id)
+            earlier = await uow.episodes.earlier(family, episode.case_number, episode.number)
             if brief is None or home is None:
                 return
             await uow.episodes.set_status(family, episode_id, EpisodeStatus.GENERATING)
@@ -79,7 +80,10 @@ class EpisodeWriting:
         oldest = max((kid.age for kid in home.kids), default=0)
         plan = domain.plan_cipher(brief.clue.text, oldest, brief.other_clues)
         # No unit of work is open here: the model call can take a while.
-        payload, is_fallback = await self._payload(family, episode, brief, home, played, plan)
+        targets = domain.pick_targets(home.objects, earlier)
+        payload, is_fallback = await self._payload(
+            family, episode, brief, home, played, plan, targets
+        )
         payload = domain.with_evening_steps(
             payload, brief.clue.suspect_id, brief.clue.points_at, plan
         )
@@ -103,6 +107,7 @@ class EpisodeWriting:
         home: Family,
         played: list[Episode],
         plan: CipherPlan,
+        targets: tuple[str | None, str | None],
     ) -> tuple[Payload, bool]:
         """The model's episode, or the built-in one. The second item is True for the built-in."""
         youngest = min((kid.age for kid in home.kids), default=domain.YOUNG_AGE)
@@ -117,10 +122,13 @@ class EpisodeWriting:
             budget.paragraphs_min,
             budget.paragraphs_max,
         )
+        target, fallback = targets
         task = replace(
             _task(episode, brief, home, played),
             rules=rules,
             secret_words=domain.secret_words(plan.secret),
+            target_object=target,
+            fallback_object=fallback,
         )
         safe_riddle: Riddle | None = None
         for attempt in range(1, WRITE_TRIES + 1):
@@ -145,7 +153,7 @@ class EpisodeWriting:
                 youngest,
                 ANSWER_SLOT,
                 plan.secret,
-                _context(brief),
+                _context(brief, target, fallback),
             )
             if not problems:
                 return payload, False
@@ -162,16 +170,20 @@ class EpisodeWriting:
             slot=ANSWER_SLOT,
             model_riddle=safe_riddle,
             youngest_age=youngest,
+            target_object=target,
+            fallback_object=fallback,
         )
         return built_in, True
 
 
-def _context(brief: EpisodeBrief) -> domain.DraftContext:
+def _context(brief: EpisodeBrief, target: str | None, fallback: str | None) -> domain.DraftContext:
     names = {suspect.id: suspect.name for suspect in brief.suspects}
     return domain.DraftContext(
         clue_text=brief.clue.text,
         clue_suspect=names.get(brief.clue.suspect_id, ""),
         suspect_names=tuple(names.values()),
+        target_object=target,
+        fallback_object=fallback,
     )
 
 

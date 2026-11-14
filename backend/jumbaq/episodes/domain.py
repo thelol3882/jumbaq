@@ -7,6 +7,7 @@ the caller, so this module stays free of the database.
 
 import re
 import uuid
+from collections import Counter
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from enum import StrEnum
@@ -301,6 +302,24 @@ class DraftContext:
     clue_text: str = ""
     clue_suspect: str = ""
     suspect_names: tuple[str, ...] = ()
+    # The objects code chose for tonight's riddles.
+    target_object: str | None = None
+    fallback_object: str | None = None
+
+
+def pick_targets(objects: tuple[str, ...], earlier: list[Episode]) -> tuple[str | None, str | None]:
+    """The objects of tonight's riddle and fallback riddle: the safe objects of the home in
+    turn, each time one used the fewest times in the earlier evenings of the family (the riddle
+    that was played counts). The same history always gives the same pick."""
+    safe = safe_objects(objects)
+    if not safe:
+        return None, None
+    used = Counter(e.riddle.target_object for e in earlier if e.riddle is not None)
+    start = len(earlier) % len(safe)
+    turn = [safe[(start + i) % len(safe)] for i in range(len(safe))]
+    target = min(turn, key=lambda obj: used[obj])
+    others = [obj for obj in turn if obj != target] or turn
+    return target, min(others, key=lambda obj: used[obj])
 
 
 def _name_words(names: tuple[str, ...]) -> set[str]:
@@ -362,6 +381,15 @@ def draft_problems(
 ) -> list[str]:
     """Why the episode cannot be read to the kids. Empty when it is fine."""
     problems = []
+    context = context or DraftContext()
+    for name, riddle, wanted in (
+        ("riddle", payload.riddle, context.target_object),
+        ("fallback riddle", payload.fallback_riddle, context.fallback_object),
+    ):
+        if wanted is not None and riddle.target_object != wanted:
+            problems.append(
+                f"the {name} must point at {wanted!r} tonight, not {riddle.target_object!r}"
+            )
     for name, riddle in (("riddle", payload.riddle), ("fallback riddle", payload.fallback_riddle)):
         if riddle.target_object not in objects:
             problems.append(f"the {name} points at {riddle.target_object!r}, not in the home")
@@ -399,7 +427,7 @@ def draft_problems(
                 f"a read_aloud paragraph is too long: paragraph {index} has {len(text)} "
                 f"characters, the limit is {paragraph_max}"
             )
-    problems += retold_clue(payload.read_aloud, context or DraftContext())
+    problems += retold_clue(payload.read_aloud, context)
     named = [(f"read_aloud paragraph {i}", text) for i, text in enumerate(payload.read_aloud, 1)]
     # The clue is the plan's text, checked when the case was planned: the episode cannot fix it.
     own = [(name, text) for name, text in _named_short_texts(payload) if name != "case_clue"]
@@ -460,6 +488,8 @@ def built_in_payload(
     slot: str,
     model_riddle: Riddle | None = None,
     youngest_age: int = YOUNG_AGE,
+    target_object: str | None = None,
+    fallback_object: str | None = None,
 ) -> Payload:
     """A plain episode for when the model fails: always safe and always playable. A safe
     riddle the model wrote for this home is kept. Only objects with safe names are used; a home
@@ -469,11 +499,15 @@ def built_in_payload(
     # checked and the built-in ones fit any riddle.
     if model_riddle is not None:
         model_riddle = replace(model_riddle, hint="", resolution_template="")
+    chosen = target_object if target_object in safe else None
     first = model_riddle or (
-        _built_in_riddle(safe[(number - 1) % len(safe)]) if safe else _GENERIC_RIDDLES[0]
+        _built_in_riddle(chosen or safe[(number - 1) % len(safe)]) if safe else _GENERIC_RIDDLES[0]
     )
     others = [obj for obj in safe if obj != first.target_object] or list(safe)
-    second = _built_in_riddle(others[number % len(others)]) if others else _GENERIC_RIDDLES[1]
+    wanted = fallback_object if fallback_object in others else None
+    second = (
+        _built_in_riddle(wanted or others[number % len(others)]) if others else _GENERIC_RIDDLES[1]
+    )
     ending = (
         "Now think about all the clues together. Who do you think did it?"
         if last

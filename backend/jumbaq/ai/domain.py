@@ -126,6 +126,9 @@ class EpisodeInput:
     clue: ClueDraft
     played: tuple[PlayedEpisode, ...]
     rules: TextRules | None = None
+    # The objects the riddles must point at tonight. Code picks them to use the whole home.
+    target_object: str | None = None
+    fallback_object: str | None = None
     # Why the previous draft was refused, so the next try fixes exactly that.
     fix: tuple[str, ...] = ()
     # Words of the clue the kids decode later: the story never uses them.

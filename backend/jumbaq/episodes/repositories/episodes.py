@@ -31,6 +31,10 @@ class EpisodeRepository(Protocol):
         """The played episodes of the case, in order."""
         ...
 
+    async def earlier(self, family: FamilyRef, case_number: int, number: int) -> list[Episode]:
+        """The written episodes of the family before this one, over all its cases, in order."""
+        ...
+
     async def set_status(
         self, family: FamilyRef, episode_id: uuid.UUID, status: EpisodeStatus
     ) -> None: ...

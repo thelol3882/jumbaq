@@ -427,3 +427,30 @@ async def test_an_older_episode_without_texts_in_its_fallback_riddle_still_swaps
 
     assert row.payload is not None and swapped["hint"] == row.payload["hint"]
     assert answered["answered"]["resolution"] == "You said red. That is exactly the secret code!"
+
+
+async def test_each_evening_points_at_the_next_unused_object_of_the_home(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    provider = UnsafeFirstDraft()
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, provider))
+    first = live_client.get("/api/v1/episodes/current").json()
+    assert '"required_target_object": "fridge"' in provider.episode_prompts[0].user
+    assert '"required_fallback_target_object": "sofa"' in provider.episode_prompts[0].user
+
+    await play_evening(live_client, sessionmaker, first["id"])
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, provider))
+    second = live_client.get("/api/v1/episodes/current").json()
+    live_client.post(f"/api/v1/episodes/{second['id']}/open-now")
+
+    shown = live_client.get(f"/api/v1/episodes/{second['id']}").json()
+    assert shown["number"] == 2 and shown["content"] is not None
+    async with sessionmaker() as session:
+        row = (
+            await session.scalars(
+                select(EpisodeRow).where(EpisodeRow.family_id == family_id, EpisodeRow.number == 2)
+            )
+        ).one()
+    assert row.payload is not None and row.payload["riddle"]["target_object"] == "sofa"
+    assert row.payload["fallback_riddle"]["target_object"] == "bookshelf"
