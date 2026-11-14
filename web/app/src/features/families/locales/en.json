@@ -76,5 +76,6 @@
     "empty": "not yet",
     "kid": "{nickname}, {age}"
   },
-  "showMore": "show {count} more"
+  "showMore": "show {count} more",
+  "checkAnswers": "Some answers need another look. They're marked in blue."
 }
