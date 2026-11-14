@@ -278,6 +278,8 @@ forbidden_modules =
     jumbaq.billing.deps
     jumbaq.billing.routers
     jumbaq.cases.domain
+    jumbaq.cases.errors
+    jumbaq.cases.events
     jumbaq.cases.models
     jumbaq.cases.repositories
     jumbaq.cases.uow
