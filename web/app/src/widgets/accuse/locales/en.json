@@ -1,7 +1,7 @@
 {
   "wordmark": "jumbaq",
   "back": "Back to the case file",
-  "loading": "Opening the case file…",
+  "loading": "Getting the accusation ready…",
   "retry": "Try again",
   "title": "Who did it?",
   "intro": "Read the five clues out loud. Then let the detectives decide.",
@@ -10,7 +10,7 @@
   "certificateLabel": "the certificate",
   "closed": "Case {number}: closed",
   "itWas": "It was {name} all along.",
-  "print": "Print the certificate",
+  "print": "Print certificate",
   "next": {
     "label": "case {number}",
     "start": "Start Case {number} · $7.99 a month",

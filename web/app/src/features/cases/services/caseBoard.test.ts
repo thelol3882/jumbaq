@@ -51,6 +51,10 @@ describe("evenings", () => {
     expect(isBeingWritten(caseWith("planning", []))).toBe(true);
     expect(isBeingWritten(caseWith("active", episodes))).toBe(false);
     expect(isBeingWritten(caseWith("active", [slot(1, "generating")]))).toBe(true);
+    // Planned, but evening 1 is not requested yet: it comes with the next event.
+    expect(isBeingWritten(caseWith("active", [slot(1, "locked"), slot(2, "locked")]))).toBe(true);
+    // Every evening played: the case moves to the accusation with the next event.
+    expect(isBeingWritten(caseWith("active", [slot(1, "played"), slot(2, "played")]))).toBe(true);
     expect(isBeingWritten(caseWith("solved", [slot(1, "generating")]))).toBe(false);
   });
 

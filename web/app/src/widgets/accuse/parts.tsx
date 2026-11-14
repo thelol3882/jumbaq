@@ -81,7 +81,7 @@ function NextCase({ current }: { current: Case }) {
         type="button"
         onClick={() => void start()}
         disabled={starting.isLoading || redirecting}
-        className="mt-1.5 inline-block border-b-2 border-ink py-1.5 font-type text-[1.3125rem] font-bold disabled:opacity-60"
+        className="mt-1.5 inline-block border-b-2 border-ink py-1.5 text-left font-type text-[1.3125rem] font-bold disabled:opacity-60"
       >
         {t("next.start", { number: next })}
       </button>

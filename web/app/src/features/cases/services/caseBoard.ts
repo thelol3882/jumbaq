@@ -21,11 +21,18 @@ export function nextEvening(episodes: readonly CaseEpisode[]): CaseEpisode | und
   return episodes.find((e) => e.status !== "played");
 }
 
-/** True while the worker is still writing something this screen waits for. */
+const WRITING: readonly CaseEpisode["status"][] = ["requested", "generating", "locked"];
+
+/**
+ * True while the worker is still writing something this screen waits for. On an active case a
+ * locked next evening is about to be requested (evening 1 comes from the event after the plan),
+ * and with every evening played the case is about to move to the accusation.
+ */
 export function isBeingWritten(current: Case): boolean {
   if (current.status === "planning") return true;
+  if (current.status !== "active") return false;
   const next = nextEvening(current.episodes);
-  return current.status === "active" && (next?.status === "requested" || next?.status === "generating");
+  return next === undefined || WRITING.includes(next.status);
 }
 
 /** True when the evening exists but its time has not come yet. */
