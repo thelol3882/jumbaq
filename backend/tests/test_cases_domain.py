@@ -235,16 +235,6 @@ def test_the_built_in_plan_follows_the_case_number_and_wraps_round() -> None:
     assert domain.fallback_plan(len(plans) + 1) == plans[0]
 
 
-def test_the_status_moves_only_forward() -> None:
-    assert domain.can_move(S.PLANNING, S.ACTIVE)
-    assert domain.can_move(S.PLANNING, S.FAILED)
-    assert domain.can_move(S.ACTIVE, S.ACCUSING)
-    assert domain.can_move(S.ACCUSING, S.SOLVED)
-    assert not domain.can_move(S.ACTIVE, S.FAILED)
-    assert not domain.can_move(S.SOLVED, S.ACTIVE)
-    assert not domain.can_move(S.PLANNING, S.SOLVED)
-
-
 def test_the_rank_depends_on_the_attempts() -> None:
     assert [domain.rank_for(n) for n in (1, 2, 3, 7)] == [
         Rank.FIRST_TRY, Rank.SECOND_TRY, Rank.LATER, Rank.LATER,

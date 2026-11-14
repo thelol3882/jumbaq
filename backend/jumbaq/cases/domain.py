@@ -21,20 +21,14 @@ FIRST_CASE = 1
 
 
 class CaseStatus(StrEnum):
-    """planning -> active -> accusing -> solved, and planning -> failed."""
+    """planning -> active -> accusing -> solved. Nothing sets `failed`: the model failing gives a
+    built-in plan."""
 
     PLANNING = "planning"
     ACTIVE = "active"
     ACCUSING = "accusing"
     SOLVED = "solved"
     FAILED = "failed"
-
-
-_NEXT_STATUSES = {
-    CaseStatus.PLANNING: {CaseStatus.ACTIVE, CaseStatus.FAILED},
-    CaseStatus.ACTIVE: {CaseStatus.ACCUSING},
-    CaseStatus.ACCUSING: {CaseStatus.SOLVED},
-}
 
 
 class Rank(StrEnum):
@@ -392,10 +386,6 @@ FALLBACK_PLAN = FALLBACK_PLANS[0]
 def fallback_plan(case_number: int) -> Plan:
     """The built-in plan for this case number: the cases of a family take turns."""
     return FALLBACK_PLANS[(case_number - 1) % len(FALLBACK_PLANS)]
-
-
-def can_move(current: CaseStatus, to: CaseStatus) -> bool:
-    return to in _NEXT_STATUSES.get(current, set())
 
 
 def rank_for(attempts: int) -> Rank:
