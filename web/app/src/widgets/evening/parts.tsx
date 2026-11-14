@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, SuspectTable, type Case } from "@/features/cases";
-import { ClueTag, type Episode } from "@/features/episodes";
-import { StampLink, Wordmark } from "@/shared/components/notebook";
+import { ClueTag, DecodeStep, StrikeStep, type Episode } from "@/features/episodes";
+import { HandNote, StampLink, Wordmark } from "@/shared/components/notebook";
 
 export type ShownEpisode = Episode & { content: NonNullable<Episode["content"]> };
 
@@ -32,9 +32,13 @@ export function AfterTheAnswer({ current, episode }: { current: Case; episode: S
   const t = useTranslations("widget.evening");
   const result = episode.content.result;
   const last = episode.number === current.episodes.length;
+  const aboutName = result?.revealed_suspect
+    ? current.suspects.find((s) => s.id === result.struck_suspect_id)?.name
+    : undefined;
   return (
     <>
       {result ? <ClueTag number={episode.number} text={result.case_clue} /> : null}
+      {aboutName ? <HandNote>{t("revealedSuspect", { name: aboutName })}</HandNote> : null}
       {current.suspects.length ? (
         <section aria-labelledby="evening-suspects">
           <h2 id="evening-suspects" className="mb-2.5 font-type text-label font-normal text-ink-muted">
@@ -50,4 +54,46 @@ export function AfterTheAnswer({ current, episode }: { current: Case; episode: S
       )}
     </>
   );
+}
+
+/** The steps after the riddle, in the main column: decode the clue, then strike out a suspect. Nothing for the other steps. */
+export function StepMain({
+  current,
+  episode,
+  codeBreaker,
+  inlineKey = false,
+  large = false,
+}: {
+  current: Case;
+  episode: ShownEpisode;
+  codeBreaker?: string;
+  inlineKey?: boolean;
+  large?: boolean;
+}) {
+  const { step, decode, strike, answered } = episode.content;
+  if (step === "decode" && decode && answered) {
+    return (
+      <DecodeStep
+        episodeId={episode.id}
+        decode={decode}
+        resolution={answered.resolution}
+        codeBreaker={codeBreaker}
+        inlineKey={inlineKey}
+        large={large}
+      />
+    );
+  }
+  if (step === "strike" && strike && answered) {
+    return (
+      <StrikeStep
+        episodeId={episode.id}
+        number={episode.number}
+        strike={strike}
+        suspects={current.suspects}
+        resolution={answered.resolution}
+        large={large}
+      />
+    );
+  }
+  return null;
 }

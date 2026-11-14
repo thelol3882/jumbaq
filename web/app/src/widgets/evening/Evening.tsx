@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useCurrentCase, WritingProgress, type Case } from "@/features/cases";
 import { useEpisode, type Episode } from "@/features/episodes";
+import { useFamily } from "@/features/families";
 import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
@@ -11,8 +12,9 @@ import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { formatOpening } from "@/shared/lib/dates";
 import { EveningDesktop } from "./EveningDesktop";
 import { EveningMobile } from "./EveningMobile";
+import { codeBreaker } from "./services/codeBreaker";
 
-/** One evening of the current case: read aloud and answer, then the result and the clue. */
+/** One evening of the current case: the riddle, the code, the suspect to cross out, then the result. */
 export function Evening({ caseNumber, evening }: { caseNumber: number; evening: number }) {
   const t = useTranslations("widget.evening");
   const errorMessage = useApiErrorMessage();
@@ -20,11 +22,18 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
   const { current, loading: caseLoading, error: caseError, slow: caseSlow, retry } = useCurrentCase();
   const slot = current?.number === caseNumber ? current.episodes.find((e) => e.number === evening) : undefined;
   const { episode, loading, writing, slow, error, retry: retryEpisode } = useEpisode(slot?.id ?? null);
+  const { family } = useFamily();
 
   const ready = current && episode?.content ? { current, episode } : null;
   if (ready) {
     const View = isMobile ? EveningMobile : EveningDesktop;
-    return <View current={ready.current} episode={ready.episode as Episode & { content: NonNullable<Episode["content"]> }} />;
+    return (
+      <View
+        current={ready.current}
+        episode={ready.episode as Episode & { content: NonNullable<Episode["content"]> }}
+        codeBreaker={codeBreaker(family?.kids ?? [])}
+      />
+    );
   }
 
   return (
