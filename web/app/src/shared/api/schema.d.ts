@@ -83,10 +83,427 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/billing/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Checkout
+         * @description A Stripe payment page (test mode) for $7.99 a month. An active subscription gives 409
+         *     `billing.already_subscribed`; a server without Stripe keys gives 503
+         *     `billing.not_configured`.
+         */
+        post: operations["start_checkout_api_v1_billing_checkout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Subscription
+         * @description `status` is null before the first payment. `active` opens the cases after the free one.
+         */
+        get: operations["get_subscription_api_v1_billing_subscription_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Current Case
+         * @description The newest case. Clues of episodes not yet played, the culprit and the reveal are never
+         *     in it. 404 `case.not_found` before case 1 is opened.
+         */
+        get: operations["get_current_case_api_v1_cases_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Next Case
+         * @description Only after the current case is solved (409 `case.not_solved`). From case 2 on it needs a
+         *     subscription: 402 `billing.payment_required`.
+         */
+        post: operations["start_next_case_api_v1_cases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases/{case_id}/accuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accuse
+         * @description Only after the last episode is played (409 `case.not_accusing`). A wrong suspect gives
+         *     200 with `correct: false`; an id that is not a suspect gives 422 `case.unknown_suspect`.
+         */
+        post: operations["accuse_api_v1_cases__case_id__accuse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases/{case_id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Certificate
+         * @description Only for a solved case (409 `case.not_solved`). Another family's case gives 404.
+         */
+        get: operations["get_certificate_api_v1_cases__case_id__certificate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episodes/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Current Episode
+         * @description The episode to show now. `content` is null while it is written or not yet available.
+         *     404 `episode.not_found` while the case is planned.
+         */
+        get: operations["get_current_episode_api_v1_episodes_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episodes/{episode_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Episode
+         * @description Another family's episode gives 404 `episode.not_found`.
+         */
+        get: operations["get_episode_api_v1_episodes__episode_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episodes/{episode_id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer Episode
+         * @description Any answer fits the story. Only for a ready episode (409 `episode.not_ready`) that is
+         *     available (409 `episode.not_available_yet`). The result is in `content.result`.
+         */
+        post: operations["answer_episode_api_v1_episodes__episode_id__answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episodes/{episode_id}/swap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Swap Riddle
+         * @description Switches to the second riddle when the object is not at hand. Once per episode
+         *     (409 `episode.already_swapped`).
+         */
+        post: operations["swap_riddle_api_v1_episodes__episode_id__swap_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episodes/{episode_id}/open-now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open Episode Now
+         * @description Opens a waiting episode at once, so the jury can play a case in minutes. Only in demo
+         *     mode (403 `episode.demo_mode_off`).
+         */
+        post: operations["open_episode_now_api_v1_episodes__episode_id__open_now_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stripe Webhook
+         * @description A wrong signature gives 400 `billing.bad_signature`. Events we do not use get 200.
+         */
+        post: operations["stripe_webhook_api_v1_billing_webhook_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AccusationOut
+         * @description A wrong suspect is not an error: `correct` is false and the kids try again.
+         */
+        AccusationOut: {
+            /** Correct */
+            correct: boolean;
+            /** Accusation Attempts */
+            accusation_attempts: number;
+            rank: components["schemas"]["Rank"] | null;
+            /** Reveal */
+            reveal: string | null;
+            /** Culprit Id */
+            culprit_id: string | null;
+        };
+        /** AccuseIn */
+        AccuseIn: {
+            /** Suspect Id */
+            suspect_id: string;
+        };
+        /** AnswerIn */
+        AnswerIn: {
+            /** Answer */
+            answer: string;
+        };
+        /**
+         * AnswerType
+         * @description What the kids read off the household object.
+         * @enum {string}
+         */
+        AnswerType: "number" | "colour" | "letter" | "shape" | "word";
+        /** CaseEpisodeOut */
+        CaseEpisodeOut: {
+            /** Number */
+            number: number;
+            /** Id */
+            id: string | null;
+            status: components["schemas"]["EpisodeSlotStatus"];
+            /** Available At */
+            available_at: string | null;
+        };
+        /**
+         * CaseOut
+         * @description The culprit and the reveal are never part of it: they come only with the right
+         *     accusation.
+         */
+        CaseOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            status: components["schemas"]["CaseStatus"];
+            /** Title */
+            title: string | null;
+            /** Suspects */
+            suspects: components["schemas"]["SuspectOut"][];
+            /** Clues */
+            clues: components["schemas"]["ClueOut"][];
+            /** Episodes */
+            episodes: components["schemas"]["CaseEpisodeOut"][];
+            /** Accusation Attempts */
+            accusation_attempts: number;
+            rank: components["schemas"]["Rank"] | null;
+        };
+        /**
+         * CaseStatus
+         * @description planning -> active -> accusing -> solved, and planning -> failed.
+         * @enum {string}
+         */
+        CaseStatus: "planning" | "active" | "accusing" | "solved" | "failed";
+        /** CertificateOut */
+        CertificateOut: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Number */
+            number: number;
+            /** Title */
+            title: string;
+            rank: components["schemas"]["Rank"];
+            /** Nicknames */
+            nicknames: string[];
+            /**
+             * Solved At
+             * Format: date-time
+             */
+            solved_at: string;
+        };
+        /** CheckoutOut */
+        CheckoutOut: {
+            /** Url */
+            url: string;
+        };
+        /**
+         * ClueOut
+         * @description A clue of an episode already played. Clues of later episodes are never sent.
+         */
+        ClueOut: {
+            /** Episode */
+            episode: number;
+            /** Text */
+            text: string;
+            /** Suspect Id */
+            suspect_id: string;
+            /** Rules Out */
+            rules_out: boolean;
+        };
+        /** EpisodeContentOut */
+        EpisodeContentOut: {
+            /** Recap */
+            recap: string;
+            /** Read Aloud */
+            read_aloud: string[];
+            riddle: components["schemas"]["RiddleOut"];
+            /** Hint */
+            hint: string;
+            /** Swapped */
+            swapped: boolean;
+            result: components["schemas"]["EpisodeResultOut"] | null;
+        };
+        /** EpisodeOut */
+        EpisodeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Case Number */
+            case_number: number;
+            /** Number */
+            number: number;
+            status: components["schemas"]["EpisodeStatus"];
+            /** Available At */
+            available_at: string | null;
+            content: components["schemas"]["EpisodeContentOut"] | null;
+        };
+        /** EpisodeResultOut */
+        EpisodeResultOut: {
+            /** Answer */
+            answer: string;
+            /** Resolution */
+            resolution: string;
+            /** Case Clue */
+            case_clue: string;
+            /** Cliffhanger */
+            cliffhanger: string;
+        };
+        /**
+         * EpisodeSlotStatus
+         * @description The statuses of an episode, plus `locked` for one that does not exist yet.
+         * @enum {string}
+         */
+        EpisodeSlotStatus: "locked" | "requested" | "generating" | "ready" | "played" | "failed";
+        /**
+         * EpisodeStatus
+         * @enum {string}
+         */
+        EpisodeStatus: "requested" | "generating" | "ready" | "played" | "failed";
         /** FamilyCreate */
         FamilyCreate: {
             /** Kids */
@@ -139,6 +556,42 @@ export interface components {
             /** Age */
             age: number;
         };
+        /**
+         * Rank
+         * @description By the number of accusations it took. The values are translation keys of the web app,
+         *     so a rename happens here and in its texts only.
+         * @enum {string}
+         */
+        Rank: "chief_detective" | "detective" | "junior_detective";
+        /** RiddleOut */
+        RiddleOut: {
+            /** Text */
+            text: string;
+            answer_type: components["schemas"]["AnswerType"];
+            /** Parent Note */
+            parent_note: string;
+        };
+        /** SubscriptionOut */
+        SubscriptionOut: {
+            status: components["schemas"]["SubscriptionStatus"] | null;
+            /** Active */
+            active: boolean;
+        };
+        /**
+         * SubscriptionStatus
+         * @description The statuses of a Stripe subscription.
+         * @enum {string}
+         */
+        SubscriptionStatus: "incomplete" | "incomplete_expired" | "trialing" | "active" | "past_due" | "unpaid" | "paused" | "canceled";
+        /** SuspectOut */
+        SuspectOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -151,6 +604,14 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WebhookOut */
+        WebhookOut: {
+            /**
+             * Received
+             * @default true
+             */
+            received: boolean;
         };
     };
     responses: never;
@@ -254,6 +715,398 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FamilyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_checkout_api_v1_billing_checkout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_subscription_api_v1_billing_subscription_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_current_case_api_v1_cases_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_next_case_api_v1_cases_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accuse_api_v1_cases__case_id__accuse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccuseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccusationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_certificate_api_v1_cases__case_id__certificate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_current_episode_api_v1_episodes_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_episode_api_v1_episodes__episode_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    answer_episode_api_v1_episodes__episode_id__answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    swap_riddle_api_v1_episodes__episode_id__swap_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_episode_now_api_v1_episodes__episode_id__open_now_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stripe_webhook_api_v1_billing_webhook_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Stripe-Signature"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookOut"];
                 };
             };
             /** @description Validation Error */
