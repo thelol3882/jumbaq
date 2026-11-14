@@ -4,16 +4,24 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, SuspectTable, type Case } from "@/features/cases";
 import { ClueTag, DecodeStep, StrikeStep, useSkipEvening, type Episode } from "@/features/episodes";
-import { useDetectivesLabel, useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { DemoControls, DetectivesTag, HandNote, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { withTonightsClue } from "./services/tonightsClues";
 
 export type ShownEpisode = Episode & { content: NonNullable<Episode["content"]> };
 
-export function EveningHeader({ current, episode, wide = false }: { current: Case; episode: ShownEpisode; wide?: boolean }) {
+export function EveningHeader({
+  current,
+  episode,
+  detectivesLabel,
+  wide = false,
+}: {
+  current: Case;
+  episode: ShownEpisode;
+  detectivesLabel: string | undefined;
+  wide?: boolean;
+}) {
   const t = useTranslations("widget.evening");
-  const detectivesLabel = useDetectivesLabel();
   return (
     <header
       className={`flex flex-wrap items-center justify-between gap-4 ${wide ? "border-b-[1.5px] border-rule-strong pb-4.5" : ""}`}
@@ -100,12 +108,11 @@ export function StepMain({
 }
 
 /** For reviewers: plays the evening out from the answer, decode or strike step. */
-export function EveningDemo({ episode }: { episode: ShownEpisode }) {
+export function EveningDemo({ episode, demoMode }: { episode: ShownEpisode; demoMode: boolean }) {
   const t = useTranslations("widget.evening");
   const errorMessage = useApiErrorMessage();
-  const { family } = useFamily();
   const skipper = useSkipEvening();
-  if (!family?.demo_mode || skipper.refused || episode.content.step === "done") return null;
+  if (!demoMode || skipper.refused || episode.content.step === "done") return null;
   return (
     <DemoControls title={t("demo.title")} note={t("demo.note")}>
       <TypedButton disabled={skipper.skipping} onClick={() => void skipper.skip(episode.id)}>

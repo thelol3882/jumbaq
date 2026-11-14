@@ -56,7 +56,15 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
 
   if (current && hasContent(episode)) {
     const View = isMobile ? EveningMobile : EveningDesktop;
-    return <View current={current} episode={episode} codeBreaker={codeBreaker(family?.kids ?? [])} />;
+    return (
+      <View
+        current={current}
+        episode={episode}
+        codeBreaker={codeBreaker(family?.kids ?? [])}
+        detectivesLabel={detectivesLabel}
+        demoMode={family?.demo_mode ?? false}
+      />
+    );
   }
 
   return (
