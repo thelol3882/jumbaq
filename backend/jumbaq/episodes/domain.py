@@ -5,6 +5,7 @@ who then go and look at something in the home. The answer slot comes from ai.pub
 the caller, so this module stays free of the database.
 """
 
+import random
 import re
 import uuid
 from dataclasses import dataclass, replace
@@ -18,6 +19,19 @@ class EpisodeStatus(StrEnum):
     READY = "ready"
     PLAYED = "played"
     FAILED = "failed"
+
+
+class EveningStep(StrEnum):
+    ANSWER = "answer"
+    DECODE = "decode"
+    STRIKE = "strike"
+    DONE = "done"
+
+
+class CipherLevel(StrEnum):
+    COUNT = "count"
+    NUMBER_CODE = "number_code"
+    SHIFT = "shift"
 
 
 # Things a small child must never be sent to or asked to do, matched as whole words in any case.
@@ -38,6 +52,25 @@ PARAGRAPH_LIMIT = {False: 600, True: 400}
 SHORT_TEXT_LIMIT = {False: 400, True: 250}
 MAX_PARAGRAPHS = 6
 
+# The oldest kid decides how hard the cipher is.
+NUMBER_CODE_AGE = 6
+SHIFT_AGE = 8
+# Wrong picks in one step before the server shows the right answer and moves on.
+MAX_ATTEMPTS = 2
+SECRET_WORD_LENGTHS = range(4, 8)
+GAP = "____"
+STOPWORDS = frozenset({
+    "the", "and", "was", "were", "with", "from", "that", "this", "they", "there", "where",
+    "when", "what", "have", "been", "into", "very", "some", "their", "then", "than", "them",
+    "these", "those", "would", "could", "should", "about", "after", "before", "because", "while",
+    "which", "who", "whom", "whose", "does", "did", "has", "had", "are", "but", "for", "not",
+    "you", "your", "our", "out", "off", "over", "under",
+})  # fmt: skip
+FALLBACK_WORDS = ("APPLE", "CLOUD", "PENCIL", "BANANA", "GARDEN")
+FALLBACK_PHRASES = ("RED APPLE PIE", "BIG BLUE CLOUD", "SOFT GREEN PENCIL")
+_LETTERS = re.compile(r"[A-Za-z]+")
+_DIGITS = re.compile(r"\d{1,9}")
+
 
 @dataclass(frozen=True)
 class Riddle:
@@ -57,6 +90,20 @@ class Payload:
     resolution_template: str
     case_clue: str
     cliffhanger: str
+    # The evening steps, set when the episode is written. An older episode has none of them
+    # and is played in one step, the answer.
+    clue_suspect_id: str | None = None
+    clue_points_at: bool | None = None
+    cipher_level: CipherLevel | None = None
+    cipher_secret: str | None = None
+    cipher_decoys: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class CipherPlan:
+    level: CipherLevel
+    secret: str | None
+    decoys: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -74,6 +121,10 @@ class Episode:
     played_at: datetime | None
     is_fallback: bool
     used_fallback_riddle: bool
+    answered_at: datetime | None = None
+    decode_attempts: int = 0
+    decoded_at: datetime | None = None
+    strike_attempts: int = 0
 
     @property
     def riddle(self) -> Riddle | None:
@@ -199,3 +250,134 @@ def is_safe_riddle(riddle: Riddle, objects: tuple[str, ...], youngest_age: int) 
         and not any(banned_words(text) for text in texts)
         and all(len(text) <= SHORT_TEXT_LIMIT[young] for text in texts)
     )
+
+
+def has_evening_steps(payload: Payload) -> bool:
+    return payload.cipher_level is not None and payload.clue_suspect_id is not None
+
+
+def evening_step(episode: Episode) -> EveningStep:
+    if episode.status == EpisodeStatus.PLAYED:
+        return EveningStep.DONE
+    if episode.answered_at is None:
+        return EveningStep.ANSWER
+    if episode.decoded_at is None:
+        return EveningStep.DECODE
+    return EveningStep.STRIKE
+
+
+def with_evening_steps(
+    payload: Payload, suspect_id: str, points_at: bool, plan: CipherPlan
+) -> Payload:
+    return replace(
+        payload,
+        clue_suspect_id=suspect_id,
+        clue_points_at=points_at,
+        cipher_level=plan.level,
+        cipher_secret=plan.secret,
+        cipher_decoys=plan.decoys,
+    )
+
+
+def cipher_level_for(oldest_age: int) -> CipherLevel:
+    if oldest_age < NUMBER_CODE_AGE:
+        return CipherLevel.COUNT
+    if oldest_age < SHIFT_AGE:
+        return CipherLevel.NUMBER_CODE
+    return CipherLevel.SHIFT
+
+
+def _clue_words(clue: str) -> list[str]:
+    return [word.upper() for word in _LETTERS.findall(clue)]
+
+
+def _secret_index(words: list[str]) -> int | None:
+    """The longest word of 4 to 7 letters that is not a stopword; the first one on a tie."""
+    best: int | None = None
+    for index, word in enumerate(words):
+        if len(word) not in SECRET_WORD_LENGTHS or word.lower() in STOPWORDS:
+            continue
+        if best is None or len(word) > len(words[best]):
+            best = index
+    return best
+
+
+def _fill(found: list[str], fallback: tuple[str, ...], secret: str) -> tuple[str, ...]:
+    chosen = list(dict.fromkeys(text for text in found if text != secret))[:2]
+    for text in fallback:
+        if len(chosen) == 2:
+            break
+        if text != secret and text not in chosen:
+            chosen.append(text)
+    return tuple(chosen)
+
+
+def plan_cipher(clue: str, oldest_age: int) -> CipherPlan:
+    """The level for the kids' age and the secret and decoys from the plan's clue. A clue with
+    no word that works gives the level count, which needs none."""
+    level = cipher_level_for(oldest_age)
+    words = _clue_words(clue)
+    index = _secret_index(words)
+    if level == CipherLevel.NUMBER_CODE and index is not None:
+        secret = words[index]
+        others = [
+            word
+            for i, word in enumerate(words)
+            if i != index and len(word) >= 3 and word.lower() not in STOPWORDS
+        ]
+        return CipherPlan(level, secret, _fill(others, FALLBACK_WORDS, secret))
+    if level == CipherLevel.SHIFT and index is not None and len(words) >= 3:
+        start = min(index, len(words) - 3)
+        secret = " ".join(words[start : start + 3])
+        starts = range(len(words) - 2)
+        # Windows that share no word with the secret come first.
+        ordered = sorted(starts, key=lambda s: abs(s - start) < 3)
+        windows = [" ".join(words[s : s + 3]) for s in ordered if s != start]
+        return CipherPlan(level, secret, _fill(windows, FALLBACK_PHRASES, secret))
+    return CipherPlan(CipherLevel.COUNT, None, ())
+
+
+def cipher_key(answer: str) -> int:
+    """The number in the answer, else how many letters it has. At least 1."""
+    digits = _DIGITS.search(answer)
+    number = int(digits.group(0)) if digits else sum(char.isalpha() for char in answer)
+    return max(number, 1)
+
+
+def number_code(key: int, secret: str) -> str:
+    """Each letter is its place in the alphabet plus a start that depends on the key: with a
+    start of 3, A is 3, B is 4. Letters are joined by "-" and words by " / "."""
+    start = (key - 1) % 9 + 1
+    return " / ".join(
+        "-".join(str(ord(char) - ord("A") + start) for char in word) for word in secret.split()
+    )
+
+
+def shift_text(key: int, secret: str) -> str:
+    shift = (key - 1) % 25 + 1
+    return "".join(
+        chr((ord(char) - ord("A") + shift) % 26 + ord("A")) if char != " " else char
+        for char in secret
+    )
+
+
+def count_target(key: int) -> int:
+    return (key - 1) % 10 + 1
+
+
+def clue_with_gap(clue: str, secret: str) -> str:
+    """The clue with the secret word or words hidden, so the kids see the rest."""
+    parts = [re.escape(word) for word in secret.split()]
+    pattern = re.compile(r"\b" + r"[^A-Za-z]+".join(parts) + r"\b", re.I)
+    return pattern.sub(GAP, clue)
+
+
+def same_word(guess: str, secret: str) -> bool:
+    return " ".join(guess.upper().split()) == secret
+
+
+def shuffled_options(secret: str, decoys: tuple[str, ...], seed: uuid.UUID) -> list[str]:
+    """The same order every time for the same episode, so a reload keeps the buttons in place."""
+    options = [secret, *decoys]
+    random.Random(seed.int).shuffle(options)
+    return options
