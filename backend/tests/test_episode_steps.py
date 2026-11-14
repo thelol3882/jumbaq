@@ -18,8 +18,8 @@ from tests.flows import deliver_all, family_body
 pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
 
 Sessionmaker = async_sessionmaker[AsyncSession]
-# The stub plans clue 1 as "A grey feather lies by the empty plate." about s2, pointing at it.
-RIGHT, WRONG = "s2", "s1"
+# The stub plans clue 1 about s1 and rules it out; the clue is the grey feather one.
+RIGHT, WRONG = "s1", "s2"
 SECRET = {"shift": "FEATHER LIES BY", "number_code": "FEATHER", "count": None}
 
 
@@ -85,7 +85,7 @@ async def test_the_whole_evening_answer_decode_strike(
     assert cipher["level"] == "shift" and cipher["attempts"] == 0
     assert cipher["key"] == 4 and cipher["count"] is None
     assert cipher["code"] == domain.shift_text(4, secret or "")
-    assert cipher["clue_with_gap"] == "A grey ____ the empty plate."
+    assert cipher["clue_with_gap"] == "A grey ____ the empty plate, and Felix has only fur."
     assert len(cipher["options"]) == 3 and secret in cipher["options"]
     # The secret never travels apart from the buttons.
     assert secret not in (cipher["code"], cipher["clue_with_gap"])
@@ -95,8 +95,8 @@ async def test_the_whole_evening_answer_decode_strike(
 
     assert decoded["step"] == "strike" and decoded["decode"] is None
     assert decoded["strike"] == {
-        "clue": "A grey feather lies by the empty plate.",
-        "points_at": True,
+        "clue": "A grey feather lies by the empty plate, and Felix has only fur.",
+        "points_at": False,
         "attempts": 0,
         "decoded_word": secret,
         "revealed_word": False,
@@ -108,8 +108,8 @@ async def test_the_whole_evening_answer_decode_strike(
     assert content(played)["step"] == "done" and played.json()["status"] == "played"
     assert result["decoded_word"] == secret
     assert (result["revealed_suspect"], result["struck_suspect_id"]) == (False, RIGHT)
-    assert result["rules_out"] is False
-    assert result["case_clue"] == "A grey feather lies by the empty plate."
+    assert result["rules_out"] is True
+    assert result["case_clue"] == "A grey feather lies by the empty plate, and Felix has only fur."
     row = await stored(sessionmaker, episode_id)
     assert (row.status, row.decode_attempts, row.strike_attempts) == ("played", 0, 0)
     assert row.played_at is not None and row.decoded_at is not None
@@ -175,7 +175,7 @@ async def test_two_wrong_suspects_finish_the_evening_and_show_the_right_one(
     assert twice.json()["status"] == "played"
     result = content(twice)["result"]
     assert (result["revealed_suspect"], result["struck_suspect_id"]) == (True, RIGHT)
-    assert result["rules_out"] is False
+    assert result["rules_out"] is True
     row = await stored(sessionmaker, episode_id)
     assert (row.status, row.strike_attempts, row.played_at is None) == ("played", 2, False)
     await deliver_all(sessionmaker)
@@ -228,7 +228,7 @@ async def test_the_oldest_kid_sets_the_level_of_the_stored_episode(
     row = await stored(sessionmaker, episode_id)
     assert row.payload is not None and row.payload["cipher_level"] == level
     assert row.payload["cipher_secret"] == SECRET[level]
-    assert row.payload["clue_suspect_id"] == RIGHT and row.payload["clue_points_at"] is True
+    assert row.payload["clue_suspect_id"] == RIGHT and row.payload["clue_points_at"] is False
     cipher = content(live_client.post(f"{path}/answer", json={"answer": "42"}))["decode"]
     assert cipher["level"] == level and cipher["key"] == 42
 
@@ -241,7 +241,7 @@ async def test_the_number_code_level_shows_numbers_and_three_buttons(
     cipher = content(live_client.post(f"{path}/answer", json={"answer": "blue"}))["decode"]
 
     assert cipher["code"] == domain.number_code(4, "FEATHER")
-    assert cipher["clue_with_gap"] == "A grey ____ lies by the empty plate."
+    assert cipher["clue_with_gap"] == "A grey ____ lies by the empty plate, and Felix has only fur."
     assert sorted(cipher["options"]) == ["FEATHER", "GREY", "LIES"]
     wrong = content(decode(live_client, path, "GREY"))
     assert wrong["decode"]["attempts"] == 1

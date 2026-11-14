@@ -227,3 +227,11 @@ def test_the_plan_prompt_states_the_clue_limit_and_the_retry_reasons() -> None:
     prompt = prompts.case_plan_prompt(CasePlanInput(HOME, 1, clue_max_chars=140, fix=(reason,)))
     assert "at most 140 characters" in prompt.system
     assert reason in prompt.user and reason not in prompt.system
+
+
+def test_the_plan_prompt_says_which_clues_may_point() -> None:
+    system = prompts.case_plan_prompt(CasePlanInput(HOME, 1)).system
+
+    assert "Only clues 4 and 5 may point at a suspect" in system
+    assert "Clues 1, 2 and 3 only rule suspects out" in system
+    assert "there are 2 innocents" in system
