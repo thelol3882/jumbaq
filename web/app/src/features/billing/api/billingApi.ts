@@ -7,6 +7,10 @@ export const billingApi = baseApi.injectEndpoints({
     startCheckout: builder.mutation<Schemas["CheckoutOut"], void>({
       query: () => ({ url: "/billing/checkout", method: "POST" }),
     }),
+    // The answer is the Stripe portal page, where the family manages or cancels; it returns to /family.
+    openPortal: builder.mutation<Schemas["PortalOut"], void>({
+      query: () => ({ url: "/billing/portal", method: "POST" }),
+    }),
     getSubscription: builder.query<Schemas["SubscriptionOut"], void>({
       query: () => "/billing/subscription",
       providesTags: ["Subscription"],
@@ -14,4 +18,4 @@ export const billingApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useStartCheckoutMutation, useGetSubscriptionQuery } = billingApi;
+export const { useStartCheckoutMutation, useOpenPortalMutation, useGetSubscriptionQuery } = billingApi;

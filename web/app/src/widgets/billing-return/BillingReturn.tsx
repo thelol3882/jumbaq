@@ -5,14 +5,17 @@ import { useTranslations } from "next-intl";
 import { useCurrentCase, useStartNextCaseMutation } from "@/features/cases";
 import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, NotebookPage, StampButton, StampLink, Wordmark } from "@/shared/components/notebook";
+import { HandNote, NotebookPage, PlansLink, StampButton, StampLink, Wordmark } from "@/shared/components/notebook";
 
 /** Where Stripe sends the parent back. One column on every screen. */
 export function BillingReturn({ outcome }: { outcome: "success" | "cancel" }) {
   const t = useTranslations("widget.billing-return");
   return (
     <NotebookPage>
-      <Wordmark text={t("wordmark")} size="sm" />
+      <div className="flex items-center justify-between gap-4">
+        <Wordmark text={t("wordmark")} size="sm" />
+        <PlansLink />
+      </div>
       <div className="mt-12 flex flex-col gap-6">
         {outcome === "success" ? (
           <Paid />

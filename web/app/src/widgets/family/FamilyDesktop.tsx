@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, inOpening, type Case } from "@/features/cases";
 import { FamilyBoard, type FamilyState } from "@/features/families";
-import { NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
+import { NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
 import { Tonight, TonightPending, type Waiting } from "./Tonight";
 
@@ -32,6 +32,7 @@ export function FamilyDesktop({
         <span className="font-type text-label text-ink-muted">
           {t("detectives", { names: family.kids.map((kid) => kid.nickname).join(", ") })}
         </span>
+        <PlansLink />
       </header>
       <div className="mt-11">
         <NotebookSpread

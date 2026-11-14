@@ -7,7 +7,7 @@ import {
   SetupSubmit,
   type SetupFormState,
 } from "@/features/families";
-import { HandNote, NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
+import { HandNote, NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
 
 /** Design F2: the questions on the left page, the case file filling in on the right, with the
  * stamp always in view. */
@@ -15,10 +15,11 @@ export function SetupDesktop({ form }: { form: SetupFormState }) {
   const t = useTranslations("widget.setup");
   return (
     <NotebookPage width="wide">
-      <header>
+      <header className="flex items-center justify-between gap-6">
         <Link href="/">
           <Wordmark text={t("wordmark")} size="sm" />
         </Link>
+        <PlansLink />
       </header>
       <div className="mt-9">
         <SetupFormShell form={form}>

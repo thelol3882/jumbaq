@@ -7,7 +7,7 @@ import { useEpisode, type Episode } from "@/features/episodes";
 import { useFamily } from "@/features/families";
 import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
+import { HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { useRefetchAt } from "@/shared/hooks/useRefetchAt";
 import { formatOpening } from "@/shared/lib/dates";
@@ -64,9 +64,12 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
         <Link href="/family" aria-label={t("toCaseFile")}>
           <Wordmark text={t("wordmark")} size="sm" />
         </Link>
-        {current && slot ? (
-          <span className="font-type text-case">{t("eveningOf", { number: evening, total: current.episodes.length })}</span>
-        ) : null}
+        <div className="flex items-center gap-4">
+          {current && slot ? (
+            <span className="font-type text-case">{t("eveningOf", { number: evening, total: current.episodes.length })}</span>
+          ) : null}
+          <PlansLink />
+        </div>
       </div>
       <div className="mt-10 flex flex-col gap-6">
         <Notice t={t} state={state} retry={recheck} current={current} />

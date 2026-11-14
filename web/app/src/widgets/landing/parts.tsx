@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { EvidenceTag, HandNote, StampLink, Wordmark } from "@/shared/components/notebook";
+import { EvidenceTag, HandNote, PlansLink, StampLink, Wordmark } from "@/shared/components/notebook";
 
 const STEPS = ["read", "hunt", "type"] as const;
 // The hand-drawn list is a little uneven on purpose.
@@ -11,9 +11,10 @@ export function Masthead() {
   const t = useTranslations("widget.landing");
   return (
     <>
-      <div className="flex justify-between font-type text-label text-ink-muted">
+      <div className="flex items-center justify-between gap-3 font-type text-label text-ink-muted">
         <span>{t("volume")}</span>
         <span>{t("edition")}</span>
+        <PlansLink />
       </div>
       <h1 className="mt-4.5 self-start">
         <Wordmark text={t("wordmark")} />

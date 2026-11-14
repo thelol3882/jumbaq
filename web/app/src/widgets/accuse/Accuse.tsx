@@ -5,7 +5,7 @@ import { useState } from "react";
 import { playedCount, useCurrentCase, type Accusation } from "@/features/cases";
 import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
+import { HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { AccuseDesktop } from "./AccuseDesktop";
 import { AccuseMobile } from "./AccuseMobile";
@@ -30,7 +30,10 @@ export function Accuse({ caseNumber }: { caseNumber: number }) {
 
   return (
     <NotebookPage margin>
-      <Wordmark text={t("wordmark")} size="sm" />
+      <div className="flex items-center justify-between gap-4">
+        <Wordmark text={t("wordmark")} size="sm" />
+        <PlansLink />
+      </div>
       <div className="mt-10 flex flex-col gap-6">
         {almost && slow ? (
           <div role="status" className="flex flex-col items-start gap-2">

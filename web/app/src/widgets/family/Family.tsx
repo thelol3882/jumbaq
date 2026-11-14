@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { inOpening, tonight, useCurrentCase } from "@/features/cases";
 import { useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
+import { HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { useRefetchAt } from "@/shared/hooks/useRefetchAt";
 import { FamilyDesktop } from "./FamilyDesktop";
@@ -40,9 +40,12 @@ export function Family() {
 
   return (
     <NotebookPage margin>
-      <Link href="/" className="self-start">
-        <Wordmark text={t("wordmark")} size="sm" />
-      </Link>
+      <div className="flex items-center justify-between gap-4">
+        <Link href="/">
+          <Wordmark text={t("wordmark")} size="sm" />
+        </Link>
+        <PlansLink />
+      </div>
       {loading ? (
         <p role="status" className="mt-10 font-type text-case font-normal text-ink-muted">
           {t("loading")}
