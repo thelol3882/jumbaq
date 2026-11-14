@@ -74,3 +74,14 @@ async def open_episode_now(
     """Opens a waiting episode at once, so the jury can play a case in minutes. Only in demo
     mode (403 `episode.demo_mode_off`)."""
     return EpisodeOut.model_validate(await episodes.open_now(family, episode_id))
+
+
+@router.post("/episodes/{episode_id}/skip")
+async def skip_episode(
+    episode_id: uuid.UUID, family: FamilyDep, episodes: EpisodeServiceDep
+) -> EpisodeOut:
+    """Plays the rest of an available evening with the right answers, so the jury can reach the
+    end of a case in minutes. Only in demo mode (403 `episode.demo_mode_off`). Like the steps:
+    409 `episode.not_ready`, `episode.not_available_yet` or, for a played one,
+    `episode.wrong_step`."""
+    return EpisodeOut.model_validate(await episodes.skip(family, episode_id))

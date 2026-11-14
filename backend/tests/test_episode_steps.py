@@ -6,13 +6,16 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from jumbaq.core.deps import get_settings
+from jumbaq.core.outbox import OutboxRow
 from jumbaq.episodes import domain
 from jumbaq.episodes.models import EpisodeRow
-from jumbaq.episodes.public import EpisodeStatus
+from jumbaq.episodes.public import EpisodePlayed, EpisodeStatus
 from jumbaq.families.deps import FAMILY_COOKIE
+from tests.conftest import TEST_SETTINGS
 from tests.flows import create_family, deliver_all, family_body, play_evening
 
 pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
@@ -417,3 +420,72 @@ async def test_decode_and_strike_of_another_family_give_404(
     for response in (decode(live_client, path, SECRET["shift"]), strike(live_client, path, RIGHT)):
         assert response.status_code == 404, response.text
         assert response.json()["error"]["code"] == "episode.not_found"
+
+
+async def played_events(sessionmaker: Sessionmaker, episode_id: str) -> int:
+    async with sessionmaker() as session:
+        row = await session.get(EpisodeRow, uuid.UUID(episode_id))
+        assert row is not None
+        return (
+            await session.scalar(
+                select(func.count())
+                .select_from(OutboxRow)
+                .where(
+                    OutboxRow.family_id == row.family_id,
+                    OutboxRow.topic == EpisodePlayed.topic,
+                )
+            )
+            or 0
+        )
+
+
+@pytest.mark.parametrize("done_steps", [0, 1, 2])
+async def test_skip_plays_the_rest_of_the_evening_from_any_step(
+    live_client: TestClient, sessionmaker: Sessionmaker, done_steps: int
+) -> None:
+    episode_id, path = await ready_episode(live_client, sessionmaker)
+    if done_steps >= 1:
+        live_client.post(f"{path}/answer", json={"answer": "blue"})
+    if done_steps >= 2:
+        decode(live_client, path, SECRET["shift"])
+
+    skipped = live_client.post(f"{path}/skip")
+
+    body = content(skipped)
+    assert skipped.json()["status"] == EpisodeStatus.PLAYED
+    assert body["step"] == "done" and body["result"]["struck_suspect_id"] == RIGHT
+    assert body["result"]["revealed_suspect"] is False
+    row = await stored(sessionmaker, episode_id)
+    assert row.status == "played" and row.played_at is not None
+    assert (row.decode_attempts, row.strike_attempts) == (0, 0)
+    assert await played_events(sessionmaker, episode_id) == 1
+    await deliver_all(sessionmaker)
+    assert live_client.get("/api/v1/episodes/current").json()["number"] == 2
+
+
+async def test_skip_with_demo_mode_off_gives_403(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    episode_id, path = await ready_episode(live_client, sessionmaker)
+    no_demo = TEST_SETTINGS.model_copy(update={"demo_mode": False})
+    live_client.app.dependency_overrides[get_settings] = lambda: no_demo  # type: ignore[attr-defined]
+    try:
+        refused = live_client.post(f"{path}/skip")
+    finally:
+        live_client.app.dependency_overrides.clear()  # type: ignore[attr-defined]
+    assert refused.status_code == 403
+    assert refused.json()["error"]["code"] == "episode.demo_mode_off"
+    assert (await stored(sessionmaker, episode_id)).status == "ready"
+
+
+async def test_skip_of_another_family_gives_404_and_of_a_played_episode_409(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    _, path = await ready_episode(live_client, sessionmaker)
+    assert content(live_client.post(f"{path}/skip"))["step"] == "done"
+    assert error_code(live_client.post(f"{path}/skip")) == "episode.wrong_step"
+
+    create_family(live_client)  # the cookie is now the other family's
+    other = live_client.post(f"{path}/skip")
+    assert other.status_code == 404, other.text
+    assert other.json()["error"]["code"] == "episode.not_found"
