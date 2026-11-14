@@ -45,6 +45,7 @@ forbidden_modules =
     jumbaq.worker
     jumbaq.models
     jumbaq.families
+    jumbaq.cases
 
 [importlinter:contract:models-without-web-framework]
 name = Models know nothing about FastAPI or Starlette
@@ -109,6 +110,7 @@ source_modules =
     jumbaq.models
     jumbaq.core
     jumbaq.families
+    jumbaq.cases
 forbidden_modules =
     jumbaq.*.handlers
 allow_indirect_imports = True
@@ -127,6 +129,7 @@ allow_indirect_imports = True
 name = Only routers and deps.py read the session cookie; other code gets a FamilyRef
 type = forbidden
 source_modules =
+    jumbaq.cases
     jumbaq.core
     jumbaq.worker
 forbidden_modules =
@@ -136,3 +139,32 @@ allow_indirect_imports = True
 # ignore_imports =
 #     jumbaq.cases.routers.* -> jumbaq.families.deps
 #     jumbaq.cases.deps -> jumbaq.families.deps
+
+# A new module joins the contracts below in its first PR: one "through public" contract of its
+# own, and its name in the forbidden lists of the others.
+
+[importlinter:contract:families-through-public]
+name = families uses other modules only through their public.py
+type = forbidden
+source_modules =
+    jumbaq.families
+forbidden_modules =
+    jumbaq.cases
+allow_indirect_imports = True
+
+[importlinter:contract:cases-through-public]
+name = cases uses other modules only through their public.py
+type = forbidden
+source_modules =
+    jumbaq.cases
+forbidden_modules =
+    jumbaq.families.domain
+    jumbaq.families.errors
+    jumbaq.families.events
+    jumbaq.families.models
+    jumbaq.families.repositories
+    jumbaq.families.queries
+    jumbaq.families.uow
+    jumbaq.families.services
+    jumbaq.families.schemas
+allow_indirect_imports = True

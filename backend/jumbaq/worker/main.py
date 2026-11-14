@@ -7,18 +7,23 @@ import time. Everything else is created in `startup`, kept in `ctx` and closed i
 
 import logging
 import os
+from functools import partial
 from typing import Any, ClassVar
 
 from arq import cron, func
 from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from jumbaq.cases.handlers import CasesHandlers
+from jumbaq.cases.services.planning import CasePlanning
+from jumbaq.cases.uow import CasesUoW
 from jumbaq.core.config import Settings
 from jumbaq.core.db import create_engine, create_sessionmaker
 from jumbaq.core.events import Event
 from jumbaq.core.logging import setup_logging
 from jumbaq.core.outbox import Handler, OutboxDelivery
 from jumbaq.core.tasks import DELIVER_OUTBOX
+from jumbaq.families.public import FamilyCreated
 from jumbaq.worker.tasks import deliver_outbox, ping
 
 logger = logging.getLogger(__name__)
@@ -28,7 +33,10 @@ def build_handlers(
     sessionmaker: async_sessionmaker[AsyncSession],
 ) -> dict[type[Event], list[Handler]]:
     """Which handlers run for which event. Handlers come from the `handlers.py` of each module."""
-    return {}
+    cases = CasesHandlers(CasePlanning(partial(CasesUoW, sessionmaker)))
+    return {
+        FamilyCreated: [cases.family_created],
+    }
 
 
 async def startup(ctx: dict[str, Any]) -> None:
