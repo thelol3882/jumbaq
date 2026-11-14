@@ -17,7 +17,7 @@ export function Family() {
   const errorMessage = useApiErrorMessage();
   const { family, loading, missing, error, retry } = useFamily();
   const detectivesLabel = useDetectivesLabel();
-  const { current, slow, error: caseError, retry: check } = useCurrentCase();
+  const { current, slow, error: caseError, retry: check } = useCurrentCase({ skip: !family });
   const isMobile = useIsMobile();
   const step = current && !inOpening(current) ? tonight(current, new Date()) : undefined;
   useRefetchAt(step?.kind === "waits" ? step.opensAt : null, check);
