@@ -14,6 +14,7 @@ from arq import cron, func
 from arq.connections import RedisSettings
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from jumbaq.billing.public import SubscriptionActivated
 from jumbaq.cases.handlers import CasesHandlers
 from jumbaq.cases.services.planning import CasePlanning
 from jumbaq.cases.uow import CasesUoW
@@ -36,6 +37,9 @@ def build_handlers(
     cases = CasesHandlers(CasePlanning(partial(CasesUoW, sessionmaker)))
     return {
         FamilyCreated: [cases.family_created],
+        # Registered without handlers, so its rows are marked processed and do not fail.
+        # cases will react to it.
+        SubscriptionActivated: [],
     }
 
 

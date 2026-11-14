@@ -8,6 +8,8 @@ from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from jumbaq import health
+from jumbaq.billing.routers import subscription as subscription_routers
+from jumbaq.billing.routers import webhook as webhook_routers
 from jumbaq.core.clock import SystemClock
 from jumbaq.core.config import CorsSettings, Settings
 from jumbaq.core.csrf import CSRF_HEADER, require_csrf_header_on_change
@@ -53,7 +55,14 @@ def create_app() -> FastAPI:
     api = APIRouter(prefix=API_PREFIX, dependencies=[Depends(require_csrf_header_on_change)])
     api.include_router(health.router)
     api.include_router(family_routers.router)
+    api.include_router(subscription_routers.router)
     app.include_router(api)
+
+    # Payment providers cannot send the CSRF header or a family cookie. Each webhook checks
+    # the provider's signature instead, so these routes skip the CSRF check.
+    webhooks = APIRouter(prefix=API_PREFIX)
+    webhooks.include_router(webhook_routers.router)
+    app.include_router(webhooks)
 
     app.add_middleware(RequestContextMiddleware)
     # Added last, so it is the outer one: preflight requests and errors get CORS headers too.
