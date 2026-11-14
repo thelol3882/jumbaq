@@ -11,12 +11,14 @@ export function useCurrentCase() {
   const query = useGetCurrentCaseQuery();
   const notOpenedYet = query.isError && toApiError(query.error).code === "case.not_found";
   const writing = notOpenedYet || (query.data ? isBeingWritten(query.data) : false);
-  useRefetchWhile(writing, query.refetch);
+  const progress = query.data ? [query.data.status, ...query.data.episodes.map((e) => e.status)].join(":") : "none";
+  const { slow } = useRefetchWhile(writing, query.refetch, progress);
 
   return {
     current: query.data,
     loading: query.isLoading,
     writing,
+    slow,
     error: query.isError && !notOpenedYet ? query.error : undefined,
     retry: query.refetch,
   };
