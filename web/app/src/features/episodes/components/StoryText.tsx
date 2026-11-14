@@ -6,14 +6,24 @@ import type { EpisodeContent } from "../types";
 
 /** What the parent reads aloud: last time, the story, and the riddle on its card. Nothing to
  * click in here, so the kids look at the room, not at buttons. */
-export function StoryText({ content, large = false }: { content: EpisodeContent; large?: boolean }) {
+export function StoryText({
+  content,
+  first = false,
+  large = false,
+}: {
+  content: EpisodeContent;
+  /** Evening 1: its recap is a welcome, not what happened last time. */
+  first?: boolean;
+  large?: boolean;
+}) {
   const t = useTranslations("episodes");
   const aloud = large ? "text-[1.625rem] leading-[1.6]" : "text-aloud";
   return (
     <div className="flex flex-col">
       {content.recap ? (
         <p className="font-type text-case font-normal text-ink-muted">
-          {t("lastTime")} {content.recap}
+          {first ? null : `${t("lastTime")} `}
+          {content.recap}
         </p>
       ) : null}
       <div className="relative mt-6 flex max-w-[34em] flex-col gap-4">

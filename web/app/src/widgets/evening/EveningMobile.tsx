@@ -32,7 +32,7 @@ export function EveningMobile({
           </>
         ) : (
           <>
-            <StoryText content={episode.content} />
+            <StoryText content={episode.content} first={episode.number === 1} />
             <ParentNote riddle={episode.content.riddle} />
             <AnswerForm episodeId={episode.id} content={episode.content} />
           </>
