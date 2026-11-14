@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { EveningBoxes, SuspectTable, type Case } from "@/features/cases";
 import { ClueTag, DecodeStep, StrikeStep, type Episode } from "@/features/episodes";
 import { HandNote, StampLink, Wordmark } from "@/shared/components/notebook";
+import { withTonightsClue } from "./services/tonightsClues";
 
 export type ShownEpisode = Episode & { content: NonNullable<Episode["content"]> };
 
@@ -44,7 +45,7 @@ export function AfterTheAnswer({ current, episode }: { current: Case; episode: S
           <h2 id="evening-suspects" className="mb-2.5 font-type text-label font-normal text-ink-muted">
             {t("suspects")}
           </h2>
-          <SuspectTable suspects={current.suspects} clues={current.clues} />
+          <SuspectTable suspects={current.suspects} clues={withTonightsClue(current.clues, episode.number, result)} />
         </section>
       ) : null}
       {last ? (
