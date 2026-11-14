@@ -23,6 +23,10 @@ export const API_ERROR_CODES = [
   "billing.bad_signature",
   "billing.not_configured",
   "billing.unavailable",
+  "case.not_found",
+  "case.not_accusing",
+  "case.not_solved",
+  "case.unknown_suspect",
   // Ours, not the API's: the request got no answer.
   "common.network_error",
 ] as const;

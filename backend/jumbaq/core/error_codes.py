@@ -41,3 +41,11 @@ class ErrorCode(StrEnum):
     # No Stripe keys on this server. The rest of the app works.
     BILLING_NOT_CONFIGURED = "billing.not_configured"
     BILLING_UNAVAILABLE = "billing.unavailable"
+
+    # cases
+    # The family has no case yet: case 1 opens a moment after the setup.
+    CASE_NOT_FOUND = "case.not_found"
+    # The kids can accuse only after the last episode of the case.
+    CASE_NOT_ACCUSING = "case.not_accusing"
+    CASE_NOT_SOLVED = "case.not_solved"
+    CASE_UNKNOWN_SUSPECT = "case.unknown_suspect"

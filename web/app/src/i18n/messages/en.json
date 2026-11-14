@@ -35,6 +35,12 @@
         "bad_signature": "The payment notice could not be checked.",
         "not_configured": "Payments are not set up yet. The free case still works.",
         "unavailable": "Payments are not answering right now. Try again in a moment."
+      },
+      "case": {
+        "not_found": "Your first case is being prepared. Try again in a moment.",
+        "not_accusing": "The detectives can name the culprit after the last evening.",
+        "not_solved": "Solve this case first to open the next one.",
+        "unknown_suspect": "This is not one of the suspects."
       }
     },
     "fieldErrors": {
