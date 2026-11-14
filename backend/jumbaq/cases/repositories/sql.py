@@ -2,7 +2,7 @@ import uuid
 from dataclasses import asdict
 from typing import Any
 
-from sqlalchemy import Select, select, update
+from sqlalchemy import Select, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -80,6 +80,12 @@ class SqlCaseLookup:
         if clue is None:
             return None
         return EpisodeBrief(row.id, row.number, plan.title, plan.setting, plan.suspects, clue)
+
+    async def current_case_number(self, family: FamilyRef) -> int | None:
+        """The number of the family's newest case, None before the first one."""
+        return await self._session.scalar(
+            select(func.max(CaseRow.number)).where(CaseRow.family_id == family.family_id)
+        )
 
 
 def _case(row: CaseRow) -> Case:

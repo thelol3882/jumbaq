@@ -98,7 +98,9 @@ class EpisodeService:
     async def current(self, family: FamilyRef) -> EpisodeView:
         async with self._uow() as uow:
             episode = await uow.episodes.newest(family)
-        if episode is None:
+            case_number = await uow.cases.current_case_number(family)
+        # The newest case may have no episode yet: the one found then belongs to an older case.
+        if episode is None or episode.case_number != case_number:
             raise EpisodeNotFoundError()
         return self._view(episode)
 

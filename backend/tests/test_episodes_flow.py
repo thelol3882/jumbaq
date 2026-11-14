@@ -15,6 +15,7 @@ from jumbaq.ai.providers.stub import StubProvider
 from jumbaq.ai.public import Provider, build_story_writer
 from jumbaq.cases.public import CasePlanned
 from jumbaq.core.clock import SystemClock
+from jumbaq.core.csrf import CSRF_HEADER
 from jumbaq.core.deps import get_settings
 from jumbaq.core.outbox import OutboxRow
 from jumbaq.episodes.models import EpisodeRow
@@ -22,6 +23,7 @@ from jumbaq.episodes.public import EpisodeRequested
 from jumbaq.families.deps import FAMILY_COOKIE
 from tests.conftest import TEST_SETTINGS
 from tests.flows import create_family, deliver_all, play_evening, stub_handlers
+from tests.stripe_events import signed, subscription_event
 
 pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
 
@@ -88,6 +90,18 @@ async def episode_1(sessionmaker: Sessionmaker, family_id: uuid.UUID) -> Episode
         ).one()
 
 
+def subscribe(client: TestClient, family_id: uuid.UUID) -> None:
+    secret = TEST_SETTINGS.stripe_webhook_secret
+    assert secret is not None
+    event = subscription_event(family_id, "active", subscription_id=f"sub_{uuid.uuid4().hex}")
+    body, header = signed(event, secret.get_secret_value())
+    client.post(
+        "/api/v1/billing/webhook",
+        content=body,
+        headers={"Stripe-Signature": header, CSRF_HEADER: ""},
+    ).raise_for_status()
+
+
 async def count(sessionmaker: Sessionmaker, query: Any) -> int:
     async with sessionmaker() as session:
         return await session.scalar(query) or 0
@@ -96,7 +110,7 @@ async def count(sessionmaker: Sessionmaker, query: Any) -> int:
 async def test_the_whole_game_on_the_stub(
     live_client: TestClient, sessionmaker: Sessionmaker
 ) -> None:
-    create_family(live_client)
+    family_id, _ = create_family(live_client)
     await deliver_all(sessionmaker)
 
     for number in range(1, 6):
@@ -135,6 +149,18 @@ async def test_the_whole_game_on_the_stub(
     assert certificate["nicknames"] == ["Aru", "Timur"]
     # Five evenings ended the case: no sixth episode was requested.
     assert live_client.get("/api/v1/episodes/current").json()["number"] == 5
+
+    # The second case is planned: its evenings do not exist yet, and evening 5 of case 1 is not
+    # the current one any more.
+    subscribe(live_client, family_id)
+    assert live_client.post("/api/v1/cases").status_code == 201
+    planning = live_client.get("/api/v1/episodes/current")
+    assert planning.status_code == 404, planning.json()
+    assert planning.json()["error"]["code"] == "episode.not_found"
+
+    await deliver_all(sessionmaker)
+    second = live_client.get("/api/v1/episodes/current").json()
+    assert (second["case_number"], second["number"]) == (2, 1)
 
 
 async def test_the_stub_episode_follows_the_rules(
