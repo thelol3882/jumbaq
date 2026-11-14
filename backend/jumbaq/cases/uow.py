@@ -2,6 +2,7 @@ from collections.abc import Callable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from jumbaq.cases.queries import CasesQueries
 from jumbaq.cases.repositories.cases import CaseRepository
 from jumbaq.cases.repositories.sql import SqlCaseRepository
 from jumbaq.core.db import UnitOfWork
@@ -11,6 +12,7 @@ from jumbaq.families.public import FamilyLookup
 
 class CasesUoW(UnitOfWork):
     cases: CaseRepository
+    queries: CasesQueries
     # The read port of families: the kids, rooms and objects for the plan and the certificate.
     families: FamilyLookup
     # The read port of episodes: the episodes of a case for the case screen.
@@ -18,6 +20,7 @@ class CasesUoW(UnitOfWork):
 
     def _attach(self, session: AsyncSession) -> None:
         self.cases = SqlCaseRepository(session)
+        self.queries = CasesQueries(session)
         self.families = FamilyLookup(session)
         self.episodes = EpisodeLookup(session)
 

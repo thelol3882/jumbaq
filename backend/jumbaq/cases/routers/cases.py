@@ -5,7 +5,7 @@ import uuid
 from fastapi import APIRouter, status
 
 from jumbaq.cases.deps import CaseServiceDep
-from jumbaq.cases.schemas import AccusationOut, AccuseIn, CaseOut, CertificateOut
+from jumbaq.cases.schemas import AccusationOut, AccuseIn, CaseOut, CertificateOut, SolvedCaseOut
 from jumbaq.families.deps import FamilyDep
 
 router = APIRouter(tags=["cases"])
@@ -16,6 +16,12 @@ async def get_current_case(family: FamilyDep, cases: CaseServiceDep) -> CaseOut:
     """The newest case. Clues of episodes not yet played, the culprit and the reveal are never
     in it. 404 `case.not_found` before case 1 is opened."""
     return CaseOut.model_validate(await cases.current(family))
+
+
+@router.get("/cases")
+async def list_solved_cases(family: FamilyDep, cases: CaseServiceDep) -> list[SolvedCaseOut]:
+    """The family's solved cases, newest first. Empty before the first one is solved."""
+    return [SolvedCaseOut.model_validate(case) for case in await cases.solved(family)]
 
 
 @router.post("/cases", status_code=status.HTTP_201_CREATED)
@@ -38,5 +44,6 @@ async def accuse(
 async def get_certificate(
     case_id: uuid.UUID, family: FamilyDep, cases: CaseServiceDep
 ) -> CertificateOut:
-    """Only for a solved case (409 `case.not_solved`). Another family's case gives 404."""
+    """Any solved case of the family, not only the current one (409 `case.not_solved`). Another
+    family's case gives 404."""
     return CertificateOut.model_validate(await cases.certificate(family, case_id))

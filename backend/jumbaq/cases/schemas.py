@@ -72,6 +72,18 @@ class CaseOut(BaseModel):
     rank: Rank | None
 
 
+class SolvedCaseOut(BaseModel):
+    """A solved case in the list of past cases: no culprit and no reveal."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    number: int
+    title: str
+    rank: Rank
+    solved_at: datetime
+
+
 class AccuseIn(BaseModel):
     suspect_id: SuspectId
 
