@@ -22,18 +22,32 @@ body {
 }
 
 /* Printing the solved case gives only the certificate, on one page. */
+@page {
+  margin: 12mm;
+}
+
 @media print {
-  body * {
-    visibility: hidden;
+  /* display: none, not visibility: hidden, which still takes room and spills into blank pages.
+     The certificate and the elements around it stay, so it keeps its place in the tree. */
+  body :not([data-print="certificate"]):not(:has([data-print="certificate"])):not([data-print="certificate"] *) {
+    display: none !important;
   }
-  [data-print="certificate"],
-  [data-print="certificate"] * {
-    visibility: visible;
+  html,
+  body,
+  body :has([data-print="certificate"]) {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    border: 0 !important;
+    background: none !important;
+    position: static !important;
+    transform: none !important;
   }
   [data-print="certificate"] {
-    position: absolute;
-    inset: 0 auto auto 0;
     width: 100%;
     rotate: none;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
