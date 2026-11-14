@@ -1,7 +1,7 @@
 # Compose file of the server. Luxen uploads it to /root/jumbaq/docker-compose.yml, so the
 # paths here are relative to /root/jumbaq. On laptops use infra/.
 #
-# Sized for 2 vCPU and 4 GB of RAM: the limits add up to about 2.2 GB, the rest is for the
+# Sized for 2 vCPU and 4 GB of RAM: the limits add up to about 2.4 GB, the rest is for the
 # OS, Docker and the page cache of PostgreSQL.
 name: jumbaq
 
@@ -144,6 +144,24 @@ services:
         limits:
           memory: 256M
 
+  web:
+    image: ghcr.io/thelol3882/jumbaq-web:${TAG:-latest}
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    restart: unless-stopped
+
   nginx:
     image: nginx:1.30-alpine
     volumes:
@@ -161,6 +179,8 @@ services:
         ipv4_address: 172.30.90.10
     depends_on:
       api:
+        condition: service_healthy
+      web:
         condition: service_healthy
     deploy:
       resources:
