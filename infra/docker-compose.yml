@@ -13,6 +13,9 @@ x-backend: &backend
     JUMBAQ_CORS_ORIGINS: ${JUMBAQ_CORS_ORIGINS:-}
     JUMBAQ_AI_PROVIDER: ${JUMBAQ_AI_PROVIDER:-stub}
     JUMBAQ_AI_API_KEY: ${JUMBAQ_AI_API_KEY:-}
+    JUMBAQ_STRIPE_SECRET_KEY: ${JUMBAQ_STRIPE_SECRET_KEY:-}
+    JUMBAQ_STRIPE_WEBHOOK_SECRET: ${JUMBAQ_STRIPE_WEBHOOK_SECRET:-}
+    JUMBAQ_WEB_APP_URL: ${JUMBAQ_WEB_APP_URL:-http://localhost:3000}
   depends_on:
     migrate:
       condition: service_completed_successfully

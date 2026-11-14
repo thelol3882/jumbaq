@@ -12,6 +12,10 @@ $(TEST_TARGETS): export JUMBAQ_DATABASE_URL ?= postgresql+asyncpg://jumbaq_app:$
 $(TEST_TARGETS): export JUMBAQ_MIGRATION_DATABASE_URL ?= postgresql+asyncpg://jumbaq_owner:$(JUMBAQ_OWNER_PASSWORD)@localhost:$(POSTGRES_HOST_PORT)/$(TEST_DB)
 # Redis database 1, so the worker of `make up` (database 0) does not run the tasks of tests.
 $(TEST_TARGETS): export JUMBAQ_REDIS_URL ?= redis://localhost:$(REDIS_HOST_PORT)/1
+# Fake Stripe secrets with `=`, not `?=`, so tests never take a real key from infra/.env.
+# The tests sign their own webhook events with this secret and never call Stripe.
+$(TEST_TARGETS): export JUMBAQ_STRIPE_SECRET_KEY = sk_test_only_for_tests
+$(TEST_TARGETS): export JUMBAQ_STRIPE_WEBHOOK_SECRET = whsec_only_for_tests
 
 # Number of the next migration file: 0002, 0003, ...
 NEXT_REV = $(shell printf '%04d' $$(( $$(ls backend/migrations/versions/*.py | wc -l) + 1 )))

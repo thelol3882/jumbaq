@@ -32,3 +32,12 @@ class ErrorCode(StrEnum):
     AI_BAD_OUTPUT = "ai.bad_output"
     # The provider is down, slow or busy. The outbox tries again later.
     AI_UNAVAILABLE = "ai.unavailable"
+
+    # billing
+    # A case after the free ones needs an active subscription. The web app opens the checkout.
+    BILLING_PAYMENT_REQUIRED = "billing.payment_required"
+    BILLING_ALREADY_SUBSCRIBED = "billing.already_subscribed"
+    BILLING_BAD_SIGNATURE = "billing.bad_signature"
+    # No Stripe keys on this server. The rest of the app works.
+    BILLING_NOT_CONFIGURED = "billing.not_configured"
+    BILLING_UNAVAILABLE = "billing.unavailable"
