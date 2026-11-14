@@ -1,12 +1,7 @@
 {
   "wordmark": "jumbaq",
-  "title": "Open a case file",
+  "title": "Tell us about your home",
   "subtitle": "one minute. no sign-up.",
-  "intro": "Three short questions. The first evening is written for your home.",
-  "previewLabel": "your case file so far",
-  "shortcut": "opens it from anywhere on the page",
-  "note": {
-    "lead": "grown-ups:",
-    "text": "the first evening is written for your home while you get the kids ready. It takes about a minute."
-  }
+  "intro": "Three short questions, about a minute.",
+  "previewLabel": "your case file so far"
 }

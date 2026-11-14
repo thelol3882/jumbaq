@@ -1,7 +1,7 @@
 {
   "add": "Add",
-  "submit": "Open the case file",
-  "submitting": "Opening the case file…",
+  "submit": "Start the case",
+  "submitting": "Starting the case…",
   "kids": {
     "title": "the detectives",
     "note": "Nicknames are fine. You'll read them out loud, so make them easy to say.",
@@ -14,13 +14,14 @@
       "nicknameTooLong": "That name is too long to read out.",
       "ageInvalid": "An age from {min} to {max}.",
       "repeated": "Two detectives have the same name. Give each one their own."
-    }
+    },
+    "removeShort": "remove"
   },
   "rooms": {
     "title": "the scene",
     "note": "Which rooms can the kids search tonight?",
     "addLabel": "Another room",
-    "addPlaceholder": "Balcony",
+    "addPlaceholder": "type a room",
     "presets": {
       "kitchen": "kitchen",
       "livingRoom": "living room",
@@ -36,9 +37,9 @@
   },
   "objects": {
     "title": "the evidence",
-    "note": "Tick the things you really have at home. Riddles only point at these. At least {min}.",
+    "note": "Tick at least {min} things you have at home. Clues will only be hidden in things you tick.",
     "addLabel": "Something else at home",
-    "addPlaceholder": "Grandma's vase",
+    "addPlaceholder": "type something else",
     "presets": {
       "clock": "clock",
       "fridge": "fridge",
@@ -74,5 +75,6 @@
     "label": "case file no. 1 · not yet opened",
     "empty": "not yet",
     "kid": "{nickname}, {age}"
-  }
+  },
+  "showMore": "show {count} more"
 }

@@ -68,7 +68,8 @@ src/widgets/landing/
 - `useIsMobile()` is true on the server and during hydration: the first HTML is the phone layout, and desktop swaps in right after. (Sheber does the opposite, because its users work at a desk.)
 - Mobile is design row D, desktop is row F of the design canvas ("jumbaq - page designs v2"). Desktop is the same notebook opened flat, never a different look:
   - `NotebookSpread`: the main page on the left, the parent's page on the right, with a dashed fold. Story text stays at reading width (about 34em); the extra width goes to the parent's tools, never to longer lines.
-  - The main action stays in view on the right page (`sticky`), and has a key: `useSubmitShortcut` (⌘↵ or Ctrl+↵) with a `KeyHint` next to it. Only one shortcut per screen, so it never clashes with typing.
+  - The main action stays in view on the right page (`sticky`). It may have a key (`useSubmitShortcut`, ⌘↵ or Ctrl+↵), but no key hint on screen: a parent review found them noise. One shortcut per screen at most.
+  - One thing per job: no element that repeats what the page already says, plain words for labels ("Evening 2 of 5", "detectives: …"), and the price said up front, never first after a win.
   - Nothing to click inside the read-aloud text: buttons on the reading page pull the kids' attention.
   - The form state lives in the wrapper (`Setup.tsx`), so turning a tablet or resizing keeps what was typed.
 

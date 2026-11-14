@@ -12,6 +12,8 @@ export function ChoiceChips({
   addLabel,
   addPlaceholder,
   addButton,
+  showFirst,
+  showMoreLabel,
 }: {
   options: Option[];
   selected: string[];
@@ -19,12 +21,19 @@ export function ChoiceChips({
   addLabel: string;
   addPlaceholder: string;
   addButton: string;
+  /** Offer only this many at first; the rest behind "show more". Picked ones always show. */
+  showFirst?: number;
+  showMoreLabel?: (count: number) => string;
 }) {
   const inputId = useId();
   const [own, setOwn] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const isPicked = (label: string) => selected.some((s) => s.toLocaleLowerCase() === label.toLocaleLowerCase());
   const offered = new Set(options.map((o) => o.label.toLocaleLowerCase()));
   const extra = selected.filter((s) => !offered.has(s.toLocaleLowerCase()));
+  const limit = showAll || showFirst === undefined ? options.length : showFirst;
+  const shown = options.filter((o, index) => index < limit || isPicked(o.label));
+  const hidden = options.length - shown.length;
 
   const addOwn = () => {
     if (own.trim()) onToggle(own);
@@ -34,7 +43,7 @@ export function ChoiceChips({
   return (
     <div>
       <ul className="flex flex-wrap gap-2">
-        {[...options.map((o) => o.label), ...extra].map((label) => {
+        {[...shown.map((o) => o.label), ...extra].map((label) => {
           const picked = isPicked(label);
           return (
             <li key={label}>
@@ -57,6 +66,17 @@ export function ChoiceChips({
             </li>
           );
         })}
+        {hidden > 0 && showMoreLabel ? (
+          <li>
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="min-h-11 px-1 font-type text-case font-normal underline decoration-dotted decoration-2 underline-offset-[5px]"
+            >
+              {showMoreLabel(hidden)}
+            </button>
+          </li>
+        ) : null}
       </ul>
       <div className="mt-3 flex items-end gap-2">
         <div className="min-w-0 flex-1">

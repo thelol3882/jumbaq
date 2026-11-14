@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import { HandNote, NotebookPage, NotebookSpread, RiddleCard, StampLink, Wordmark } from "@/shared/components/notebook";
-import { ExampleExhibit, Headline, Steps } from "./parts";
+import { Headline, Steps } from "./parts";
 
 /** Design F1: the story on the left page, a real page of a case on the right. */
 export function LandingDesktop({ startHref }: { startHref: string }) {
@@ -36,14 +36,11 @@ export function LandingDesktop({ startHref }: { startHref: string }) {
           }
           side={
             <>
-              <p className="pt-3 font-type text-label text-ink-muted">{t("example.pageLabel")}</p>
+              <div className="pt-10" />
               <RiddleCard label={t("example.riddleLabel")} text={t("example.riddle")} />
               <HandNote lead={t("example.noteLead")} className="ml-3 -rotate-[1.5deg]">
                 {t("example.note")}
               </HandNote>
-              <div className="self-end">
-                <ExampleExhibit />
-              </div>
             </>
           }
         />

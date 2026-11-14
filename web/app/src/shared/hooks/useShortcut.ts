@@ -1,8 +1,9 @@
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * ⌘↵ on a Mac, Ctrl+↵ elsewhere, from anywhere on the page. Only for the one main action
- * of a screen, so it never clashes with typing.
+ * of a screen, so it never clashes with typing. No hint on screen: a parent who knows the
+ * key uses it, and nobody else has to read about it.
  */
 export function useSubmitShortcut(onSubmit: () => void, enabled = true) {
   const latest = useRef(onSubmit);
@@ -21,12 +22,4 @@ export function useSubmitShortcut(onSubmit: () => void, enabled = true) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [enabled]);
-}
-
-const noop = () => () => {};
-const isApple = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-
-/** The name of the modifier key for the hints: ⌘ on Apple devices, Ctrl elsewhere. */
-export function useModifierKey(): string {
-  return useSyncExternalStore(noop, () => (isApple() ? "⌘" : "Ctrl"), () => "⌘");
 }

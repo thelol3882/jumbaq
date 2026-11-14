@@ -7,21 +7,18 @@ import {
   SetupSubmit,
   type SetupFormState,
 } from "@/features/families";
-import { HandNote, KeyHint, NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
-import { useModifierKey } from "@/shared/hooks/useShortcut";
+import { HandNote, NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
 
 /** Design F2: the questions on the left page, the case file filling in on the right, with the
  * stamp always in view. */
 export function SetupDesktop({ form }: { form: SetupFormState }) {
   const t = useTranslations("widget.setup");
-  const modifier = useModifierKey();
   return (
     <NotebookPage width="wide">
-      <header className="flex flex-wrap items-baseline justify-between gap-6">
+      <header>
         <Link href="/">
           <Wordmark text={t("wordmark")} size="sm" />
         </Link>
-        <span className="font-type text-label text-ink-muted">{t("subtitle")}</span>
       </header>
       <div className="mt-9">
         <SetupFormShell form={form}>
@@ -40,13 +37,7 @@ export function SetupDesktop({ form }: { form: SetupFormState }) {
               <div className="sticky top-6 flex flex-col gap-7 pt-1.5">
                 <p className="font-type text-label text-ink-muted">{t("previewLabel")}</p>
                 <CaseFilePreview draft={form.draft} />
-                <div className="flex flex-col gap-3">
-                  <SetupSubmit form={form} />
-                  <KeyHint keys={[modifier, "↵"]} label={t("shortcut")} />
-                </div>
-                <HandNote lead={t("note.lead")} className="-rotate-1 text-note-sm">
-                  {t("note.text")}
-                </HandNote>
+                <SetupSubmit form={form} />
               </div>
             }
           />

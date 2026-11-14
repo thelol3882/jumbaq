@@ -73,9 +73,9 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
                     type="button"
                     onClick={() => form.removeKid(kid.key)}
                     aria-label={t("kids.remove", { number: index + 1 })}
-                    className="size-12 shrink-0 font-type text-xl text-ink-muted"
+                    className="h-12 shrink-0 px-1 font-type text-label text-ink-muted underline decoration-dotted decoration-2 underline-offset-[5px]"
                   >
-                    ×
+                    {t("kids.removeShort")}
                   </button>
                 ) : null}
               </div>
@@ -127,6 +127,8 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
           addLabel={t("objects.addLabel")}
           addPlaceholder={t("objects.addPlaceholder")}
           addButton={t("add")}
+          showFirst={8}
+          showMoreLabel={(count) => t("showMore", { count })}
         />
         {errors.objects ? (
           <p className="font-type text-label text-gentle-error-fg">
