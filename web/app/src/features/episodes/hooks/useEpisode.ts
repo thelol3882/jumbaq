@@ -7,7 +7,7 @@ export function useEpisode(episodeId: string | null) {
   const query = useGetEpisodeQuery(episodeId ?? skipToken);
   const status = query.data?.status;
   const writing = status === "requested" || status === "generating";
-  useRefetchWhile(writing && episodeId !== null, query.refetch);
+  const { slow } = useRefetchWhile(writing && episodeId !== null, query.refetch, status);
 
-  return { episode: query.data, loading: query.isLoading, writing, error: query.error, retry: query.refetch };
+  return { episode: query.data, loading: query.isLoading, writing, slow, error: query.error, retry: query.refetch };
 }
