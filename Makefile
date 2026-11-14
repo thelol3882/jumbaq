@@ -8,10 +8,12 @@ REDIS_HOST_PORT ?= 6379
 # Tests on the laptop use the test database and Redis of `make up`. Only for these targets:
 # Compose takes variables from the shell before infra/.env, so `make up` must not get them.
 TEST_TARGETS = test test-unit migration
-$(TEST_TARGETS): export JUMBAQ_DATABASE_URL ?= postgresql+asyncpg://jumbaq_app:$(JUMBAQ_APP_PASSWORD)@localhost:$(POSTGRES_HOST_PORT)/$(TEST_DB)
-$(TEST_TARGETS): export JUMBAQ_MIGRATION_DATABASE_URL ?= postgresql+asyncpg://jumbaq_owner:$(JUMBAQ_OWNER_PASSWORD)@localhost:$(POSTGRES_HOST_PORT)/$(TEST_DB)
+# 127.0.0.1, not localhost: on Windows localhost is ::1 first, where Docker does not listen, so
+# every connection waited for its timeout and the suite took minutes instead of seconds.
+$(TEST_TARGETS): export JUMBAQ_DATABASE_URL ?= postgresql+asyncpg://jumbaq_app:$(JUMBAQ_APP_PASSWORD)@127.0.0.1:$(POSTGRES_HOST_PORT)/$(TEST_DB)
+$(TEST_TARGETS): export JUMBAQ_MIGRATION_DATABASE_URL ?= postgresql+asyncpg://jumbaq_owner:$(JUMBAQ_OWNER_PASSWORD)@127.0.0.1:$(POSTGRES_HOST_PORT)/$(TEST_DB)
 # Redis database 1, so the worker of `make up` (database 0) does not run the tasks of tests.
-$(TEST_TARGETS): export JUMBAQ_REDIS_URL ?= redis://localhost:$(REDIS_HOST_PORT)/1
+$(TEST_TARGETS): export JUMBAQ_REDIS_URL ?= redis://127.0.0.1:$(REDIS_HOST_PORT)/1
 # Fake Stripe secrets with `=`, not `?=`, so tests never take a real key from infra/.env.
 # The tests sign their own webhook events with this secret and never call Stripe.
 $(TEST_TARGETS): export JUMBAQ_STRIPE_SECRET_KEY = sk_test_only_for_tests
