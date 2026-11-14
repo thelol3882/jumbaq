@@ -125,7 +125,7 @@ env:
       { required: true, secret: true, generate: rand-hex-24, example: "change-me", description: "API and worker, no DELETE" }
     JUMBAQ_CORS_ORIGINS:
       { required: true, default: "https://jumbaq.fun", description: "Web app origins that may call the API with cookies; comma separated" }
-    JUMBAQ_AI_PROVIDER: { default: "stub", description: "stub | claude; claude needs JUMBAQ_AI_API_KEY" }
+    JUMBAQ_AI_PROVIDER: { default: "stub", description: "stub | claude | openrouter (laptops); a real model needs JUMBAQ_AI_API_KEY" }
     JUMBAQ_AI_API_KEY: { secret: true, description: "Anthropic API key from console.anthropic.com" }
     JUMBAQ_STRIPE_SECRET_KEY: { secret: true, description: "Stripe test key (sk_test_...); live keys are refused" }
     JUMBAQ_STRIPE_WEBHOOK_SECRET: { secret: true, description: "whsec_... of the webhook endpoint in the Stripe dashboard" }
