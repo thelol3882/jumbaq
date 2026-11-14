@@ -19,6 +19,10 @@ from jumbaq.cases.events import CaseOpened, CaseSolved
 from jumbaq.cases.uow import CasesUoWFactory
 from jumbaq.core.clock import Clock
 from jumbaq.core.family import FamilyRef
+from jumbaq.episodes.public import EpisodeSlot
+
+# The status of an episode that does not exist yet.
+LOCKED = "locked"
 
 
 @dataclass(frozen=True)
@@ -80,9 +84,10 @@ class CaseService:
     async def current(self, family: FamilyRef) -> CaseView:
         async with self._uow() as uow:
             case = await uow.cases.newest(family)
+            slots = await uow.episodes.slots(family, case.id) if case else []
         if case is None:
             raise CaseNotFoundError()
-        return _view(case)
+        return _view(case, slots)
 
     async def start_next(self, family: FamilyRef) -> CaseView:
         async with self._uow() as uow:
@@ -99,7 +104,7 @@ class CaseService:
             case = await uow.cases.newest(family)
             await uow.commit()
         assert case is not None
-        return _view(case)
+        return _view(case, [])
 
     async def accuse(
         self, family: FamilyRef, case_id: uuid.UUID, suspect_id: str
@@ -146,7 +151,7 @@ class CaseService:
         )
 
 
-def _view(case: Case) -> CaseView:
+def _view(case: Case, slots: list[EpisodeSlot]) -> CaseView:
     return CaseView(
         id=case.id,
         number=case.number,
@@ -157,17 +162,20 @@ def _view(case: Case) -> CaseView:
             ClueView(clue.episode, clue.text, clue.suspect_id, rules_out=not clue.points_at)
             for clue in domain.visible_clues(case)
         ),
-        episodes=_slots(case),
+        episodes=_slots(slots),
         accusation_attempts=case.accusation_attempts,
         rank=case.rank,
     )
 
 
-def _slots(case: Case) -> tuple[EpisodeSlotView, ...]:
-    # Until the episodes module reports its episodes here, cases knows only how many were played.
-    return tuple(
-        EpisodeSlotView(
-            number, None, "played" if number <= case.played_episodes else "locked", None
-        )
-        for number in range(1, EPISODES_PER_CASE + 1)
-    )
+def _slots(slots: list[EpisodeSlot]) -> tuple[EpisodeSlotView, ...]:
+    """One per episode of the case. An episode not created yet is locked."""
+    by_number = {slot.number: slot for slot in slots}
+    views = []
+    for number in range(1, EPISODES_PER_CASE + 1):
+        slot = by_number.get(number)
+        if slot is None:
+            views.append(EpisodeSlotView(number, None, LOCKED, None))
+        else:
+            views.append(EpisodeSlotView(number, slot.id, slot.status.value, slot.available_at))
+    return tuple(views)

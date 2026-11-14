@@ -19,14 +19,19 @@ from jumbaq.billing.public import SubscriptionActivated
 from jumbaq.cases.handlers import CasesHandlers
 from jumbaq.cases.public import CaseOpened, CasePlanned, CaseSolved
 from jumbaq.cases.services.planning import CasePlanning
+from jumbaq.cases.services.progress import CaseProgress
 from jumbaq.cases.uow import CasesUoW
-from jumbaq.core.clock import SystemClock
+from jumbaq.core.clock import Clock, SystemClock
 from jumbaq.core.config import Settings
 from jumbaq.core.db import create_engine, create_sessionmaker
 from jumbaq.core.events import Event
 from jumbaq.core.logging import setup_logging
 from jumbaq.core.outbox import Handler, OutboxDelivery
 from jumbaq.core.tasks import DELIVER_OUTBOX
+from jumbaq.episodes.handlers import EpisodesHandlers
+from jumbaq.episodes.public import EpisodePlayed, EpisodeRequested
+from jumbaq.episodes.services.writing import EpisodeWriting
+from jumbaq.episodes.uow import EpisodesUoW
 from jumbaq.families.public import FamilyCreated
 from jumbaq.worker.tasks import deliver_outbox, ping
 
@@ -34,18 +39,22 @@ logger = logging.getLogger(__name__)
 
 
 def build_handlers(
-    sessionmaker: async_sessionmaker[AsyncSession], writer: StoryWriter
+    sessionmaker: async_sessionmaker[AsyncSession], writer: StoryWriter, clock: Clock
 ) -> dict[type[Event], list[Handler]]:
     """Which handlers run for which event. Handlers come from the `handlers.py` of each module.
 
     The writer is built once in `startup` and shared, like the engine.
     """
-    cases = CasesHandlers(CasePlanning(partial(CasesUoW, sessionmaker), writer))
+    cases_uow = partial(CasesUoW, sessionmaker)
+    cases = CasesHandlers(CasePlanning(cases_uow, writer), CaseProgress(cases_uow))
+    episodes = EpisodesHandlers(EpisodeWriting(partial(EpisodesUoW, sessionmaker), writer, clock))
     return {
         FamilyCreated: [cases.family_created],
         CaseOpened: [cases.case_opened],
-        # Registered without handlers until episodes reacts to them.
-        CasePlanned: [],
+        CasePlanned: [episodes.case_planned],
+        EpisodeRequested: [episodes.episode_requested],
+        EpisodePlayed: [cases.episode_played],
+        # Registered without handlers, so their rows are marked processed and do not fail.
         CaseSolved: [],
         # Registered without handlers, so its rows are marked processed and do not fail.
         # cases will react to it.
@@ -59,8 +68,10 @@ async def startup(ctx: dict[str, Any]) -> None:
     ctx["settings"] = settings
     ctx["engine"] = create_engine(settings.database_url)
     ctx["sessionmaker"] = create_sessionmaker(ctx["engine"])
-    writer = build_story_writer(ctx["sessionmaker"], settings, SystemClock())
-    ctx["outbox"] = OutboxDelivery(ctx["sessionmaker"], build_handlers(ctx["sessionmaker"], writer))
+    clock = SystemClock()
+    writer = build_story_writer(ctx["sessionmaker"], settings, clock)
+    handlers = build_handlers(ctx["sessionmaker"], writer, clock)
+    ctx["outbox"] = OutboxDelivery(ctx["sessionmaker"], handlers)
     logger.info("worker started")
 
 
