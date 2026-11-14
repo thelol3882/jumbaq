@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 /** The read-aloud column with its red margin label. Nothing to click inside it. */
 export function ReadAloud({ children, large = false }: { children: ReactNode; large?: boolean }) {
   const t = useTranslations("episodes");
-  const aloud = large ? "text-[1.625rem] leading-[1.6]" : "text-aloud";
+  const aloud = large ? "text-aloud-lg" : "text-aloud";
   return (
     <div className="relative max-w-[34em]">
       <span

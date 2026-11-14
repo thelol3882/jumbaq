@@ -32,7 +32,7 @@ export function Tonight({
   const skipper = useSkipEvening();
   const step = tonight(current, new Date());
   const base = `/cases/${current.number}`;
-  const title = large ? "text-[2.875rem] leading-[1.12]" : "text-title";
+  const title = large ? "text-display-lg" : "text-title";
 
   if (inOpening(current)) return <Opening current={current} detectives={detectives} waiting={waiting} large={large} />;
 
@@ -170,7 +170,7 @@ function Writing({
     <div role="status" className="flex flex-col gap-7">
       <div>
         <p className="font-type text-case text-accent-red">{t("tonight")}</p>
-        <h1 className={`mt-2.5 max-w-2xl ${large ? "text-[2.875rem] leading-[1.12]" : "text-title"} font-bold`}>
+        <h1 className={`mt-2.5 max-w-2xl ${large ? "text-display-lg" : "text-title"} font-bold`}>
           {current.title ?? t("writing.title")}
         </h1>
       </div>
