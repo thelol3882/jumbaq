@@ -97,7 +97,7 @@ class CasePlanning:
             active = replace(
                 case,
                 status=CaseStatus.ACTIVE,
-                plan=plan or domain.FALLBACK_PLAN,
+                plan=plan or domain.fallback_plan(case.number),
                 is_fallback=plan is None,
             )
             await uow.cases.update(active)

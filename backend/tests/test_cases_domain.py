@@ -8,7 +8,16 @@ import pytest
 
 from jumbaq.ai.public import EPISODES_PER_CASE, SUSPECTS_PER_CASE
 from jumbaq.cases import domain
-from jumbaq.cases.domain import FALLBACK_PLAN, Case, CaseStatus, Clue, Plan, Rank, Suspect
+from jumbaq.cases.domain import (
+    FALLBACK_PLAN,
+    FALLBACK_PLANS,
+    Case,
+    CaseStatus,
+    Clue,
+    Plan,
+    Rank,
+    Suspect,
+)
 from jumbaq.episodes.domain import banned_words
 
 NOW = datetime(2026, 11, 14, 18, 0, tzinfo=UTC)
@@ -48,6 +57,21 @@ def with_clue(index: int, clue: Clue) -> Plan:
 def test_a_good_plan_and_the_fallback_plan_are_playable() -> None:
     assert problems(GOOD) == []
     assert problems(FALLBACK_PLAN) == []
+
+
+@pytest.mark.parametrize("plan", FALLBACK_PLANS)
+def test_every_built_in_plan_is_playable_and_names_its_suspects(plan: Plan) -> None:
+    assert problems(plan) == []
+    names = {suspect.id: suspect.name.split()[0] for suspect in plan.suspects}
+    assert all(names[clue.suspect_id] in clue.text for clue in plan.clues)
+    assert all(clue.text.isascii() for clue in plan.clues)
+
+
+def test_the_built_in_plan_follows_the_case_number_and_cycles() -> None:
+    first, second, third = (domain.fallback_plan(number) for number in (1, 2, 3))
+    assert first is FALLBACK_PLAN
+    assert len({first.title, second.title, third.title}) == 3
+    assert domain.fallback_plan(4) is first and domain.fallback_plan(5) is second
 
 
 @pytest.mark.parametrize(
