@@ -1,0 +1,10 @@
+# Used by Luxen on the laptop to build and push the image.
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.jumbaq.fun}
+    # The server is x86-64; without this a Mac with Apple silicon builds arm64.
+    platform: linux/amd64
+    image: ghcr.io/thelol3882/jumbaq-web:${TAG:-latest}

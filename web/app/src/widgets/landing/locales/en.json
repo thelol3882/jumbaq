@@ -1,0 +1,18 @@
+{
+  "volume": "case file, vol. 1",
+  "edition": "pocket edition",
+  "wordmark": "jumbaq",
+  "meaning": "means \"riddle\" in Kazakh",
+  "headline": "A detective story your kids solve by searching the room you're sitting in.",
+  "steps": {
+    "read": "You read the story aloud.",
+    "hunt": "The kids hunt the room for the thing in the riddle.",
+    "type": "You type what they found. A clue drops."
+  },
+  "example": {
+    "label": "from the case files",
+    "title": "The Case of the Missing Midnight Cookie"
+  },
+  "start": "Start tonight's case",
+  "free": "No sign-up. First case is free."
+}

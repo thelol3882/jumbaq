@@ -1,0 +1,35 @@
+{
+  "$schema": "https://cdn.jsdelivr.net/npm/@thelol3882/lexen/schema/i18n.config.schema.json",
+  "srcDir": "src",
+  "locales": [
+    "en"
+  ],
+  "defaultLocale": "en",
+  "filePatterns": [
+    "**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "**/*.d.ts",
+    "**/node_modules/**",
+    "**/.next/**"
+  ],
+  "hook": {
+    "name": "useTranslations",
+    "package": "next-intl"
+  },
+  "resolver": "typechecker",
+  "layout": {
+    "feature": "features/{namespace}/locales/{locale}.json",
+    "widget": "widgets/{widget}/locales/{locale}.json",
+    "widgetNamespacePrefix": "widget",
+    "global": "i18n/messages/{locale}.json",
+    "globalNamespace": "common",
+    "featuresDir": "features",
+    "widgetsDir": "widgets"
+  },
+  "preserve": {
+    "common": [
+      "metadata.*"
+    ]
+  }
+}

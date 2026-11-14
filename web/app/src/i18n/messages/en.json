@@ -1,0 +1,45 @@
+{
+  "common": {
+    "metadata": {
+      "title": "jumbaq: a detective story your kids solve at home",
+      "description": "One short mystery a night for five nights. You read it aloud, the kids search the room you're sitting in. No sign-up."
+    },
+    "unexpectedError": "Something went wrong. If it happens again, tell us this code: {requestId}",
+    "errors": {
+      "common": {
+        "bad_request": "This request is not right.",
+        "not_found": "We couldn't find that.",
+        "method_not_allowed": "This action is not allowed here.",
+        "conflict": "Something changed meanwhile. Load the page again.",
+        "too_large": "That is too big to send.",
+        "too_many_requests": "Too many tries. Wait a minute and try again.",
+        "validation_failed": "Some answers need another look.",
+        "http_error": "The server didn't answer properly. Try again in a moment.",
+        "internal_error": "Something went wrong on our side. Try again in a moment.",
+        "not_authenticated": "We don't know this browser yet. Start a case first.",
+        "forbidden": "This action is not allowed.",
+        "network_error": "No connection. Check the internet and try again."
+      },
+      "family": {
+        "no_session": "This browser has no case yet. Start one, it takes a minute.",
+        "kid_nickname_repeated": "Two kids have the same nickname. Give each one their own."
+      },
+      "ai": {
+        "daily_limit_reached": "That's enough mysteries for today. Come back tomorrow evening.",
+        "bad_output": "Tonight's story got muddled. Try again in a moment.",
+        "unavailable": "The storyteller is busy. Try again in a moment."
+      }
+    },
+    "fieldErrors": {
+      "missing": "Fill this in.",
+      "string_too_short": "Fill this in.",
+      "string_too_long": "This is too long.",
+      "too_short": "Add at least one more.",
+      "too_long": "That's too many.",
+      "int_parsing": "Type a number.",
+      "greater_than_equal": "This number is too small.",
+      "less_than_equal": "This number is too big.",
+      "invalid": "This doesn't look right."
+    }
+  }
+}

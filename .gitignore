@@ -33,3 +33,6 @@ out/
 
 # Server certificates and keys
 deploy/ssl/
+
+# Playwright MCP output
+.playwright-mcp/
