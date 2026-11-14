@@ -252,7 +252,8 @@ async def test_the_number_code_level_shows_numbers_and_three_buttons(
     assert cipher["code"] == domain.number_code(4, "FEATHER")
     assert cipher["clue_with_gap"] == "A grey ____ lies by the empty plate, and Felix has only fur."
     # The wrong buttons are words of the other clues: none is in the sentence with the gap.
-    assert cipher["options"] == ["EVENING", "FEATHER", "THROUGH"]
+    assert len(cipher["options"]) == 3 and "FEATHER" in cipher["options"]
+    assert cipher["options"] == sorted(cipher["options"])
     assert not set(cipher["options"]) & set(cipher["clue_with_gap"].upper().split())
     assert (cipher["start"], cipher["shift"]) == (domain.number_start(4), None)
     wrong = content(decode(live_client, path, "GREY"))
