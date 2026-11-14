@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { useGetSubscriptionQuery } from "@/features/billing";
 import { playedCount, useCurrentCase, useGetCertificateQuery, type Accusation } from "@/features/cases";
 import { useDetectivesLabel } from "@/features/families";
 import { toApiError } from "@/shared/api/errors";
@@ -26,11 +27,12 @@ export function Accuse({ caseNumber }: { caseNumber: number }) {
   // The certificate is only asked for once this page shows the solved case.
   const showsSolved = current?.number === caseNumber && current.status === "solved";
   const certificate = useGetCertificateQuery(current?.id ?? "", { skip: !showsSolved });
+  const subscription = useGetSubscriptionQuery(undefined, { skip: !showsSolved });
   const noFamily = error !== undefined && toApiError(error).code === "family.no_session";
 
   if (current && current.number === caseNumber && (current.status === "accusing" || current.status === "solved")) {
     const View = isMobile ? AccuseMobile : AccuseDesktop;
-    return <View current={current} solved={solved} onSolved={setSolved} detectivesLabel={detectivesLabel} certificate={certificate.data} />;
+    return <View current={current} solved={solved} onSolved={setSolved} detectivesLabel={detectivesLabel} certificate={certificate.data} subscription={subscription.isError ? null : subscription.data} />;
   }
 
   return (

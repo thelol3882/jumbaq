@@ -18,7 +18,9 @@
   "next": {
     "label": "case {number}",
     "start": "Start Case {number} · $7.99 a month",
-    "terms": "Cancel anytime. The cases you played stay yours."
+    "startPlain": "Start Case {number}",
+    "terms": "Cancel anytime. The cases you played stay yours.",
+    "until": "Your subscription stays active until {date}."
   },
   "noFamily": {
     "title": "No case file yet",

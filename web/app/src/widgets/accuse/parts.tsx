@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useCheckout } from "@/features/billing";
+import { useCheckout, type Subscription } from "@/features/billing";
 import { CertificateCard, RankStamp, useStartNextCase, type Accusation, type Case, type Certificate } from "@/features/cases";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { StampButton } from "@/shared/components/notebook";
@@ -15,6 +15,9 @@ export type AccuseViewProps = {
   detectivesLabel: string | undefined;
   /** Loaded by the wrapper once the case is solved. */
   certificate: Certificate | undefined;
+  /** Loaded by the wrapper once the case is solved: the next case button says nothing of the price to a subscriber. */
+  /** Undefined while loading, null when it could not be loaded (then the price is told, as to anyone not subscribed). */
+  subscription: Subscription | null | undefined;
 };
 
 export function SolvedStory({ current, solved, large = false }: { current: Case; solved: Accusation | null; large?: boolean }) {
@@ -39,7 +42,15 @@ export function SolvedStory({ current, solved, large = false }: { current: Case;
 }
 
 /** The certificate, the print button, and only then the next case: the win comes first. */
-export function CertificateAndNext({ current, certificate }: { current: Case; certificate: Certificate | undefined }) {
+export function CertificateAndNext({
+  current,
+  certificate,
+  subscription,
+}: {
+  current: Case;
+  certificate: Certificate | undefined;
+  subscription: Subscription | null | undefined;
+}) {
   const t = useTranslations("widget.accuse");
   return (
     <div className="flex flex-col gap-6">
@@ -51,12 +62,12 @@ export function CertificateAndNext({ current, certificate }: { current: Case; ce
           </StampButton>
         </>
       ) : null}
-      <NextCase current={current} />
+      <NextCase current={current} subscription={subscription} />
     </div>
   );
 }
 
-function NextCase({ current }: { current: Case }) {
+function NextCase({ current, subscription }: { current: Case; subscription: Subscription | null | undefined }) {
   const t = useTranslations("widget.accuse");
   const router = useRouter();
   const errorMessage = useApiErrorMessage();
@@ -65,6 +76,13 @@ function NextCase({ current }: { current: Case }) {
   const { start, starting, error: startError } = useStartNextCase({ onStarted: () => router.push("/family"), onNotYet: checkout });
   const next = current.number + 1;
   const error = checkoutError ?? startError;
+  // Until the subscription is known the button stays plain, so a subscriber never sees the price flash.
+  const priced = subscription === null || subscription?.active === false;
+  const note = priced
+    ? t("next.terms")
+    : subscription?.cancels_at
+      ? t("next.until", { date: formatDay(subscription.cancels_at) })
+      : null;
   return (
     <div className="mt-2 border-[1.5px] border-dashed border-rule-divider px-5.5 py-5">
       <p className="font-type text-label text-ink-muted">{t("next.label", { number: next })}</p>
@@ -74,9 +92,9 @@ function NextCase({ current }: { current: Case }) {
         disabled={starting || redirecting}
         className="mt-1.5 inline-block border-b-2 border-ink py-1.5 text-left font-type text-[1.3125rem] font-bold disabled:opacity-60"
       >
-        {t("next.start", { number: next })}
+        {t(priced ? "next.start" : "next.startPlain", { number: next })}
       </button>
-      <p className="mt-1.5 font-type text-case font-normal">{t("next.terms")}</p>
+      {note ? <p className="mt-1.5 font-type text-case font-normal">{note}</p> : null}
       {error ? (
         <p role="alert" className="mt-2 font-type text-label text-gentle-error-fg">
           {errorMessage(error)}
