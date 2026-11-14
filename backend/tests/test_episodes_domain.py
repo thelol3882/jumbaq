@@ -31,7 +31,7 @@ GOOD = Payload(
     fallback_riddle=Riddle("You sit on me.", "sofa", "number", "Count the cushions."),
     resolution_template=f"The code was {ANSWER_SLOT}! The door opened.",
     case_clue="A grey feather lies by the plate.",
-    cliffhanger="Who left the feather?",
+    cliffhanger="Who was here before you?",
 )
 
 
@@ -235,10 +235,28 @@ def test_the_oldest_kid_sets_the_level(age: int, level: CipherLevel) -> None:
     assert domain.cipher_level_for(age) == level
 
 
-def test_a_number_code_hides_the_longest_good_word() -> None:
-    plan = domain.plan_cipher(CLUE, 7)
+OTHERS = (
+    "Boris snored in the back room the whole night.",
+    "Felix was at his grandma's all evening.",
+)
 
-    assert plan == CipherPlan(CipherLevel.NUMBER_CODE, "FEATHER", ("GREY", "LIES"))
+
+def test_a_number_code_hides_the_longest_good_word() -> None:
+    plan = domain.plan_cipher(CLUE, 7, OTHERS)
+
+    assert plan.level == CipherLevel.NUMBER_CODE and plan.secret == "FEATHER"
+    # The wrong buttons are words of the other clues, not of this one, and as long as the secret.
+    assert plan.decoys == ("EVENING", "SNORED")
+
+
+def test_no_decoy_is_a_word_of_the_clue() -> None:
+    clue = "Grandma's grey feather lies by the empty plate."
+    others = ("Grey feathers and the empty plate.", "Olive socks hide under pillows.")
+    for age in (7, 9):
+        plan = domain.plan_cipher(clue, age, others)
+        words = {word for word in re.findall(r"[A-Z]+", clue.upper().replace("'", ""))}
+        for decoy in plan.decoys:
+            assert not words & set(decoy.split()), decoy
 
 
 def test_the_first_of_two_longest_words_wins() -> None:
@@ -252,37 +270,82 @@ def test_stopwords_and_odd_lengths_are_not_secrets() -> None:
     assert plan == CipherPlan(CipherLevel.COUNT, None, ())
 
 
-def test_decoys_come_from_the_fallback_list_when_the_clue_has_too_few_words() -> None:
+def test_decoys_come_from_the_kid_words_when_the_other_clues_have_too_few() -> None:
     plan = domain.plan_cipher("Look at the kettle", 7)
 
     assert plan.secret == "KETTLE"
-    assert plan.decoys == ("LOOK", "APPLE")
+    assert plan.decoys == ("PENCIL", "BANANA")
+    # Six letters like the secret, so the length does not give it away.
+    assert {len(word) for word in plan.decoys} == {6}
 
 
-def test_a_shift_secret_is_three_words_around_the_best_word() -> None:
-    plan = domain.plan_cipher(CLUE, 9)
+def test_a_decoy_in_the_clue_is_left_out() -> None:
+    plan = domain.plan_cipher("Look at the kettle and the garden pencil", 7)
+
+    assert plan.secret == "KETTLE"
+    assert "GARDEN" not in plan.decoys and "PENCIL" not in plan.decoys
+
+
+def test_a_shift_secret_is_three_words_that_do_not_start_or_end_on_filler() -> None:
+    plan = domain.plan_cipher(CLUE, 9, OTHERS)
 
     assert plan.level == CipherLevel.SHIFT
-    assert plan.secret == "FEATHER LIES BY"
-    assert plan.decoys == ("THE EMPTY PLATE", "A GREY FEATHER")
+    assert plan.secret == "GREY FEATHER LIES"
 
 
-def test_a_shift_window_that_does_not_fit_moves_back() -> None:
-    plan = domain.plan_cipher("Look near the kettle", 9)
+def test_a_shift_secret_does_not_end_on_and() -> None:
+    plan = domain.plan_cipher("Basil Bunny nibbles carrots and cakes", 9)
 
-    assert plan.secret == "NEAR THE KETTLE"
-    assert plan.decoys == ("LOOK NEAR THE", "RED APPLE PIE")
+    assert plan.secret is not None
+    first, last = plan.secret.split()[0], plan.secret.split()[-1]
+    assert first not in ("AND", "THE", "A") and last not in ("AND", "THE", "A")
+    assert plan.secret == "BUNNY NIBBLES CARROTS"
+
+
+@pytest.mark.parametrize("filler", ["and", "the", "a", "of", "to", "in", "on", "at", "is", "was"])
+def test_a_shift_window_never_ends_on_a_filler_word(filler: str) -> None:
+    plan = domain.plan_cipher(f"Penny baked cookies {filler} {filler} kettle {filler}", 9)
+
+    words = (plan.secret or "").split()
+    assert not words or (words[0].lower() != filler and words[-1].lower() != filler)
+
+
+def test_a_shift_secret_takes_two_words_when_three_do_not_fit() -> None:
+    plan = domain.plan_cipher("Boris snored in the back", 9)
+
+    assert plan.secret == "BORIS SNORED"
+    assert len(plan.decoys) == 2 and all(len(d.split()) == 2 for d in plan.decoys)
+
+
+def test_a_shift_clue_with_no_window_gives_count() -> None:
+    assert domain.plan_cipher("Look at the kettle", 9) == CipherPlan(CipherLevel.COUNT, None, ())
+
+
+def test_shift_decoys_are_phrases_of_the_other_clues_that_are_not_in_the_clue() -> None:
+    plan = domain.plan_cipher(CLUE, 9, OTHERS)
+
+    assert len(plan.decoys) == 2
+    clue_words = set(CLUE.upper().rstrip(".").split())
+    for decoy in plan.decoys:
+        assert len(decoy.split()) == 3 and not clue_words & set(decoy.split())
 
 
 def test_an_apostrophe_keeps_a_word_whole() -> None:
     plan = domain.plan_cipher("Grandma\u2019s hat hid under Bram's bed", 9)
 
-    assert plan.secret == "UNDER BRAMS BED"
+    assert plan.secret == "HID UNDER BRAMS"
     assert "S" not in " ".join((plan.secret or "", *plan.decoys)).split()
 
 
-def test_a_clue_of_two_words_gives_count_at_any_age() -> None:
-    assert domain.plan_cipher("Green kettle", 9) == CipherPlan(CipherLevel.COUNT, None, ())
+def test_a_clue_of_one_word_gives_count_at_any_age() -> None:
+    assert domain.plan_cipher("Kettle", 9) == CipherPlan(CipherLevel.COUNT, None, ())
+
+
+def test_a_clue_of_two_words_gives_a_two_word_secret_at_the_shift_level() -> None:
+    plan = domain.plan_cipher("Green kettle", 9)
+
+    assert plan.secret == "GREEN KETTLE"
+    assert all(len(decoy.split()) == 2 for decoy in plan.decoys)
 
 
 def test_the_young_get_count_with_no_secret() -> None:
@@ -336,6 +399,18 @@ def test_the_gap_hides_the_secret_in_any_case_and_keeps_the_rest() -> None:
     assert domain.clue_with_gap("Feather, FEATHER!", "FEATHER") == "____, ____!"
 
 
+def test_the_gap_hides_a_word_with_an_apostrophe() -> None:
+    clue = "Felix was at his grandma's all evening"
+    plan = domain.plan_cipher(clue, 9)
+
+    assert plan.secret == "GRANDMAS ALL EVENING"
+    assert domain.clue_with_gap(clue, plan.secret or "") == "Felix was at his ____"
+    assert domain.clue_with_gap("Bram\u2019s bed", "BRAMS") == "____ bed"
+    assert domain.clue_with_gap("Felix was at his grandma's all evening", "EVENING") == (
+        "Felix was at his grandma's all ____"
+    )
+
+
 def test_the_gap_does_not_cut_a_longer_word() -> None:
     assert domain.clue_with_gap("A cat in a catalog", "CAT") == "A ____ in a catalog"
 
@@ -345,13 +420,61 @@ def test_a_pick_is_compared_in_upper_case_with_spaces_squeezed() -> None:
     assert not domain.same_word("feathers", "FEATHER")
 
 
-def test_options_hold_every_word_and_keep_their_order_for_one_episode() -> None:
-    episode_id = uuid.uuid4()
+def test_options_are_in_alphabetical_order_whatever_the_secret() -> None:
+    assert domain.sorted_options("PIG", ("MORNING", "PENNY")) == ["MORNING", "PENNY", "PIG"]
+    assert domain.sorted_options("A", ("C", "B")) == ["A", "B", "C"]
 
-    options = domain.shuffled_options("A", ("B", "C"), episode_id)
 
-    assert sorted(options) == ["A", "B", "C"]
-    assert options == domain.shuffled_options("A", ("B", "C"), episode_id)
+def test_the_start_and_the_shift_are_the_numbers_of_the_ciphers() -> None:
+    assert [domain.number_start(key) for key in (1, 9, 10, 4)] == [1, 9, 1, 4]
+    assert [domain.shift_amount(key) for key in (1, 25, 26, 4)] == [1, 25, 1, 4]
+    assert domain.number_code(4, "A") == str(domain.number_start(4))
+    assert domain.shift_text(4, "A") == "E"
+
+
+def test_the_words_to_keep_out_of_the_story_skip_filler() -> None:
+    assert domain.secret_words("GREY FEATHER LIES") == ("GREY", "FEATHER", "LIES")
+    assert domain.secret_words("GRANDMAS ALL EVENING") == ("GRANDMAS", "EVENING")
+    assert domain.secret_words("FEATHER") == ("FEATHER",)
+    assert domain.secret_words(None) == ()
+
+
+def test_a_draft_that_uses_the_secret_is_refused_and_says_where() -> None:
+    leaky = replace(GOOD, read_aloud=("The Feather was on the table.", "Quiet."))
+
+    found = domain.draft_problems(leaky, OBJECTS, 7, ANSWER_SLOT, "FEATHER")
+
+    assert len(found) == 1
+    assert "feather" in found[0] and "read_aloud paragraph 1" in found[0]
+    assert "gives the clue away" in found[0]
+
+
+def test_the_secret_is_found_in_every_text_but_the_clue() -> None:
+    for field in ("recap", "hint", "resolution_template", "cliffhanger"):
+        text = f"A grey feather. {ANSWER_SLOT}" if field == "resolution_template" else "A feather"
+        leaky = replace(GOOD, **{field: text})
+        found = domain.draft_problems(leaky, OBJECTS, 7, ANSWER_SLOT, "FEATHER")
+        assert any(f"in {field}" in problem for problem in found), field
+    riddle = replace(GOOD.riddle, parent_note="Look for the feather's colour.")
+    assert domain.draft_problems(replace(GOOD, riddle=riddle), OBJECTS, 7, ANSWER_SLOT, "FEATHER")
+
+
+def test_the_clue_itself_may_hold_the_secret() -> None:
+    assert domain.draft_problems(GOOD, OBJECTS, 7, ANSWER_SLOT, "FEATHER") == []
+
+
+def test_only_whole_words_count_as_the_secret() -> None:
+    text = replace(GOOD, recap="The feathers and the feathery hat.")
+
+    assert domain.draft_problems(text, OBJECTS, 7, ANSWER_SLOT, "FEATHER") == []
+
+
+def test_one_word_of_a_secret_phrase_is_enough_to_refuse_but_filler_is_not() -> None:
+    by_filler = replace(GOOD, recap="She walked by the lake.")
+    by_word = replace(GOOD, recap="Grey birds sat there.")
+
+    assert domain.draft_problems(by_filler, OBJECTS, 7, ANSWER_SLOT, "GREY FEATHER LIES BY") == []
+    assert domain.draft_problems(by_word, OBJECTS, 7, ANSWER_SLOT, "GREY FEATHER LIES BY")
 
 
 def test_the_evening_goes_answer_decode_strike_done() -> None:
@@ -370,7 +493,7 @@ def test_an_older_payload_has_no_steps_and_the_new_one_has() -> None:
 
     assert domain.has_evening_steps(stepped)
     assert (stepped.clue_suspect_id, stepped.clue_points_at) == ("s2", True)
-    assert (stepped.cipher_secret, stepped.cipher_decoys) == ("FEATHER", ("GREY", "LIES"))
+    assert (stepped.cipher_secret, stepped.cipher_decoys) == (plan.secret, plan.decoys)
 
 
 def test_the_plan_clue_is_not_measured_again() -> None:

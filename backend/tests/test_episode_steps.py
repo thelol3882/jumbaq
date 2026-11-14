@@ -13,14 +13,14 @@ from jumbaq.episodes import domain
 from jumbaq.episodes.models import EpisodeRow
 from jumbaq.episodes.public import EpisodeStatus
 from jumbaq.families.deps import FAMILY_COOKIE
-from tests.flows import deliver_all, family_body
+from tests.flows import create_family, deliver_all, family_body, play_evening
 
 pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
 
 Sessionmaker = async_sessionmaker[AsyncSession]
 # The stub plans clue 1 about s1 and rules it out; the clue is the grey feather one.
 RIGHT, WRONG = "s1", "s2"
-SECRET = {"shift": "FEATHER LIES BY", "number_code": "FEATHER", "count": None}
+SECRET = {"shift": "GREY FEATHER LIES", "number_code": "FEATHER", "count": None}
 
 
 async def ready_episode(
@@ -85,13 +85,17 @@ async def test_the_whole_evening_answer_decode_strike(
     assert cipher["level"] == "shift" and cipher["attempts"] == 0
     assert cipher["key"] == 4 and cipher["count"] is None
     assert cipher["code"] == domain.shift_text(4, secret or "")
-    assert cipher["clue_with_gap"] == "A grey ____ the empty plate, and Felix has only fur."
+    assert cipher["clue_with_gap"] == "A ____ by the empty plate, and Felix has only fur."
+    assert (cipher["start"], cipher["shift"]) == (None, domain.shift_amount(4))
     assert len(cipher["options"]) == 3 and secret in cipher["options"]
+    assert cipher["options"] == sorted(cipher["options"])
+    clue_words = set(cipher["clue_with_gap"].upper().replace(",", "").split())
+    assert not clue_words & {w for o in cipher["options"] for w in o.split()}
     # The secret never travels apart from the buttons.
     assert secret not in (cipher["code"], cipher["clue_with_gap"])
     assert answered["strike"] is None
 
-    decoded = content(decode(live_client, path, " feather  lies by "))
+    decoded = content(decode(live_client, path, " grey  feather lies "))
 
     assert decoded["step"] == "strike" and decoded["decode"] is None
     assert decoded["strike"] == {
@@ -203,6 +207,11 @@ async def test_a_step_out_of_order_gives_409_wrong_step(
     strike(live_client, path, RIGHT)
     assert error_code(strike(live_client, path, RIGHT)) == "episode.wrong_step"
     assert error_code(decode(live_client, path, "FEATHER")) == "episode.wrong_step"
+    # A played episode gives the same error for every step, answer and swap included.
+    assert error_code(live_client.post(f"{path}/answer", json={"answer": "x"})) == (
+        "episode.wrong_step"
+    )
+    assert error_code(live_client.post(f"{path}/swap")) == "episode.wrong_step"
 
 
 async def test_a_wrong_step_changes_nothing(
@@ -242,7 +251,10 @@ async def test_the_number_code_level_shows_numbers_and_three_buttons(
 
     assert cipher["code"] == domain.number_code(4, "FEATHER")
     assert cipher["clue_with_gap"] == "A grey ____ lies by the empty plate, and Felix has only fur."
-    assert sorted(cipher["options"]) == ["FEATHER", "GREY", "LIES"]
+    # The wrong buttons are words of the other clues: none is in the sentence with the gap.
+    assert cipher["options"] == ["EVENING", "FEATHER", "THROUGH"]
+    assert not set(cipher["options"]) & set(cipher["clue_with_gap"].upper().split())
+    assert (cipher["start"], cipher["shift"]) == (domain.number_start(4), None)
     wrong = content(decode(live_client, path, "GREY"))
     assert wrong["decode"]["attempts"] == 1
     assert content(decode(live_client, path, "FEATHER"))["step"] == "strike"
@@ -257,6 +269,7 @@ async def test_the_count_level_takes_any_body(
 
     assert cipher["level"] == "count" and cipher["key"] == 7 and cipher["count"] == 7
     assert (cipher["code"], cipher["clue_with_gap"], cipher["options"]) == (None, None, [])
+    assert (cipher["start"], cipher["shift"]) == (None, None)
     after = content(decode(live_client, path, None))
     assert after["step"] == "strike"
     assert after["strike"]["decoded_word"] is None and after["strike"]["revealed_word"] is False
@@ -307,8 +320,9 @@ async def test_an_episode_written_before_the_steps_is_played_by_the_answer(
     # An older episode has no steps to take after the answer.
     assert error_code(decode(live_client, path, "FEATHER")) == "episode.wrong_step"
     assert error_code(live_client.post(f"{path}/answer", json={"answer": "x"})) == (
-        "episode.not_ready"
+        "episode.wrong_step"
     )
+    assert error_code(live_client.post(f"{path}/swap")) == "episode.wrong_step"
 
 
 async def test_decode_and_strike_check_their_bodies(
@@ -328,3 +342,32 @@ def test_the_steps_need_a_family(live_client: TestClient) -> None:
 
     assert decode(live_client, f"/api/v1/episodes/{any_id}", "X").status_code == 401
     assert strike(live_client, f"/api/v1/episodes/{any_id}", "s1").status_code == 401
+
+
+async def test_decode_and_strike_wait_for_the_evening(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    episode_id, _ = await ready_episode(live_client, sessionmaker)
+    await play_evening(live_client, sessionmaker, episode_id)
+    await deliver_all(sessionmaker)
+    second = live_client.get("/api/v1/episodes/current").json()
+    assert second["number"] == 2 and second["status"] == "ready" and second["content"] is None
+    later = f"/api/v1/episodes/{second['id']}"
+
+    for response in (decode(live_client, later, "FEATHER"), strike(live_client, later, RIGHT)):
+        assert response.status_code == 409, response.text
+        assert response.json()["error"]["code"] == "episode.not_available_yet"
+    row = await stored(sessionmaker, second["id"])
+    assert (row.decode_attempts, row.strike_attempts, row.answered_at) == (0, 0, None)
+
+
+async def test_decode_and_strike_of_another_family_give_404(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    _, path = await ready_episode(live_client, sessionmaker)
+    live_client.post(f"{path}/answer", json={"answer": "blue"})
+    create_family(live_client)  # the cookie is now the other family's
+
+    for response in (decode(live_client, path, SECRET["shift"]), strike(live_client, path, RIGHT)):
+        assert response.status_code == 404, response.text
+        assert response.json()["error"]["code"] == "episode.not_found"

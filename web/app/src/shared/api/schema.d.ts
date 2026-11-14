@@ -262,9 +262,10 @@ export interface paths {
         /**
          * Answer Episode
          * @description Step 1 of 3. Any answer fits the story. Only for a ready episode (409
-         *     `episode.not_ready`) that is available (409 `episode.not_available_yet`). A second answer
-         *     gives 409 `episode.wrong_step`. The cipher to decode is then in `content.decode`; an
-         *     episode without a cipher is played here and its result is in `content.result`.
+         *     `episode.not_ready`) that is available (409 `episode.not_available_yet`). A played episode or
+         *     a second answer gives 409 `episode.wrong_step`. The cipher to decode is then in
+         *     `content.decode`; an episode without a cipher is played here and its result is in
+         *     `content.result`.
          */
         post: operations["answer_episode_api_v1_episodes__episode_id__answer_post"];
         delete?: never;
@@ -520,6 +521,10 @@ export interface components {
             level: components["schemas"]["CipherLevel"];
             /** Key */
             key: number;
+            /** Start */
+            start: number | null;
+            /** Shift */
+            shift: number | null;
             /** Code */
             code: string | null;
             /** Count */
