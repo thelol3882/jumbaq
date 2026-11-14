@@ -4,7 +4,8 @@ import { useTranslations } from "next-intl";
 import { useId } from "react";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, StampButton, TypedButton } from "@/shared/components/notebook";
-import { MAX_ANSWER, useAnswerForm } from "../hooks/useAnswerForm";
+import { useAnswerForm } from "../hooks/useAnswerForm";
+import { MAX_ANSWER } from "../services/answerLimit";
 import type { EpisodeContent } from "../types";
 
 /** Straight under the riddle: what the kids found, then the stamp. Hint and the other riddle below. */
@@ -41,6 +42,11 @@ export function AnswerForm({ episodeId, content }: { episodeId: string; content:
           </StampButton>
         </div>
       </div>
+      {form.left !== null ? (
+        <p className={`font-type text-label ${form.left === 0 ? "text-gentle-error-fg" : "text-ink-muted"}`}>
+          {t("answer.left", { count: form.left })}
+        </p>
+      ) : null}
       {form.error ? (
         <p role="alert" className="font-type text-label text-gentle-error-fg">
           {errorMessage(form.error)}

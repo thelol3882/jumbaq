@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useAnswerEpisodeMutation, useSwapRiddleMutation } from "../api/episodesApi";
-
-// The same limit as the backend: the answer goes into the story read aloud.
-export const MAX_ANSWER = 60;
+import { charactersLeft, MAX_ANSWER } from "../services/answerLimit";
 
 /** What the kids found, typed by the parent, plus the hint and the other riddle. */
 export function useAnswerForm(episodeId: string) {
@@ -34,6 +32,7 @@ export function useAnswerForm(episodeId: string) {
   return {
     answer,
     setAnswer: (value: string) => setAnswer(value.slice(0, MAX_ANSWER)),
+    left: charactersLeft(answer.length),
     canSubmit: clean.length > 0 && !sending.isLoading,
     submit,
     sending: sending.isLoading,
