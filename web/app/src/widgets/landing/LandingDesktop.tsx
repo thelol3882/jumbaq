@@ -1,9 +1,9 @@
 import { useTranslations } from "next-intl";
 import { HandNote, NotebookPage, NotebookSpread, PlansLink, RiddleCard, StampLink, Wordmark } from "@/shared/components/notebook";
-import { ForReviewers, Headline, Steps } from "./parts";
+import { ForReviewers, Headline, Steps, WelcomeCard, type Welcome } from "./parts";
 
 /** Design F1: the story on the left page, a real page of a case on the right. */
-export function LandingDesktop({ startHref }: { startHref: string }) {
+export function LandingDesktop({ startHref, welcome }: { startHref: string; welcome: Welcome | undefined }) {
   const t = useTranslations("widget.landing");
   return (
     <NotebookPage width="wide">
@@ -27,12 +27,18 @@ export function LandingDesktop({ startHref }: { startHref: string }) {
               <div className="mt-9 max-w-xl">
                 <Steps large />
               </div>
-              <div className="mt-11 flex flex-wrap items-center gap-6">
-                <StampLink href={startHref} fit>
-                  {t("start")}
-                </StampLink>
-                <HandNote>{t("free")}</HandNote>
-              </div>
+              {welcome ? (
+                <div className="mt-11 max-w-md">
+                  <WelcomeCard welcome={welcome} />
+                </div>
+              ) : (
+                <div className="mt-11 flex flex-wrap items-center gap-6">
+                  <StampLink href={startHref} fit>
+                    {t("start")}
+                  </StampLink>
+                  <HandNote>{t("free")}</HandNote>
+                </div>
+              )}
             </div>
           }
           side={

@@ -9,5 +9,6 @@ export { useGetCertificateQuery, useStartNextCaseMutation } from "./api/casesApi
 export { useCurrentCase } from "./hooks/useCurrentCase";
 export { nextEvening, opensLater, playedCount } from "./services/caseBoard";
 export { inOpening, openingStamps } from "./services/opening";
-export { tonight, type Tonight } from "./services/tonight";
+export { caseProgress, type CaseProgress } from "./services/progress";
+export { tonight,type Tonight } from "./services/tonight";
 export type * from "./types";
