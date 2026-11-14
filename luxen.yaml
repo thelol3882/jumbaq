@@ -125,5 +125,7 @@ env:
       { required: true, secret: true, generate: rand-hex-24, example: "change-me", description: "API and worker, no DELETE" }
     JUMBAQ_CORS_ORIGINS:
       { required: true, default: "https://jumbaq.fun", description: "Web app origins that may call the API with cookies; comma separated" }
+    JUMBAQ_AI_PROVIDER: { default: "stub", description: "stub | claude; claude needs JUMBAQ_AI_API_KEY" }
+    JUMBAQ_AI_API_KEY: { secret: true, description: "Anthropic API key from console.anthropic.com" }
     JUMBAQ_ENVIRONMENT: { default: "prod", description: "dev | prod" }
     JUMBAQ_LOG_LEVEL: { default: "INFO" }
