@@ -63,15 +63,6 @@ export function ExampleCase() {
   );
 }
 
-export function ExampleExhibit() {
-  const t = useTranslations("widget.landing");
-  return (
-    <div className="w-70 rotate-[2.5deg]">
-      <EvidenceTag label={t("example.exhibitLabel")}>{t("example.exhibit")}</EvidenceTag>
-    </div>
-  );
-}
-
 export function Start({ href }: { href: string }) {
   const t = useTranslations("widget.landing");
   return (

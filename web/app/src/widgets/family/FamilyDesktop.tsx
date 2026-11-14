@@ -12,9 +12,9 @@ export function FamilyDesktop({ family }: { family: Family }) {
         <Link href="/">
           <Wordmark text={t("wordmark")} size="sm" />
         </Link>
-        <span className="font-type text-case">{t("eyebrow")}</span>
-        <span className="font-type text-label-sm text-ink-muted">
-          {family.kids.map((kid) => kid.nickname).join(" · ")}
+        <span className="font-type text-case">{t("progress")}</span>
+        <span className="font-type text-label text-ink-muted">
+          {t("detectives", { names: family.kids.map((kid) => kid.nickname).join(", ") })}
         </span>
       </header>
       <div className="mt-11">
