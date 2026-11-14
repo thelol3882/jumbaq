@@ -1,8 +1,8 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
 import { openingStamps, tonight, type Case } from "@/features/cases";
+import { ReadAloud } from "@/features/episodes";
 import { HandNote, ProgressStamps, StampLink, TypedButton } from "@/shared/components/notebook";
 import { formatOpening } from "@/shared/lib/dates";
 import type { Waiting } from "./Tonight";
@@ -29,7 +29,6 @@ export function Opening({
   const format = useFormatter();
   const stamps = openingStamps(current);
   const step = current ? tonight(current, new Date()) : undefined;
-  const aloud = large ? "text-aloud-lg" : "text-aloud";
 
   return (
     <div className="flex flex-col gap-9">
@@ -55,31 +54,34 @@ export function Opening({
         <HandNote className="max-w-xl">{t("opening.saved")}</HandNote>
       </div>
 
-      <ReadAloud label={t("opening.readAloud")}>
-        <p className={`font-story ${aloud} text-aloud-fg`}>
-          {t("opening.oath.intro", { count: detectives.length, names: format.list(detectives) })}
-        </p>
-        {OATH.map((line) => (
-          <p key={line} className={`font-story ${aloud} text-aloud-fg ${line === "end" ? "font-bold" : "italic"}`}>
-            {t(`opening.oath.${line}`, { count: detectives.length })}
-          </p>
-        ))}
-      </ReadAloud>
-
-      {current && stamps.suspects ? (
-        <ReadAloud label={t("opening.readAloud")}>
-          <p className={`font-story ${aloud} text-aloud-fg`}>
-            {t("opening.suspects.intro", { title: current.title ?? "", count: current.suspects.length })}
-          </p>
-          <ul className="flex flex-col gap-3">
-            {current.suspects.map((s) => (
-              <li key={s.id} className={`font-story ${aloud} text-aloud-fg`}>
-                <b className="font-type font-bold">{s.name}</b>: {s.description}
-              </li>
-            ))}
-          </ul>
+      {/* The wide page has no margin rule, so the label gets its room here. */}
+      <div className={`flex flex-col gap-9 ${large ? "pl-14" : ""}`}>
+        <ReadAloud large={large}>
+          <p>{t("opening.oath.intro", { count: detectives.length, names: format.list(detectives) })}</p>
+          {OATH.map((line) => (
+            <p key={line} className={line === "end" ? "font-bold" : "italic"}>
+              {t(`opening.oath.${line}`, { count: detectives.length })}
+            </p>
+          ))}
         </ReadAloud>
-      ) : null}
+
+        {current && stamps.suspects ? (
+          <ReadAloud large={large}>
+            <p>{t("opening.suspects.intro", { title: current.title ?? "", count: current.suspects.length })}</p>
+            <ul className="flex flex-col gap-3">
+              {current.suspects.map((s) => (
+                <li key={s.id}>
+                  {t.rich("opening.suspects.item", {
+                    name: s.name,
+                    description: s.description,
+                    b: (chunks) => <b className="font-type font-bold">{chunks}</b>,
+                  })}
+                </li>
+              ))}
+            </ul>
+          </ReadAloud>
+        ) : null}
+      </div>
 
       <div aria-live="polite" className="flex flex-col gap-4">
         {step?.kind === "read" && step.evening.number === 1 ? (
@@ -101,15 +103,5 @@ export function Opening({
         ) : null}
       </div>
     </div>
-  );
-}
-
-/** Text the parent reads to the kids, with the red label the brand gives read-aloud text. */
-function ReadAloud({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <section className="flex max-w-[34em] flex-col gap-3">
-      <p className="font-type text-label-sm text-aloud-label">{label}</p>
-      {children}
-    </section>
   );
 }
