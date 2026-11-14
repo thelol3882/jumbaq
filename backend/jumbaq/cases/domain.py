@@ -1,16 +1,17 @@
 """A detective case of 5 episodes. Case 1 is free.
 
 The plan is fixed when the case is planned: three suspects, one culprit and one clue per
-episode. The model writes it, these rules check it, and a built-in plan stands in when the model
-fails twice.
+episode, with one false trail that a later clue clears. The model writes it, these rules check
+it, and a built-in plan stands in when the model fails twice.
 
 The numbers of suspects and episodes come from ai.public through the caller: importing it here
 would pull the database into the domain. So does the check for words unsafe for small kids,
 which comes from episodes.public.
 """
 
+import re
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import StrEnum
@@ -102,16 +103,38 @@ class EpisodeBrief:
 
 # Every episode quotes its clue word for word to the kids, so a clue is one short sentence.
 CLUE_MAX_CHARS = 140
-# Only the last episodes may point at someone, and the culprit is the only one they point at: a
-# clue that points at a suspect early would solve the game at once.
+# The last episodes point at the culprit and nobody else.
 POINTING_EPISODES = 2
+# The false trail lives in the first two evenings and a clue by the end of the third explains
+# it away: the kids are never left with a wrong idea for long, and the evenings that point at
+# the culprit stay clean.
+TRAIL_LAST_EPISODE = 2
+CLEARED_BY_EPISODE = 3
+_NAME_FILLER = {"the", "a", "an", "of"}
+
+
+def _names_suspect(clue: Clue, suspect: Suspect) -> bool:
+    """The clue says the suspect's name or one word of it (Felix for Felix the Fox)."""
+    words = [w for w in re.findall(r"[\w-]+", suspect.name.casefold()) if w not in _NAME_FILLER]
+    text = set(re.findall(r"[\w-]+", clue.text.casefold().replace("'s", " ")))
+    return any(word in text for word in words)
 
 
 def plan_problems(
-    plan: Plan, suspects: int, episodes: int, unsafe_words: Callable[[str], list[str]]
+    plan: Plan,
+    suspects: int,
+    episodes: int,
+    unsafe_words: Callable[[str], list[str]],
+    used_titles: Collection[str] = (),
+    used_names: Collection[str] = (),
 ) -> list[str]:
     """Why the plan cannot be played. Empty when it is fine. `unsafe_words` returns the words
-    of a text that a small kid must not hear: the episodes module owns that list."""
+    of a text that a small kid must not hear: the episodes module owns that list. `used_titles`
+    and `used_names` are what the family played before: a case must not look like an old one.
+
+    The shape of the clues: one innocent suspect looks bad in evening 1 or 2 (the false trail)
+    and a clue by evening 3 explains it away; the other innocent is ruled out in evenings 1 to
+    3; the last evenings point at the culprit, and nothing rules the culprit out."""
     problems = []
     texts = [("title", plan.title), ("setting", plan.setting), ("reveal", plan.reveal)]
     for suspect in plan.suspects:
@@ -130,6 +153,14 @@ def plan_problems(
                 f"the clue of episode {clue.episode} has {len(clue.text)} characters, "
                 f"the limit is {CLUE_MAX_CHARS}"
             )
+    if plan.title.casefold() in {title.casefold() for title in used_titles}:
+        problems.append(f'the title "{plan.title}" was used by an earlier case of this family')
+    taken = {name.casefold() for name in used_names}
+    for suspect in plan.suspects:
+        if suspect.name.casefold() in taken:
+            problems.append(
+                f'the suspect name "{suspect.name}" was used by an earlier case of this family'
+            )
     ids = [suspect.id for suspect in plan.suspects]
     if len(ids) != suspects or len(set(ids)) != len(ids):
         problems.append(f"needs {suspects} suspects with different ids")
@@ -137,23 +168,71 @@ def plan_problems(
         problems.append("the culprit is not a suspect")
     if sorted(clue.episode for clue in plan.clues) != list(range(1, episodes + 1)):
         problems.append(f"needs one clue for each of the {episodes} episodes")
-    if any(clue.suspect_id not in ids for clue in plan.clues):
+    named = {suspect.id: suspect for suspect in plan.suspects}
+    if any(clue.suspect_id not in named for clue in plan.clues):
         problems.append("a clue names someone who is not a suspect")
-    ruled_out = {clue.suspect_id for clue in plan.clues if not clue.points_at}
-    if any(sid not in ruled_out for sid in ids if sid != plan.culprit_id):
-        problems.append("an innocent suspect is never ruled out")
-    if plan.culprit_id in ruled_out:
-        problems.append("a clue rules out the culprit")
-    # Small kids take a clue at its word, so a false trail would only confuse them.
-    if any(clue.points_at and clue.suspect_id != plan.culprit_id for clue in plan.clues):
-        problems.append("a clue points at an innocent suspect")
+    for clue in plan.clues:
+        suspect = named.get(clue.suspect_id)
+        if suspect is not None and not _names_suspect(clue, suspect):
+            problems.append(
+                f"the clue of episode {clue.episode} does not say the name of {suspect.name}"
+            )
+    if plan.culprit_id in named and all(clue.suspect_id in named for clue in plan.clues):
+        problems.extend(_clue_shape_problems(plan, list(named), episodes))
+    return problems
+
+
+def _clue_shape_problems(plan: Plan, ids: list[str], episodes: int) -> list[str]:
+    problems = []
+    innocents = [sid for sid in ids if sid != plan.culprit_id]
     first_pointing = episodes - POINTING_EPISODES + 1
-    early = sorted(c.episode for c in plan.clues if c.points_at and c.episode < first_pointing)
-    if early:
+    if any(clue.suspect_id == plan.culprit_id and not clue.points_at for clue in plan.clues):
+        problems.append("a clue rules out the culprit")
+    for clue in plan.clues:
+        points_at_culprit = clue.points_at and clue.suspect_id == plan.culprit_id
+        if clue.episode >= first_pointing and not points_at_culprit:
+            problems.append(
+                f"the clue of episode {clue.episode} must point at the culprit: episodes "
+                f"{first_pointing} to {episodes} point at the culprit and at nobody else"
+            )
+        if clue.episode < first_pointing and points_at_culprit:
+            problems.append(
+                f"the clue of episode {clue.episode} points at the culprit: only episodes "
+                f"{first_pointing} to {episodes} may do that"
+            )
+    trails = [c for c in plan.clues if c.points_at and c.suspect_id in innocents]
+    if len(trails) != 1:
         problems.append(
-            f"the clue of episode {early[0]} points at a suspect: only episodes "
-            f"{first_pointing} to {episodes} may point, the earlier ones only rule suspects out"
+            "needs exactly one false trail (a clue that points at an innocent suspect), "
+            f"found {len(trails)}"
         )
+        return problems
+    trail = trails[0]
+    if trail.episode > TRAIL_LAST_EPISODE:
+        problems.append(
+            f"the false trail is in episode {trail.episode}: it belongs to episode 1 or "
+            f"{TRAIL_LAST_EPISODE}"
+        )
+    cleared = any(
+        not c.points_at
+        and c.suspect_id == trail.suspect_id
+        and trail.episode < c.episode <= CLEARED_BY_EPISODE
+        for c in plan.clues
+    )
+    if not cleared:
+        problems.append(
+            f"no clue after the false trail and by episode {CLEARED_BY_EPISODE} rules out "
+            f"{trail.suspect_id}, the suspect the false trail points at"
+        )
+    for sid in innocents:
+        ruled_out = any(
+            not c.points_at and c.suspect_id == sid and c.episode <= CLEARED_BY_EPISODE
+            for c in plan.clues
+        )
+        if sid != trail.suspect_id and not ruled_out:
+            problems.append(
+                f"the innocent suspect {sid} is not ruled out in episodes 1 to {CLEARED_BY_EPISODE}"
+            )
     return problems
 
 
@@ -162,17 +241,17 @@ FALLBACK_PLAN = Plan(
     setting="The big red balloon for Granny Hedgehog's birthday has floated out of the "
     "forest school. Someone took it, and the party is tomorrow.",
     suspects=(
-        Suspect("s1", "Rosa the Rabbit", "fast and always in a hurry"),
-        Suspect("s2", "Milo the Magpie", "loves shiny and colorful things"),
-        Suspect("s3", "Toby the Tortoise", "slow, calm and very honest"),
+        Suspect("s1", "Rosa the Rabbit", "wants the balloon to float over her garden party"),
+        Suspect("s2", "Milo the Magpie", "wants the balloon to brighten his cozy nest"),
+        Suspect("s3", "Toby the Tortoise", "wants the balloon for his own birthday picnic"),
     ),
     culprit_id="s2",
     clues=(
-        Clue(1, "Rosa was at the carrot market all morning, many saw her.", "s1", False),
-        Clue(2, "Toby is far too slow to catch a flying balloon.", "s3", False),
-        Clue(3, "Rosa has no wings, so she could not reach the high branch.", "s1", False),
-        Clue(4, "A black and white feather from Milo lies where the balloon was tied.", "s2", True),
-        Clue(5, "A red ribbon hangs in Milo's nest in the tall tree.", "s2", True),
+        Clue(1, "Rosa left muddy paw prints right where the balloon was tied.", "s1", True),
+        Clue(2, "Toby was at the carrot market all morning, and many saw him.", "s3", False),
+        Clue(3, "Rosa dug carrots all morning, so that is the mud on her paws.", "s1", False),
+        Clue(4, "A black and white feather lies where Milo's balloon was tied.", "s2", True),
+        Clue(5, "A red ribbon hangs from the tall tree where Milo nests.", "s2", True),
     ),
     reveal="Milo the Magpie took the balloon because it was the shiniest thing he had ever "
     "seen. He kept it safe in his nest and is glad to bring it to the party.",
