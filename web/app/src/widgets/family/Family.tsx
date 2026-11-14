@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useCurrentCase } from "@/features/cases";
+import { inOpening, tonight, useCurrentCase } from "@/features/cases";
 import { useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
+import { useRefetchAt } from "@/shared/hooks/useRefetchAt";
 import { FamilyDesktop } from "./FamilyDesktop";
 import { FamilyMobile } from "./FamilyMobile";
 
@@ -17,6 +18,8 @@ export function Family() {
   const { family, loading, missing, error, retry } = useFamily();
   const { current, slow, error: caseError, retry: check } = useCurrentCase();
   const isMobile = useIsMobile();
+  const step = current && !inOpening(current) ? tonight(current, new Date()) : undefined;
+  useRefetchAt(step?.kind === "waits" ? step.opensAt : null, check);
 
   if (family) {
     const waiting = { slow, onCheck: () => void check() };

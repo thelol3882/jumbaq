@@ -9,6 +9,7 @@ import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
+import { useRefetchAt } from "@/shared/hooks/useRefetchAt";
 import { formatOpening } from "@/shared/lib/dates";
 import { EveningDesktop } from "./EveningDesktop";
 import { EveningMobile } from "./EveningMobile";
@@ -23,6 +24,29 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
   const slot = current?.number === caseNumber ? current.episodes.find((e) => e.number === evening) : undefined;
   const { episode, loading, writing, slow, error, retry: retryEpisode } = useEpisode(slot?.id ?? null);
   const { family } = useFamily();
+
+  const recheck = () => {
+    void retry();
+    if (slot?.id) void retryEpisode();
+  };
+
+  const state: NoticeState =
+    caseLoading || loading
+      ? { kind: "loading" }
+      : caseError && toApiError(caseError).code === "family.no_session"
+        ? { kind: "noFamily" }
+        : caseError || error
+          ? { kind: "error", message: errorMessage(caseError ?? error) }
+          : !current || !slot
+            ? { kind: "missing" }
+            : slot.status === "failed" || episode?.status === "failed"
+              ? { kind: "failed" }
+              : writing || slot.status === "requested" || slot.status === "generating"
+                ? { kind: "writing", slow: slow || caseSlow }
+                : slot.available_at
+                  ? { kind: "later", when: formatOpening(slot.available_at), at: slot.available_at }
+                  : { kind: "missing" };
+  useRefetchAt(state.kind === "later" ? state.at : null, recheck);
 
   const ready = current && episode?.content ? { current, episode } : null;
   if (ready) {
@@ -47,31 +71,7 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
         ) : null}
       </div>
       <div className="mt-10 flex flex-col gap-6">
-        <Notice
-          t={t}
-          state={
-            caseLoading || loading
-              ? { kind: "loading" }
-              : caseError && toApiError(caseError).code === "family.no_session"
-                ? { kind: "noFamily" }
-                : caseError || error
-                  ? { kind: "error", message: errorMessage(caseError ?? error) }
-                  : !current || !slot
-                    ? { kind: "missing" }
-                    : slot.status === "failed" || episode?.status === "failed"
-                      ? { kind: "failed" }
-                      : writing || slot.status === "requested" || slot.status === "generating"
-                        ? { kind: "writing", slow: slow || caseSlow }
-                        : slot.available_at
-                          ? { kind: "later", when: formatOpening(slot.available_at) }
-                          : { kind: "missing" }
-          }
-          retry={() => {
-            void retry();
-            if (slot?.id) void retryEpisode();
-          }}
-          current={current}
-        />
+        <Notice t={t} state={state} retry={recheck} current={current} />
       </div>
     </NotebookPage>
   );
@@ -84,7 +84,7 @@ type NoticeState =
   | { kind: "noFamily" }
   | { kind: "failed" }
   | { kind: "writing"; slow: boolean }
-  | { kind: "later"; when: string };
+  | { kind: "later"; when: string; at: string };
 
 function Notice({
   t,
