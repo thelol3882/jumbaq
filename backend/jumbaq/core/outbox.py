@@ -12,7 +12,10 @@ and can take minutes:
    dead letter queue.
 
 A worker that dies in step 2 leaves the row with its lease, so another worker takes it when
-the lease ends, and the attempt has already been counted.
+the lease ends, and the attempt has already been counted. If the one that died was running the
+last attempt, the row gets one more run (attempt MAX_ATTEMPTS + 1) as a last attempt, so the
+handlers still give their built-in result. That run is never repeated: if it fails or is lost
+too, the row gets `failed_at`.
 
 Handlers must be safe to run twice: the worker can stop after a handler and before the row
 is marked.
@@ -151,9 +154,9 @@ class OutboxDelivery:
             if row is None:
                 return None
             topic, payload, attempts = row
-            if attempts >= MAX_ATTEMPTS:
-                # The last attempt ran and its worker died before it could say how it ended.
-                logger.error("event %s %s lost its last attempt and is dead", topic, row_id)
+            if attempts > MAX_ATTEMPTS:
+                # The extra run was lost too. It never runs a second time.
+                logger.error("event %s %s lost its extra run and is dead", topic, row_id)
                 await uow.session.execute(
                     text(
                         "UPDATE outbox SET failed_at = now(), last_error = 'LeaseExpired'"

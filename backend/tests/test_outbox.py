@@ -140,7 +140,56 @@ async def test_the_handler_knows_the_last_attempt_and_the_row_dies_after_it(
     assert not is_last_attempt()
 
 
-async def test_a_row_whose_last_attempt_was_lost_is_dead_and_not_run_again(
+async def set_attempts(sessionmaker: Sessionmaker, row_id: uuid.UUID, attempts: int) -> None:
+    async with sessionmaker() as session:
+        await session.execute(
+            text("UPDATE outbox SET attempts = :n WHERE id = :id"), {"n": attempts, "id": row_id}
+        )
+        await session.commit()
+
+
+async def test_a_row_whose_last_attempt_was_lost_gets_one_more_run_as_the_last(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    seen: list[bool] = []
+
+    async def handler(event: Event) -> None:
+        seen.append(is_last_attempt())
+
+    delivery, row_id = await ping_with(sessionmaker, live_client, handler)
+    await set_attempts(sessionmaker, row_id, MAX_ATTEMPTS)
+
+    await deliver(delivery, row_id)
+
+    assert seen == [True]
+    row = await row_of(sessionmaker, row_id)
+    assert row.processed_at is not None and row.failed_at is None
+    assert row.attempts == MAX_ATTEMPTS + 1
+
+
+async def test_the_extra_run_that_raises_ends_failed_and_is_not_run_again(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    runs: list[int] = []
+
+    async def handler(event: Event) -> None:
+        runs.append(1)
+        raise RuntimeError("boom")
+
+    delivery, row_id = await ping_with(sessionmaker, live_client, handler)
+    await set_attempts(sessionmaker, row_id, MAX_ATTEMPTS)
+
+    await deliver(delivery, row_id)
+    await make_due(sessionmaker, row_id)
+    await deliver(delivery, row_id)
+
+    assert runs == [1]
+    row = await row_of(sessionmaker, row_id)
+    assert row.failed_at is not None and row.processed_at is None
+    assert row.last_error == "RuntimeError"
+
+
+async def test_a_lost_extra_run_is_dead_and_not_run_again(
     live_client: TestClient, sessionmaker: Sessionmaker
 ) -> None:
     runs: list[int] = []
@@ -149,12 +198,7 @@ async def test_a_row_whose_last_attempt_was_lost_is_dead_and_not_run_again(
         runs.append(1)
 
     delivery, row_id = await ping_with(sessionmaker, live_client, handler)
-    async with sessionmaker() as session:
-        await session.execute(
-            text("UPDATE outbox SET attempts = :n WHERE id = :id"),
-            {"n": MAX_ATTEMPTS, "id": row_id},
-        )
-        await session.commit()
+    await set_attempts(sessionmaker, row_id, MAX_ATTEMPTS + 1)
 
     await deliver(delivery, row_id)
 
