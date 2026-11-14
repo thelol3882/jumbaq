@@ -70,9 +70,9 @@ one line that a child remembers.
 - Exactly {EPISODES_PER_CASE} clues, one for each episode 1 to {EPISODES_PER_CASE}. Each clue \
 names one suspect and either points at that suspect (points_at true) or rules them out \
 (points_at false).
-- Every innocent suspect is ruled out by at least one clue. No clue rules out the culprit. A \
-clue that points at an innocent suspect is fine early on, as a false trail, as long as a later \
-clue rules that suspect out.
+- Every innocent suspect is ruled out by at least one clue. No clue rules out the culprit. \
+No clue points at an innocent suspect: small kids take a clue at its word, so there are no \
+false trails.
 - The reveal: a few sentences that explain how the clues fit together.
 
 {_SAFETY}

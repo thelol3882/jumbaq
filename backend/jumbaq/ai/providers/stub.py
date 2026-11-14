@@ -22,7 +22,7 @@ def _data(prompt: Prompt) -> dict[str, Any]:
 
 
 def _plan(case_number: int) -> dict[str, Any]:
-    # s2 did it. s1 is a false trail that clue 2 rules out, clue 3 rules out s3.
+    # s2 did it. Clue 2 rules out s1, clue 3 rules out s3, the others point at s2.
     return {
         "title": f"Case {case_number}: the missing honey cake",
         "setting": "The honey cake vanished from the forest bakery before the party.",
@@ -35,8 +35,8 @@ def _plan(case_number: int) -> dict[str, Any]:
         "clues": [
             {
                 "episode": 1,
-                "text": "Red fur by the empty plate.",
-                "suspect_id": "s1",
+                "text": "A grey feather lies by the empty plate.",
+                "suspect_id": "s2",
                 "points_at": True,
             },
             {
@@ -53,7 +53,7 @@ def _plan(case_number: int) -> dict[str, Any]:
             },
             {
                 "episode": 4,
-                "text": "A grey feather lies in the crumbs.",
+                "text": "Owl footprints lead away through the crumbs.",
                 "suspect_id": "s2",
                 "points_at": True,
             },
