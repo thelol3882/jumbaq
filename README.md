@@ -18,17 +18,20 @@ make lint    # ruff and the import-linter contracts
 
 The API is on http://localhost:8000/api/v1, its docs on http://localhost:8000/api/v1/docs.
 
+The web app runs on its own: `cd web/app && pnpm install && pnpm dev`, then http://localhost:3000.
+
 ## Layout
 
 ```
 backend/   FastAPI API and arq worker (package jumbaq)
+web/app/   Next.js web app at jumbaq.fun (standalone server)
 infra/     the local Docker Compose stack and the database setup
 deploy/    the server: its Docker Compose file and nginx behind Cloudflare
 brand/     logo, colours, type and tokens for the web app
 ```
 
-How the backend is built and the rules for changing it: [backend/AGENTS.md](backend/AGENTS.md).
+How the backend is built and the rules for changing it: [backend/AGENTS.md](backend/AGENTS.md). The web app: [web/app/AGENTS.md](web/app/AGENTS.md).
 
 ## Deploy
 
-[Luxen](luxen.yaml) builds the backend image, pushes it to ghcr.io and deploys it to the server with `deploy/docker-compose.yml`. The API is at https://api.jumbaq.fun. The server `.env` comes from `.env.example`.
+[Luxen](luxen.yaml) builds the backend and web images, pushes them to ghcr.io and deploys them to the server with `deploy/docker-compose.yml`. The web app is at https://jumbaq.fun, the API at https://api.jumbaq.fun. The server `.env` comes from `.env.example`.
