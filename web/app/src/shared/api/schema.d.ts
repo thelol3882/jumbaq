@@ -106,6 +106,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/billing/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open Portal
+         * @description A Stripe page where the family manages or cancels its subscription. A family with no
+         *     subscription that gives access gets 409 `billing.no_subscription`.
+         */
+        post: operations["open_portal_api_v1_billing_portal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/billing/subscription": {
         parameters: {
             query?: never;
@@ -682,6 +703,11 @@ export interface components {
             /** Age */
             age: number;
         };
+        /** PortalOut */
+        PortalOut: {
+            /** Url */
+            url: string;
+        };
         /**
          * Rank
          * @description By the number of accusations it took. The values are translation keys of the web app,
@@ -890,6 +916,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckoutOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_portal_api_v1_billing_portal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalOut"];
                 };
             };
             /** @description Validation Error */
