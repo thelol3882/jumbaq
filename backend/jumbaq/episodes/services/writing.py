@@ -139,7 +139,7 @@ class EpisodeWriting:
                 logger.info("episode of the wrong shape, try %s", attempt)
                 continue
             except (AiDailyLimitError, AiDisabledError):
-                # A built-in episode keeps the evening going; a failed one would stop the case.
+                # A built-in episode keeps the evening going, so the case still has all five.
                 logger.warning("episode %s: no model call (daily cap or switched off)", episode.id)
                 break
             except Exception:
