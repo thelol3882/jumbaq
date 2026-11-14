@@ -409,6 +409,54 @@ async def test_the_next_case_needs_a_solved_case_and_a_subscription(
 def test_cases_need_a_family(live_client: TestClient) -> None:
     live_client.cookies.delete(FAMILY_COOKIE)
     assert live_client.get("/api/v1/cases/current").status_code == 401
+    assert live_client.get("/api/v1/cases").status_code == 401
+
+
+async def solve_current(
+    live_client: TestClient, sessionmaker: Sessionmaker, family_id: uuid.UUID
+) -> str:
+    await deliver_all(sessionmaker)
+    case_id = live_client.get("/api/v1/cases/current").json()["id"]
+    await play_all(sessionmaker, family_id, case_id)
+    live_client.post(f"/api/v1/cases/{case_id}/accuse", json={"suspect_id": CULPRIT})
+    return str(case_id)
+
+
+async def test_the_past_cases_are_the_solved_ones_newest_first(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    await deliver_all(sessionmaker)
+    assert live_client.get("/api/v1/cases").json() == []
+
+    first = await solve_current(live_client, sessionmaker, family_id)
+    assert [case["id"] for case in live_client.get("/api/v1/cases").json()] == [first]
+
+    settings = Settings()
+    assert settings.stripe_webhook_secret is not None
+    event = subscription_event(family_id, "active", subscription_id=f"sub_{uuid.uuid4().hex}")
+    body, header = signed(event, settings.stripe_webhook_secret.get_secret_value())
+    live_client.post(
+        "/api/v1/billing/webhook",
+        content=body,
+        headers={"Stripe-Signature": header, CSRF_HEADER: ""},
+    ).raise_for_status()
+    live_client.post("/api/v1/cases").raise_for_status()
+    await deliver_all(sessionmaker)
+    # Case 2 is open and not solved yet, so it is not listed.
+    assert [case["id"] for case in live_client.get("/api/v1/cases").json()] == [first]
+
+    second = await solve_current(live_client, sessionmaker, family_id)
+    listed = live_client.get("/api/v1/cases").json()
+
+    assert [(case["id"], case["number"]) for case in listed] == [(second, 2), (first, 1)]
+    assert set(listed[0]) == {"id", "number", "title", "rank", "solved_at"}
+    assert listed[1]["rank"] == "chief_detective"
+    assert live_client.get(f"/api/v1/cases/{first}/certificate").status_code == 200
+
+    create_family(live_client)  # the cookie is now the other family's
+    assert live_client.get("/api/v1/cases").json() == []
+    assert live_client.get(f"/api/v1/cases/{first}/certificate").status_code == 404
 
 
 class PlanRecorder:

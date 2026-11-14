@@ -16,6 +16,7 @@ from jumbaq.cases.errors import (
     UnknownSuspectError,
 )
 from jumbaq.cases.events import CaseOpened, CaseSolved
+from jumbaq.cases.queries import SolvedCaseView
 from jumbaq.cases.uow import CasesUoWFactory
 from jumbaq.core.clock import Clock
 from jumbaq.core.family import FamilyRef
@@ -131,6 +132,10 @@ class CaseService:
             reveal=case.plan.reveal,
             culprit_id=case.plan.culprit_id,
         )
+
+    async def solved(self, family: FamilyRef) -> list[SolvedCaseView]:
+        async with self._uow() as uow:
+            return await uow.queries.solved(family.family_id)
 
     async def certificate(self, family: FamilyRef, case_id: uuid.UUID) -> CertificateView:
         async with self._uow() as uow:
