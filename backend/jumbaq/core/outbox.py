@@ -1,10 +1,18 @@
 """The transactional outbox.
 
-`UnitOfWork.publish` writes a row in the transaction of the change. The worker delivers it:
-it finds due rows, then for each row opens a unit of work, locks the row with SKIP LOCKED, so
-two workers never take the same row, runs the handlers and marks the row processed. A failure
-is tried again later, and after the last attempt the row gets `failed_at`: our dead letter
-queue.
+`UnitOfWork.publish` writes a row in the transaction of the change. The worker delivers it in
+three steps, and no transaction is open while the handlers run, because they call the model
+and can take minutes:
+
+1. Claim: a short unit of work locks the row with SKIP LOCKED, so two workers never take the
+   same row, counts the attempt and moves `next_attempt_at` a lease ahead. Then it commits.
+2. Run the handlers.
+3. Finish: a new short unit of work marks the row processed, or on a failure stores the error
+   and the wait for the next attempt. After the last attempt the row gets `failed_at`: our
+   dead letter queue.
+
+A worker that dies in step 2 leaves the row with its lease, so another worker takes it when
+the lease ends, and the attempt has already been counted.
 
 Handlers must be safe to run twice: the worker can stop after a handler and before the row
 is marked.
@@ -21,7 +29,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Mapped, mapped_column
 
-from jumbaq.core.context import family_id_var
+from jumbaq.core.context import family_id_var, last_attempt_var
 from jumbaq.core.db import UUID_V7, Base, UnitOfWork
 from jumbaq.core.events import Event
 from jumbaq.core.tasks import DELIVER_OUTBOX, TaskQueue
@@ -38,6 +46,10 @@ BACKOFF = (
     timedelta(minutes=30),
 )
 MAX_ATTEMPTS = len(BACKOFF) + 1
+# How long a claimed row belongs to its worker. Longer than the arq job timeout (5 minutes) and
+# the model call (up to 4 minutes), so a row that is still running is not taken by a second
+# worker, and short enough that a row of a dead worker is not forgotten for long.
+LEASE = timedelta(minutes=10)
 
 
 class OutboxRow(Base):
@@ -101,31 +113,65 @@ class OutboxDelivery:
         return delivered
 
     async def _deliver(self, row_id: uuid.UUID) -> bool:
+        claimed = await self._claim(row_id)
+        if claimed is None:
+            return False  # another worker has it, it is leased, or it is done
+        topic, payload, attempts = claimed
+        # Tells the handlers whether a failure now is the end, so they can give a built-in
+        # result instead of raising.
+        token = last_attempt_var.set(attempts >= MAX_ATTEMPTS)
+        try:
+            await self._run_handlers(topic, payload)
+        except Exception as error:
+            await self._failed(row_id, topic, attempts, error)
+            return False
+        finally:
+            last_attempt_var.reset(token)
+        async with UnitOfWork(self._sessionmaker) as uow:
+            await uow.session.execute(
+                text("UPDATE outbox SET processed_at = now() WHERE id = :id"), {"id": row_id}
+            )
+            await uow.commit()
+        return True
+
+    async def _claim(self, row_id: uuid.UUID) -> tuple[str, dict[str, Any], int] | None:
+        """Counts the attempt and leases the row. None when there is nothing to run."""
         async with UnitOfWork(self._sessionmaker) as uow:
             row = (
                 await uow.session.execute(
                     text(
                         "SELECT topic, payload, attempts FROM outbox"
                         " WHERE id = :id AND processed_at IS NULL AND failed_at IS NULL"
+                        " AND next_attempt_at <= now()"
                         " FOR UPDATE SKIP LOCKED"
                     ),
                     {"id": row_id},
                 )
             ).first()
             if row is None:
-                return False  # another worker has it, or it is done
+                return None
             topic, payload, attempts = row
-            try:
-                await self._run_handlers(topic, payload)
-            except Exception as error:
-                await self._failed(uow.session, row_id, topic, attempts + 1, error)
+            if attempts >= MAX_ATTEMPTS:
+                # The last attempt ran and its worker died before it could say how it ended.
+                logger.error("event %s %s lost its last attempt and is dead", topic, row_id)
+                await uow.session.execute(
+                    text(
+                        "UPDATE outbox SET failed_at = now(), last_error = 'LeaseExpired'"
+                        " WHERE id = :id"
+                    ),
+                    {"id": row_id},
+                )
                 await uow.commit()
-                return False
+                return None
             await uow.session.execute(
-                text("UPDATE outbox SET processed_at = now() WHERE id = :id"), {"id": row_id}
+                text(
+                    "UPDATE outbox SET attempts = attempts + 1,"
+                    " next_attempt_at = now() + :lease WHERE id = :id"
+                ),
+                {"id": row_id, "lease": LEASE},
             )
             await uow.commit()
-            return True
+            return topic, payload, attempts + 1
 
     async def _run_handlers(self, topic: str, payload: dict[str, Any]) -> None:
         if topic not in self._events:
@@ -135,19 +181,9 @@ class OutboxDelivery:
         for handler in handlers:
             await handler(event)
 
-    async def _failed(
-        self,
-        session: AsyncSession,
-        row_id: uuid.UUID,
-        topic: str,
-        attempts: int,
-        error: Exception,
-    ) -> None:
-        values: dict[str, Any] = {
-            "id": row_id,
-            "attempts": attempts,
-            "error": type(error).__name__,
-        }
+    async def _failed(self, row_id: uuid.UUID, topic: str, attempts: int, error: Exception) -> None:
+        """`attempts` is already counted by the claim."""
+        values: dict[str, Any] = {"id": row_id, "error": type(error).__name__}
         if attempts >= MAX_ATTEMPTS:
             logger.error(
                 "event %s %s failed %s times and is dead", topic, row_id, attempts, exc_info=error
@@ -159,9 +195,8 @@ class OutboxDelivery:
             )
             sql = "next_attempt_at = now() + :wait"
             values["wait"] = BACKOFF[attempts - 1]
-        await session.execute(
-            text(
-                f"UPDATE outbox SET attempts = :attempts, last_error = :error, {sql} WHERE id = :id"
-            ),
-            values,
-        )
+        async with UnitOfWork(self._sessionmaker) as uow:
+            await uow.session.execute(
+                text(f"UPDATE outbox SET last_error = :error, {sql} WHERE id = :id"), values
+            )
+            await uow.commit()
