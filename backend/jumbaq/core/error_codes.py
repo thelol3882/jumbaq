@@ -28,6 +28,8 @@ class ErrorCode(StrEnum):
 
     # ai
     AI_DAILY_LIMIT_REACHED = "ai.daily_limit_reached"
+    # The owner switched the model off. The caller uses a built-in story.
+    AI_DISABLED = "ai.disabled"
     # The model answered, but with nothing we can use. The caller retries once, then falls back.
     AI_BAD_OUTPUT = "ai.bad_output"
     # The provider is down, slow or busy. The outbox tries again later.

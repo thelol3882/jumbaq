@@ -29,6 +29,7 @@
       },
       "ai": {
         "daily_limit_reached": "That's enough mysteries for today. Come back tomorrow evening.",
+        "disabled": "Stories are taking a short break. A built-in story is on its way.",
         "bad_output": "Tonight's story got muddled. Try again in a moment.",
         "unavailable": "The storyteller is busy. Try again in a moment."
       },
