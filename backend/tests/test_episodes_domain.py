@@ -65,7 +65,7 @@ def test_an_episode_that_breaks_a_rule_is_refused(payload: Payload, problem: str
 
 
 def test_texts_for_a_kid_under_6_are_shorter() -> None:
-    medium = replace(GOOD, read_aloud=("word " * 100,))
+    medium = replace(GOOD, read_aloud=("the cat sat " * 42,))
     assert problems(medium, youngest=7) == []
     assert any("too long" in found for found in problems(medium, youngest=5))
 
@@ -516,3 +516,40 @@ def test_an_older_payload_has_no_steps_and_the_new_one_has() -> None:
 def test_the_plan_clue_is_not_measured_again() -> None:
     # The clue is quoted from the plan, which checks it; the episode cannot change it.
     assert problems(replace(GOOD, case_clue="word " * 80), youngest=4) == []
+
+
+ENGLISH = (
+    "Once upon a time the little fox went to the old barn. It was dark and she was not afraid, "
+    "because her friend Zo\u00eb was with her and they had a lantern."
+)
+GERMAN = (
+    "Es war einmal ein kleiner Fuchs, der in die alte Scheune ging. Es war dunkel, aber er "
+    "hatte keine Angst, weil seine Freundin mit einer Laterne bei ihm war."
+)
+GERMAN_NO_UMLAUTS = (
+    "Der kleine Fuchs ging mit seiner Freundin in die alte Scheune und sie fanden dort eine "
+    "Laterne, die noch brannte."
+)
+RUSSIAN = "Жила-была маленькая лиса, которая пошла в старый сарай."
+
+
+NICKNAMES = (
+    "Маша, the bakery needs you. Маша and Диас "
+    "will look at the table, and it is time to find the clue."
+)
+
+
+@pytest.mark.parametrize("text", [ENGLISH, NICKNAMES, "Hello there!", ""])
+def test_an_english_text_passes_the_language_check(text: str) -> None:
+    assert domain.is_english(text)
+
+
+@pytest.mark.parametrize("text", [GERMAN, GERMAN_NO_UMLAUTS, RUSSIAN])
+def test_a_text_in_another_language_fails_the_language_check(text: str) -> None:
+    assert not domain.is_english(text)
+
+
+def test_a_draft_in_german_is_refused_with_a_clear_message() -> None:
+    assert problems(GOOD) == []
+    found = problems(replace(GOOD, read_aloud=(GERMAN,)))
+    assert any("write in English" in problem for problem in found), found
