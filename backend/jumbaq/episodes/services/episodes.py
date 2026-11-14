@@ -1,5 +1,5 @@
 """What a family does with an episode: read it, answer the riddle, decode the clue, strike out
-the suspect, swap the riddle and, in demo mode, open it at once."""
+the suspect, swap the riddle and, in demo mode, open it at once or skip it."""
 
 import uuid
 from dataclasses import dataclass, replace
@@ -122,20 +122,7 @@ class EpisodeService:
             assert episode.payload is not None
             if episode.answered_at is not None:
                 raise EpisodeWrongStepError()
-            cleaned = domain.clean_answer(answer)
-            answered = replace(
-                episode,
-                answer=cleaned,
-                # The riddle in use decides: after a swap the story is the second riddle's.
-                resolution=domain.resolution(
-                    episode.resolution_template or "", cleaned, ANSWER_SLOT
-                ),
-                answered_at=now,
-            )
-            if domain.has_evening_steps(episode.payload):
-                await uow.episodes.update(answered)
-            else:
-                answered = await self._finish(uow, family, answered, now)
+            answered = await self._answered(uow, family, episode, answer, now)
             await uow.commit()
         return self._view(answered)
 
@@ -148,18 +135,7 @@ class EpisodeService:
         async with self._uow() as uow:
             episode = await self._in_step(uow.episodes, family, episode_id, EveningStep.DECODE)
             assert episode.payload is not None
-            secret = episode.payload.cipher_secret
-            # A count level with no secret (a clue with no short word, or an older episode)
-            # has no box to check: any body passes.
-            if secret is None or (word is not None and domain.same_word(word, secret)):
-                decoded = replace(episode, decoded_at=now)
-            else:
-                attempts = episode.decode_attempts + 1
-                given_away = attempts >= domain.MAX_ATTEMPTS
-                decoded = replace(
-                    episode, decode_attempts=attempts, decoded_at=now if given_away else None
-                )
-            await uow.episodes.update(decoded)
+            decoded = await self._decoded(uow, episode, word, now)
             await uow.commit()
         return self._view(decoded)
 
@@ -172,16 +148,83 @@ class EpisodeService:
         async with self._uow() as uow:
             episode = await self._in_step(uow.episodes, family, episode_id, EveningStep.STRIKE)
             assert episode.payload is not None
-            right = suspect_id == episode.payload.clue_suspect_id
-            struck = (
-                episode if right else replace(episode, strike_attempts=episode.strike_attempts + 1)
-            )
-            if right or struck.strike_attempts >= domain.MAX_ATTEMPTS:
-                struck = await self._finish(uow, family, struck, now)
-            else:
-                await uow.episodes.update(struck)
+            struck = await self._struck(uow, family, episode, suspect_id, now)
             await uow.commit()
         return self._view(struck)
+
+    async def skip(self, family: FamilyRef, episode_id: uuid.UUID) -> EpisodeView:
+        """For the jury: plays the rest of an evening with the right answers, through the same
+        rules as a real family, so the next evening is requested as usual."""
+        if not self._demo_mode:
+            raise DemoModeOffError()
+        now = self._clock.now()
+        async with self._uow() as uow:
+            episode = await self._playable(uow.episodes, family, episode_id)
+            payload = episode.payload
+            assert payload is not None
+            if episode.answered_at is None:
+                target = episode.riddle.target_object if episode.riddle is not None else ""
+                episode = await self._answered(uow, family, episode, target or "thing", now)
+            if episode.status != EpisodeStatus.PLAYED and episode.decoded_at is None:
+                episode = await self._decoded(uow, episode, payload.cipher_secret, now)
+            if episode.status != EpisodeStatus.PLAYED:
+                suspect = payload.clue_suspect_id or ""
+                episode = await self._struck(uow, family, episode, suspect, now)
+            await uow.commit()
+        return self._view(episode)
+
+    async def _answered(
+        self, uow: EpisodesUoW, family: FamilyRef, episode: Episode, answer: str, now: datetime
+    ) -> Episode:
+        assert episode.payload is not None
+        if episode.answered_at is not None:
+            raise EpisodeWrongStepError()
+        cleaned = domain.clean_answer(answer)
+        answered = replace(
+            episode,
+            answer=cleaned,
+            # The riddle in use decides: after a swap the story is the second riddle's.
+            resolution=domain.resolution(episode.resolution_template or "", cleaned, ANSWER_SLOT),
+            answered_at=now,
+        )
+        if domain.has_evening_steps(episode.payload):
+            await uow.episodes.update(answered)
+            return answered
+        return await self._finish(uow, family, answered, now)
+
+    async def _decoded(
+        self, uow: EpisodesUoW, episode: Episode, word: str | None, now: datetime
+    ) -> Episode:
+        assert episode.payload is not None
+        secret = episode.payload.cipher_secret
+        # A count level with no secret (a clue with no short word, or an older episode)
+        # has no box to check: any body passes.
+        if secret is None or (word is not None and domain.same_word(word, secret)):
+            decoded = replace(episode, decoded_at=now)
+        else:
+            attempts = episode.decode_attempts + 1
+            given_away = attempts >= domain.MAX_ATTEMPTS
+            decoded = replace(
+                episode, decode_attempts=attempts, decoded_at=now if given_away else None
+            )
+        await uow.episodes.update(decoded)
+        return decoded
+
+    async def _struck(
+        self,
+        uow: EpisodesUoW,
+        family: FamilyRef,
+        episode: Episode,
+        suspect_id: str,
+        now: datetime,
+    ) -> Episode:
+        assert episode.payload is not None
+        right = suspect_id == episode.payload.clue_suspect_id
+        struck = episode if right else replace(episode, strike_attempts=episode.strike_attempts + 1)
+        if right or struck.strike_attempts >= domain.MAX_ATTEMPTS:
+            return await self._finish(uow, family, struck, now)
+        await uow.episodes.update(struck)
+        return struck
 
     async def _finish(
         self, uow: EpisodesUoW, family: FamilyRef, episode: Episode, now: datetime

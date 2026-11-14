@@ -23,6 +23,7 @@ ENDPOINTS = [
     ("POST", f"/api/v1/episodes/{ANY}/strike", {"suspect_id": "s2"}),
     ("POST", f"/api/v1/episodes/{ANY}/swap", None),
     ("POST", f"/api/v1/episodes/{ANY}/open-now", None),
+    ("POST", f"/api/v1/episodes/{ANY}/skip", None),
 ]
 
 
