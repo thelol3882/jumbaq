@@ -241,6 +241,33 @@ async def test_both_prompts_demand_english_whatever_the_language_of_the_home() -
         assert "in the language the parent used" not in system
 
 
+async def test_the_episode_prompt_lists_the_words_the_story_must_not_use() -> None:
+    plan = await _stub_plan(1)
+    task = EpisodeInput(
+        HOME, plan.title, plan.setting, plan.suspects, 1, plan.clues[0], (),
+        secret_words=("FEATHER", "LIES"),
+    )  # fmt: skip
+
+    system = prompts.episode_prompt(task).system
+
+    assert 'never use the word or words "feather", "lies" in read_aloud' in system
+    assert "Only case_clue may hold them" in system
+
+
+async def test_an_episode_without_a_secret_has_no_such_rule() -> None:
+    plan = await _stub_plan(1)
+    task = EpisodeInput(HOME, plan.title, plan.setting, plan.suspects, 1, plan.clues[0], ())
+
+    assert "decode part of the clue" not in prompts.episode_prompt(task).system
+
+
+def test_the_plan_prompt_wants_every_clue_to_name_its_suspect() -> None:
+    system = prompts.case_plan_prompt(CasePlanInput(HOME, 1)).system
+
+    assert "names its suspect by name in its text" in system
+    assert "a striped animal" in system
+
+
 def test_the_plan_prompt_says_which_clues_may_point() -> None:
     system = prompts.case_plan_prompt(CasePlanInput(HOME, 1)).system
 

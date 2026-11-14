@@ -89,8 +89,9 @@ forest school, a bakery of animals).
 one line that a child remembers.
 - One culprit, given by its id.
 - Exactly {EPISODES_PER_CASE} clues, one for each episode 1 to {EPISODES_PER_CASE}. Each clue \
-names one suspect and either points at that suspect (points_at true) or rules them out \
-(points_at false).
+names its suspect by name in its text (never "a striped animal" or "someone": the kids \
+must know who the clue is about) and either points at that suspect (points_at true) or rules \
+them out (points_at false).
 - Every innocent suspect is ruled out by at least one clue. No clue rules out the culprit. \
 No clue points at an innocent suspect: small kids take a clue at its word, so there are no \
 false trails.
@@ -117,6 +118,18 @@ Hard limits. Code checks every episode before anyone sees it, and refuses one th
 riddles are at most {rules.short_text_max_chars} characters each.
 - These words never appear in any text, not even about a character of the story, and neither \
 do their plurals and other forms (plug, plugs, plugged, plugging): {words}."""
+
+
+def _secret_rule(words: tuple[str, ...]) -> str:
+    if not words:
+        return ""
+    listed = ", ".join(f'"{word.lower()}"' for word in words)
+    return (
+        "\nThe kids decode part of the clue later in the evening, so the story must not give "
+        f"it away: never use the word or words {listed} in read_aloud, recap, "
+        "resolution_template, cliffhanger or any riddle text. Only case_clue may hold them. Use "
+        "other words, even when the clue is about the same thing.\n"
+    )
 
 
 def episode_prompt(task: EpisodeInput) -> Prompt:
@@ -152,7 +165,7 @@ after the riddle.
 - cliffhanger: {ending}
 
 Never say or hint who the culprit is beyond what the clues say.
-
+{_secret_rule(task.secret_words)}
 {_SAFETY}
 {"" if task.rules is None else chr(10) + _limits(task.rules) + chr(10)}
 {_DATA_RULES}"""

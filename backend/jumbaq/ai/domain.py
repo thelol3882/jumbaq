@@ -116,6 +116,8 @@ class EpisodeInput:
     rules: TextRules | None = None
     # Why the previous draft was refused, so the next try fixes exactly that.
     fix: tuple[str, ...] = ()
+    # Words of the clue the kids decode later: the story never uses them.
+    secret_words: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
