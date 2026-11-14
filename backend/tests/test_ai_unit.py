@@ -12,6 +12,7 @@ import pytest
 
 from jumbaq.ai import domain, parsing, prompts
 from jumbaq.ai.domain import (
+    AiControl,
     CaseDraft,
     CasePlanInput,
     EpisodeInput,
@@ -389,3 +390,26 @@ def test_the_plan_prompt_of_a_first_case_names_no_earlier_cases() -> None:
 
     assert "earlier_cases" not in prompt.system + prompt.user
     assert "Do not move it" not in prompt.system
+
+
+def control(enabled: bool = True, limit: int | None = None) -> AiControl:
+    return AiControl(enabled, limit, datetime(2026, 11, 14, 5, 0, tzinfo=UTC))
+
+
+def test_no_row_means_on_with_the_cap_of_the_settings() -> None:
+    assert domain.is_enabled(None)
+    assert domain.effective_limit(None, 400) == 400
+
+
+def test_a_row_without_a_limit_takes_the_cap_of_the_settings() -> None:
+    assert domain.effective_limit(control(limit=None), 400) == 400
+
+
+def test_the_limit_of_a_row_wins_over_the_settings() -> None:
+    assert domain.effective_limit(control(limit=1000), 400) == 1000
+    assert domain.effective_limit(control(limit=0), 400) == 0
+
+
+def test_an_off_row_is_disabled() -> None:
+    assert not domain.is_enabled(control(enabled=False))
+    assert domain.is_enabled(control(enabled=True))

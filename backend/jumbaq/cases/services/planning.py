@@ -9,6 +9,7 @@ from jumbaq.ai.public import (
     SUSPECTS_PER_CASE,
     AiBadOutputError,
     AiDailyLimitError,
+    AiDisabledError,
     CaseDraft,
     CasePlanInput,
     HomeInput,
@@ -70,8 +71,8 @@ class CasePlanning:
                 used_suspect_names=tuple(s.name for old in earlier for s in old.suspects),
             )
             plan = await self._ask(family, task)
-        except AiDailyLimitError:
-            logger.warning("case %s: the family reached the daily cap, built-in plan", case_id)
+        except (AiDailyLimitError, AiDisabledError):
+            logger.warning("case %s: daily cap or switched off, built-in plan", case_id)
             plan = None
         except Exception:
             if not is_last_attempt():

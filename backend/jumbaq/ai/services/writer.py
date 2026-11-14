@@ -1,5 +1,5 @@
-"""Asks the model for a case plan or an episode, within the daily cap of the family and the
-daily cap of all families together."""
+"""Asks the model for a case plan or an episode, unless the owner switched it off, within the
+daily cap of the family and the daily cap of all families together."""
 
 import time
 import uuid
@@ -17,7 +17,12 @@ from jumbaq.ai.domain import (
     LlmCall,
     TaskKind,
 )
-from jumbaq.ai.errors import AiBadOutputError, AiDailyLimitError, AiUnavailableError
+from jumbaq.ai.errors import (
+    AiBadOutputError,
+    AiDailyLimitError,
+    AiDisabledError,
+    AiUnavailableError,
+)
 from jumbaq.ai.prompts import Prompt
 from jumbaq.ai.providers.base import Provider
 from jumbaq.ai.uow import AiUoWFactory
@@ -105,8 +110,12 @@ class StoryWriter:
         async with self._uow() as uow:
             calls_today = await uow.calls.count_between(family, start, end)
             all_calls_today = await uow.calls.count_all_between(start, end)
+            control = await uow.control.get()
+        if not domain.is_enabled(control):
+            raise AiDisabledError()
+        global_limit = domain.effective_limit(control, self._global_daily_limit)
         if domain.limit_reached(calls_today, self._daily_limit) or domain.limit_reached(
-            all_calls_today, self._global_daily_limit
+            all_calls_today, global_limit
         ):
             raise AiDailyLimitError()
 

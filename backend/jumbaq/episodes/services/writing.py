@@ -9,6 +9,7 @@ from jumbaq.ai.public import (
     EPISODES_PER_CASE,
     AiBadOutputError,
     AiDailyLimitError,
+    AiDisabledError,
     ClueDraft,
     EpisodeDraft,
     EpisodeInput,
@@ -137,9 +138,9 @@ class EpisodeWriting:
             except AiBadOutputError:
                 logger.info("episode of the wrong shape, try %s", attempt)
                 continue
-            except AiDailyLimitError:
+            except (AiDailyLimitError, AiDisabledError):
                 # A built-in episode keeps the evening going; a failed one would stop the case.
-                logger.warning("episode %s: the family reached the daily cap", episode.id)
+                logger.warning("episode %s: no model call (daily cap or switched off)", episode.id)
                 break
             except Exception:
                 if not is_last_attempt():
