@@ -204,7 +204,12 @@ def _task(
             brief.clue.episode, brief.clue.text, brief.clue.suspect_id, brief.clue.points_at
         ),
         played=tuple(
-            PlayedEpisode(e.number, e.riddle.target_object, e.answer or "")
+            PlayedEpisode(
+                e.number,
+                e.riddle.target_object,
+                e.answer or "",
+                e.payload.cliffhanger if e.payload is not None else "",
+            )
             for e in played
             if e.riddle is not None
         ),

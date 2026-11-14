@@ -221,7 +221,10 @@ def episode_prompt(task: EpisodeInput) -> Prompt:
         "This is the last episode: the cliffhanger asks the kids to think about all the clues "
         "and say who did it."
         if last
-        else "End with a cliffhanger that makes the kids want the next evening."
+        else "End with a cliffhanger that makes the kids want the next evening. It points at "
+        "the next evening without inventing a new sound, noise or object (no squeak under the "
+        "table, no knock at the door) that the story would have to explain later, and it "
+        "never repeats a cliffhanger of earlier_episodes in the data."
     )
     system = f"""\
 You write episode {task.number} of {EPISODES_PER_CASE} of a detective story for a family. A \
@@ -229,13 +232,18 @@ parent reads it aloud. The youngest kid is {youngest}, so use short sentences an
 that a {youngest}-year-old follows.
 
 The episode:
-- recap: two or three sentences about the story so far, using what the kids answered before. \
-For episode 1, a short welcome to the case instead.
+- recap: two or three sentences about the story so far. It may repeat what the kids found, \
+but it never turns their answer into a fact of the plot: if they answered 7, do not write \
+that something happened at 7 o'clock. For episode 1, a short welcome to the case instead.
 - read_aloud: {_read_aloud(task.rules, youngest)} Use the kids' nicknames as the detectives.
 - riddle: a riddle that leads the kids to exactly one household object. \
 {_targets(task)} The kids read something off the object: \
 answer_type tells what ({", ".join(t.value for t in AnswerType)}). \
-parent_note tells the parent in one sentence where to look and what counts as an answer.
+parent_note tells the parent in one sentence where to look and what counts as an answer. \
+The text of the riddle ends with a question that asks for the value of answer_type: a number \
+("How many ...?"), a color, a letter, a shape or a word. "What am I?" alone asks for nothing. \
+Code refuses a riddle whose text has no matching word (number or how many, color, letter, \
+shape, word).
 - hint: one sentence that makes the riddle easier.
 - fallback_riddle: a second, easier riddle with the same fields, about a different object from \
 the list, in case the first object is not at hand. \
@@ -256,6 +264,12 @@ the clue.
 - cliffhanger: {ending}
 
 Never say or hint who the culprit is beyond what the clues say.
+
+Style:
+- Write American English only: color, favorite, cozy, gray, neighbor, center, mom, realize. \
+Code refuses British spellings such as colour, favourite, cosy, grey, neighbour, centre, mum.
+- The story is read in the evening, before bed. No "Good morning" and no morning scenes unless \
+the plot needs one.
 {_secret_rule(task.secret_words)}
 {_SAFETY}
 {"" if task.rules is None else chr(10) + _limits(task.rules) + chr(10)}

@@ -322,6 +322,69 @@ def pick_targets(objects: tuple[str, ...], earlier: list[Episode]) -> tuple[str 
     return target, min(others, key=lambda obj: used[obj])
 
 
+# British spellings a story must not use, as (British stem, American stem, regular endings).
+# Only the stored enum value AnswerType.COLOUR keeps its spelling.
+_OUR_ENDINGS = "(?:s|ed|ing|ful|ite|ites|less|ly)?"
+_BRITISH = (
+    *(
+        (british, american, _OUR_ENDINGS)
+        for british, american in (
+            ("colour", "color"), ("favour", "favor"), ("flavour", "flavor"),
+            ("honour", "honor"), ("humour", "humor"), ("labour", "labor"),
+            ("neighbour", "neighbor"), ("rumour", "rumor"), ("savour", "savor"),
+            ("behaviour", "behavior"), ("harbour", "harbor"), ("odour", "odor"),
+            ("vapour", "vapor"), ("armour", "armor"),
+        )
+    ),
+    ("realis", "realiz", "(?:e|es|ed|ing|ation)"),
+    ("recognis", "recogniz", "(?:e|es|ed|ing|ation)"),
+    ("organis", "organiz", "(?:e|es|ed|ing|ation)"),
+    ("apologis", "apologiz", "(?:e|es|ed|ing)"),
+    ("cosy", "cozy", "(?:ly)?"),
+    ("grey", "gray", "(?:s|er|est|ish)?"),
+    ("centre", "center", "(?:s|d)?"),
+    ("metre", "meter", "s?"),
+    ("litre", "liter", "s?"),
+    ("theatre", "theater", "s?"),
+    ("mum", "mom", "s?"),
+    ("pyjamas", "pajamas", ""),
+    ("tyre", "tire", "s?"),
+    ("programme", "program", "s?"),
+    ("jewellery", "jewelry", ""),
+    ("aeroplane", "airplane", "s?"),
+)  # fmt: skip
+_BRITISH_PATTERNS = tuple(
+    (re.compile(rf"\b({british})({endings})\b", re.I), american)
+    for british, american, endings in _BRITISH
+)
+
+
+def british_spellings(text: str) -> list[str]:
+    """The British spellings in a text, each with the American one: "colour (color)"."""
+    found = []
+    for pattern, american in _BRITISH_PATTERNS:
+        for match in pattern.finditer(text):
+            found.append(f"{match.group(0).lower()} ({american}{match.group(2).lower()})")
+    return found
+
+
+# What a riddle asks for, by answer type. The stored type "colour" keeps its spelling; "colour"
+# in a text is a British spelling and is refused on its own.
+_ASK = {
+    "number": (re.compile(r"\b(?:numbers?|how many)\b", re.I), "number or how many"),
+    "colour": (re.compile(r"\bcolou?rs?\b", re.I), "color"),
+    "letter": (re.compile(r"\bletters?\b", re.I), "letter"),
+    "shape": (re.compile(r"\bshapes?\b", re.I), "shape"),
+    "word": (re.compile(r"\bwords?\b", re.I), "word"),
+}
+
+
+def asks_for_answer(riddle: Riddle) -> bool:
+    """The riddle text has the word that asks for its answer type: "What am I?" alone does not."""
+    ask = _ASK.get(riddle.answer_type)
+    return ask is None or ask[0].search(riddle.text) is not None
+
+
 def _name_words(names: tuple[str, ...]) -> set[str]:
     # "Felix the Fox" is Felix and Fox: a story names a suspect by either.
     return {
@@ -393,6 +456,12 @@ def draft_problems(
     for name, riddle in (("riddle", payload.riddle), ("fallback riddle", payload.fallback_riddle)):
         if riddle.target_object not in objects:
             problems.append(f"the {name} points at {riddle.target_object!r}, not in the home")
+        if not asks_for_answer(riddle):
+            word = _ASK[riddle.answer_type][1]
+            problems.append(
+                f"the {name} asks for nothing: its answer_type is {riddle.answer_type}, so its "
+                f"text must end with a question that has the word {word} in it"
+            )
     if payload.riddle.target_object == payload.fallback_riddle.target_object:
         problems.append("both riddles point at the same object")
     if payload.resolution_template.count(slot) != 1:
@@ -442,6 +511,13 @@ def draft_problems(
         if found:
             problems.append(
                 f"unsafe for small kids: {', '.join(found)} in {name}; leave the word out entirely"
+            )
+    for name, text in named:
+        british = british_spellings(text)
+        if british:
+            problems.append(
+                f"british spelling: {', '.join(british)} in {name}; "
+                "write american english, with the american spelling in the brackets"
             )
     hidden = set(secret_words(secret))
     for name, text in named:
@@ -577,26 +653,26 @@ def safe_objects(objects: tuple[str, ...]) -> tuple[str, ...]:
 # and something round.
 _GENERIC_RIDDLES = (
     Riddle(
-        text="Look around the room you are in and find something soft. What colour is it?",
+        text="Look around the room you are in and find something soft. What color is it?",
         target_object="something soft in the room",
         answer_type="colour",
-        parent_note="Help the kids find something soft nearby. Any colour they say is right.",
+        parent_note="Help the kids find something soft nearby. Any color they say is right.",
     ),
     Riddle(
-        text="Look around the room you are in and find something round. What colour is it?",
+        text="Look around the room you are in and find something round. What color is it?",
         target_object="something round in the room",
         answer_type="colour",
-        parent_note="Help the kids find something round nearby. Any colour they say is right.",
+        parent_note="Help the kids find something round nearby. Any color they say is right.",
     ),
 )
 
 
 def _built_in_riddle(target: str) -> Riddle:
     return Riddle(
-        text=f"Find the {target}. What colour is it?",
+        text=f"Find the {target}. What color is it?",
         target_object=target,
         answer_type="colour",
-        parent_note=f"Help the kids find the {target}. Any colour they say is right.",
+        parent_note=f"Help the kids find the {target}. Any color they say is right.",
     )
 
 
@@ -605,8 +681,9 @@ def is_safe_riddle(riddle: Riddle, objects: tuple[str, ...], youngest_age: int) 
     texts = (riddle.text, riddle.parent_note)
     return (
         riddle.target_object in safe_objects(objects)
-        and not any(banned_words(text) for text in texts)
+        and not any(banned_words(text) or british_spellings(text) for text in texts)
         and all(len(text) <= SHORT_TEXT_LIMIT[young] for text in texts)
+        and asks_for_answer(riddle)
     )
 
 

@@ -99,6 +99,8 @@ class PlayedEpisode:
     target_object: str
     # What the kids answered. Typed by the parent, so it is untrusted.
     answer: str
+    # How that evening ended, so the next one does not repeat it.
+    cliffhanger: str = ""
 
 
 @dataclass(frozen=True)
