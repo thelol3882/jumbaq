@@ -56,7 +56,7 @@ class ErrorCode(StrEnum):
 
     # episodes
     EPISODE_NOT_FOUND = "episode.not_found"
-    # Still being written, or already played.
+    # Still being written.
     EPISODE_NOT_READY = "episode.not_ready"
     # One episode per evening: this one opens later.
     EPISODE_NOT_AVAILABLE_YET = "episode.not_available_yet"

@@ -9,7 +9,7 @@ class EpisodeNotFoundError(NotFoundError):
 
 
 class EpisodeNotReadyError(ConflictError):
-    """Still being written, or already played."""
+    """Still being written."""
 
     code = ErrorCode.EPISODE_NOT_READY
 

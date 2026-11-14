@@ -270,7 +270,7 @@ class EpisodeService:
             if episode is None:
                 raise EpisodeNotFoundError()
             if episode.status == EpisodeStatus.PLAYED:
-                raise EpisodeNotReadyError()
+                raise EpisodeWrongStepError()
             opened = replace(episode, available_at=self._clock.now())
             await uow.episodes.update(opened)
             await uow.commit()
