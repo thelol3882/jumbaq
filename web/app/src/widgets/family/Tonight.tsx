@@ -1,10 +1,8 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
-import { useState } from "react";
 import { inOpening, tonight, WritingProgress, type Case } from "@/features/cases";
-import { useOpenNowMutation, useSkipEvening } from "@/features/episodes";
-import { toApiError } from "@/shared/api/errors";
+import { useOpenNow, useSkipEvening } from "@/features/episodes";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { DemoControls, HandNote, StampLink, TypedButton } from "@/shared/components/notebook";
 import { formatOpening } from "@/shared/lib/dates";
@@ -30,9 +28,7 @@ export function Tonight({
 }) {
   const t = useTranslations("widget.family");
   const errorMessage = useApiErrorMessage();
-  const [openNow, opening] = useOpenNowMutation();
-  // Demo mode can be turned off while the page is open; then the button goes away for good.
-  const [demoRefused, setDemoRefused] = useState(false);
+  const opener = useOpenNow();
   const skipper = useSkipEvening();
   const step = tonight(current, new Date());
   const base = `/cases/${current.number}`;
@@ -60,7 +56,7 @@ export function Tonight({
           <HandNote lead={t("note.lead")} className="max-w-xl -rotate-1">
             {t("note.text")}
           </HandNote>
-          {!demoMode || demoRefused || skipper.refused || !step.evening.id ? null : (
+          {!demoMode || skipper.refused || !step.evening.id ? null : (
             <DemoControls title={t("demo.title")} note={t("demo.note")}>
               <TypedButton
                 disabled={skipper.skipping}
@@ -88,25 +84,20 @@ export function Tonight({
           <p className="text-body">
             {t("opens", { number: step.evening.number, when: formatOpening(step.opensAt) })}
           </p>
-          {!demoMode || demoRefused || !step.evening.id ? null : (
+          {!demoMode || opener.refused || !step.evening.id ? null : (
             <DemoControls title={t("demo.title")} note={t("demo.note")}>
               <TypedButton
-                disabled={opening.isLoading}
-                onClick={async () => {
+                disabled={opener.opening}
+                onClick={() => {
                   const id = step.evening.id;
-                  if (!id) return;
-                  try {
-                    await openNow(id).unwrap();
-                  } catch (error) {
-                    if (toApiError(error).code === "episode.demo_mode_off") setDemoRefused(true);
-                  }
+                  if (id) void opener.open(id);
                 }}
               >
                 {t("demo.openNow")}
               </TypedButton>
-              {opening.error && toApiError(opening.error).code !== "episode.demo_mode_off" ? (
+              {opener.error ? (
                 <p role="alert" className="font-type text-label text-gentle-error-fg">
-                  {errorMessage(opening.error)}
+                  {errorMessage(opener.error)}
                 </p>
               ) : null}
             </DemoControls>
