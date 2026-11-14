@@ -1,0 +1,3 @@
+# files mounted into Linux containers break with CRLF checkouts on Windows
+*.sh text eol=lf
+infra/postgres/*.sql text eol=lf
