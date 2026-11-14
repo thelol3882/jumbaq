@@ -66,7 +66,11 @@ src/widgets/landing/
 - A widget `X.tsx` picks `XMobile` or `XDesktop` with `useIsMobile()` (`shared/hooks`) only when the two UIs truly differ; otherwise Tailwind breakpoints in one component (`Setup` is one column everywhere).
 - The wrapper `X.tsx` loads the data and passes it down; `XDesktop` and `XMobile` only render. Form state and submit go into a feature hook (`useSetupForm`), shared by both.
 - `useIsMobile()` is true on the server and during hydration: the first HTML is the phone layout, and desktop swaps in right after. (Sheber does the opposite, because its users work at a desk.)
-- The designs are drawn for a 390 px phone. Desktop is the same notebook opened flat, never a different look.
+- Mobile is design row D, desktop is row F of the design canvas ("jumbaq - page designs v2"). Desktop is the same notebook opened flat, never a different look:
+  - `NotebookSpread`: the main page on the left, the parent's page on the right, with a dashed fold. Story text stays at reading width (about 34em); the extra width goes to the parent's tools, never to longer lines.
+  - The main action stays in view on the right page (`sticky`), and has a key: `useSubmitShortcut` (⌘↵ or Ctrl+↵) with a `KeyHint` next to it. Only one shortcut per screen, so it never clashes with typing.
+  - Nothing to click inside the read-aloud text: buttons on the reading page pull the kids' attention.
+  - The form state lives in the wrapper (`Setup.tsx`), so turning a tablet or resizing keeps what was typed.
 
 ## Look
 
