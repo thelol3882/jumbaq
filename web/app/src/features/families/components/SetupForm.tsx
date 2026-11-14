@@ -159,7 +159,7 @@ export function SetupFields({ form, numbered = false }: { form: SetupFormState; 
               </div>
               {error ? (
                 <p id={errorId} data-setup-error className="font-type text-label text-gentle-error-fg">
-                  {t(`kids.errors.${error}`, { min: MIN_AGE, max: MAX_AGE })}
+                  {t(`kids.errors.${error}`)}
                 </p>
               ) : null}
             </div>
