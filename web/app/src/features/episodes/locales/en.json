@@ -8,7 +8,8 @@
     "label": "What did they find?",
     "placeholder": "type what they said",
     "submit": "Log the answer",
-    "sending": "Logging…"
+    "sending": "Logging…",
+    "left": "{count, plural, =0 {no characters left} one {# character left} other {# characters left}}"
   },
   "hint": {
     "show": "Need a hint",
