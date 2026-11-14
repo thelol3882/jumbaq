@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jumbaq.core.family import FamilyRef
-from jumbaq.episodes.domain import Episode, EpisodeStatus, Payload, Riddle
+from jumbaq.episodes.domain import CipherLevel, Episode, EpisodeStatus, Payload, Riddle
 from jumbaq.episodes.models import EpisodeRow
 
 
@@ -154,4 +154,9 @@ def _payload(data: dict[str, Any]) -> Payload:
         resolution_template=data["resolution_template"],
         case_clue=data["case_clue"],
         cliffhanger=data["cliffhanger"],
+        clue_suspect_id=data.get("clue_suspect_id"),
+        clue_points_at=data.get("clue_points_at"),
+        cipher_level=CipherLevel(level) if (level := data.get("cipher_level")) else None,
+        cipher_secret=data.get("cipher_secret"),
+        cipher_decoys=tuple(data.get("cipher_decoys") or ()),
     )

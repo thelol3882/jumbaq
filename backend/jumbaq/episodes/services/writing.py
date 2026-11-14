@@ -74,6 +74,13 @@ class EpisodeWriting:
 
         # No unit of work is open here: the model call can take a while.
         payload, is_fallback = await self._payload(family, episode, brief, home, played)
+        oldest = max((kid.age for kid in home.kids), default=0)
+        payload = domain.with_evening_steps(
+            payload,
+            brief.clue.suspect_id,
+            brief.clue.points_at,
+            domain.plan_cipher(brief.clue.text, oldest),
+        )
 
         async with self._uow() as uow:
             current = await uow.episodes.get(family, episode_id, for_update=True)
