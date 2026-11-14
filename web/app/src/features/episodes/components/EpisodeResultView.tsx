@@ -13,7 +13,15 @@ function Tick() {
 }
 
 /** After the answer: what it meant, read aloud, and how the story goes on. */
-export function EpisodeResultView({ result, large = false }: { result: EpisodeResult; large?: boolean }) {
+export function EpisodeResultView({
+  result,
+  last = false,
+  large = false,
+}: {
+  result: EpisodeResult;
+  last?: boolean;
+  large?: boolean;
+}) {
   const t = useTranslations("episodes");
   const aloud = large ? "text-[1.625rem] leading-[1.6]" : "text-aloud";
   return (
@@ -30,7 +38,7 @@ export function EpisodeResultView({ result, large = false }: { result: EpisodeRe
         <p className={`font-story ${aloud}`}>{result.resolution}</p>
         <p className={`font-story ${aloud}`}>{result.cliffhanger}</p>
       </div>
-      <HandNote className="mt-2 ml-28 -rotate-2">{t("result.continued")}</HandNote>
+      {last ? null : <HandNote className="mt-2 ml-28 -rotate-2">{t("result.continued")}</HandNote>}
     </div>
   );
 }

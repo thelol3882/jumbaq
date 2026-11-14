@@ -18,7 +18,7 @@
   },
   "result": {
     "logged": "answer logged:",
-    "continued": "to be continued tomorrow",
+    "continued": "to be continued",
     "exhibit": "exhibit {number}, filed tonight"
   },
   "decode": {
