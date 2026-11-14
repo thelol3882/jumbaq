@@ -1,14 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import type { Certificate } from "../types";
 
 /** The certificate the kids keep. Printing shows only this card (see globals.css). */
 export function CertificateCard({ certificate, solvedOn }: { certificate: Certificate; solvedOn: string }) {
   const t = useTranslations("cases");
-  const names = certificate.nicknames;
-  const last = names.at(-1) ?? "";
-  const first = names.slice(0, -1).join(", ");
+  const format = useFormatter();
   return (
     <figure data-print="certificate" aria-label={t("certificate.label")} className="relative m-0 rotate-1">
       <span aria-hidden="true" className="absolute -top-2 -left-3.5 h-5.5 w-17.5 -rotate-[35deg] bg-tag-tape print:hidden" />
@@ -17,13 +15,7 @@ export function CertificateCard({ certificate, solvedOn }: { certificate: Certif
         <p className="font-type text-label text-ink-muted">{t("certificate.title")}</p>
         <p className="mt-3 text-body-sm">{t("certificate.intro")}</p>
         <p className="mt-2 font-type text-[2.125rem] leading-[1.15] font-bold">
-          {first ? (
-            <>
-              {first} <span className="text-lg font-normal">{t("certificate.and")}</span> {last}
-            </>
-          ) : (
-            last
-          )}
+          {format.list(certificate.nicknames, { type: "conjunction" })}
         </p>
         <p className="mt-2.5 text-body-sm">
           {t("certificate.solved", { title: certificate.title, rank: t(`ranks.${certificate.rank}`) })}
