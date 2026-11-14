@@ -25,9 +25,13 @@ class Settings(BaseSettings):
     family_cookie_days: int = 365
 
     # "stub" writes fixed stories without a network call. Tests and laptops without a key use it.
-    ai_provider: Literal["stub", "claude"] = "stub"
+    # "openrouter" uses a free model, for laptops; "claude" is for the server.
+    ai_provider: Literal["stub", "claude", "openrouter"] = "stub"
+    # The key of the chosen provider.
     ai_api_key: SecretStr | None = None
     ai_model: str = "claude-opus-5-5"
+    # Free models come and go: https://openrouter.ai/models?q=free
+    ai_openrouter_model: str = "google/gemma-4-31b-it:free"
     ai_timeout_seconds: float = 60
     # Every call costs money, so one family cannot start an endless chain of them.
     ai_daily_calls_per_family: int = 40

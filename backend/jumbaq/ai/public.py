@@ -22,6 +22,7 @@ from jumbaq.ai.errors import AiBadOutputError, AiDailyLimitError, AiUnavailableE
 from jumbaq.ai.prompts import ANSWER_SLOT, EPISODES_PER_CASE, SUSPECTS_PER_CASE
 from jumbaq.ai.providers.base import Provider
 from jumbaq.ai.providers.claude import ClaudeProvider
+from jumbaq.ai.providers.openrouter import OpenRouterProvider
 from jumbaq.ai.providers.stub import StubProvider
 from jumbaq.ai.services.writer import StoryWriter
 from jumbaq.ai.uow import AiUoW
@@ -30,12 +31,13 @@ from jumbaq.core.config import Settings
 
 
 def build_provider(settings: Settings) -> Provider:
-    if settings.ai_provider == "claude":
-        assert settings.ai_api_key is not None  # Settings checks it
-        return ClaudeProvider(
-            settings.ai_api_key.get_secret_value(), settings.ai_model, settings.ai_timeout_seconds
-        )
-    return StubProvider()
+    if settings.ai_provider == "stub":
+        return StubProvider()
+    assert settings.ai_api_key is not None  # Settings checks it
+    key = settings.ai_api_key.get_secret_value()
+    if settings.ai_provider == "openrouter":
+        return OpenRouterProvider(key, settings.ai_openrouter_model, settings.ai_timeout_seconds)
+    return ClaudeProvider(key, settings.ai_model, settings.ai_timeout_seconds)
 
 
 def build_story_writer(
