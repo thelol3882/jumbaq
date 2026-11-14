@@ -37,6 +37,8 @@ class EpisodeResultOut(BaseModel):
     # True when the strike was given away after two wrong ones.
     revealed_suspect: bool
     struck_suspect_id: str | None
+    # True when the clue rules the suspect out, false when it points at them, null if unknown.
+    rules_out: bool | None
 
 
 class AnsweredOut(BaseModel):

@@ -108,6 +108,7 @@ async def test_the_whole_evening_answer_decode_strike(
     assert content(played)["step"] == "done" and played.json()["status"] == "played"
     assert result["decoded_word"] == secret
     assert (result["revealed_suspect"], result["struck_suspect_id"]) == (False, RIGHT)
+    assert result["rules_out"] is False
     assert result["case_clue"] == "A grey feather lies by the empty plate."
     row = await stored(sessionmaker, episode_id)
     assert (row.status, row.decode_attempts, row.strike_attempts) == ("played", 0, 0)
@@ -174,6 +175,7 @@ async def test_two_wrong_suspects_finish_the_evening_and_show_the_right_one(
     assert twice.json()["status"] == "played"
     result = content(twice)["result"]
     assert (result["revealed_suspect"], result["struck_suspect_id"]) == (True, RIGHT)
+    assert result["rules_out"] is False
     row = await stored(sessionmaker, episode_id)
     assert (row.status, row.strike_attempts, row.played_at is None) == ("played", 2, False)
     await deliver_all(sessionmaker)
@@ -298,6 +300,7 @@ async def test_an_episode_written_before_the_steps_is_played_by_the_answer(
         False,
         None,
     )
+    assert body["result"]["rules_out"] is None
     await deliver_all(sessionmaker)
     assert len(live_client.get("/api/v1/cases/current").json()["clues"]) == 1
     assert live_client.get("/api/v1/episodes/current").json()["number"] == 2
