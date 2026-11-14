@@ -48,6 +48,7 @@ forbidden_modules =
     jumbaq.cases
     jumbaq.ai
     jumbaq.billing
+    jumbaq.episodes
 
 [importlinter:contract:models-without-web-framework]
 name = Models know nothing about FastAPI or Starlette
@@ -115,6 +116,7 @@ source_modules =
     jumbaq.cases
     jumbaq.ai
     jumbaq.billing
+    jumbaq.episodes
 forbidden_modules =
     jumbaq.*.handlers
 allow_indirect_imports = True
@@ -136,6 +138,7 @@ source_modules =
     jumbaq.cases
     jumbaq.ai
     jumbaq.billing
+    jumbaq.episodes
     jumbaq.core
     jumbaq.worker
 forbidden_modules =
@@ -144,6 +147,8 @@ allow_indirect_imports = True
 # When a module's routers or deps.py start to use FamilyDep, they are added here by name:
 ignore_imports =
     jumbaq.billing.routers.* -> jumbaq.families.deps
+    jumbaq.cases.routers.* -> jumbaq.families.deps
+    jumbaq.episodes.routers.* -> jumbaq.families.deps
 
 # A new module joins the contracts below in its first PR: one "through public" contract of its
 # own, and its name in the forbidden lists of the others.
@@ -157,6 +162,7 @@ forbidden_modules =
     jumbaq.cases
     jumbaq.ai
     jumbaq.billing
+    jumbaq.episodes
 allow_indirect_imports = True
 
 [importlinter:contract:cases-through-public]
@@ -195,6 +201,12 @@ forbidden_modules =
     jumbaq.billing.schemas
     jumbaq.billing.deps
     jumbaq.billing.routers
+    jumbaq.episodes.domain
+    jumbaq.episodes.uow
+    jumbaq.episodes.services
+    jumbaq.episodes.schemas
+    jumbaq.episodes.deps
+    jumbaq.episodes.routers
 allow_indirect_imports = True
 
 [importlinter:contract:ai-through-public]
@@ -206,6 +218,7 @@ forbidden_modules =
     jumbaq.families
     jumbaq.cases
     jumbaq.billing
+    jumbaq.episodes
 allow_indirect_imports = True
 
 [importlinter:contract:billing-through-public]
@@ -225,6 +238,54 @@ forbidden_modules =
     jumbaq.families.schemas
     jumbaq.cases
     jumbaq.ai
+    jumbaq.episodes
+allow_indirect_imports = True
+
+[importlinter:contract:episodes-through-public]
+name = episodes uses other modules only through their public.py
+type = forbidden
+source_modules =
+    jumbaq.episodes
+forbidden_modules =
+    jumbaq.families.domain
+    jumbaq.families.errors
+    jumbaq.families.events
+    jumbaq.families.models
+    jumbaq.families.repositories
+    jumbaq.families.queries
+    jumbaq.families.uow
+    jumbaq.families.services
+    jumbaq.families.schemas
+    jumbaq.ai.domain
+    jumbaq.ai.errors
+    jumbaq.ai.models
+    jumbaq.ai.parsing
+    jumbaq.ai.prompts
+    jumbaq.ai.providers
+    jumbaq.ai.repositories
+    jumbaq.ai.uow
+    jumbaq.ai.services
+    jumbaq.billing.domain
+    jumbaq.billing.errors
+    jumbaq.billing.events
+    jumbaq.billing.models
+    jumbaq.billing.providers
+    jumbaq.billing.repositories
+    jumbaq.billing.queries
+    jumbaq.billing.uow
+    jumbaq.billing.services
+    jumbaq.billing.schemas
+    jumbaq.billing.deps
+    jumbaq.billing.routers
+    jumbaq.cases.domain
+    jumbaq.cases.models
+    jumbaq.cases.repositories
+    jumbaq.cases.uow
+    jumbaq.cases.services
+    jumbaq.cases.schemas
+    jumbaq.cases.deps
+    jumbaq.cases.routers
+    jumbaq.cases.handlers
 allow_indirect_imports = True
 
 [importlinter:contract:only-ai-providers-call-the-model]
@@ -237,6 +298,7 @@ source_modules =
     jumbaq.families
     jumbaq.cases
     jumbaq.billing
+    jumbaq.episodes
     jumbaq.ai.domain
     jumbaq.ai.services
     jumbaq.ai.repositories
@@ -256,6 +318,7 @@ source_modules =
     jumbaq.families
     jumbaq.cases
     jumbaq.ai
+    jumbaq.episodes
     jumbaq.billing.domain
     jumbaq.billing.services
     jumbaq.billing.repositories
