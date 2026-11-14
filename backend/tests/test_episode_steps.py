@@ -193,6 +193,7 @@ async def test_a_step_out_of_order_gives_409_wrong_step(
     answer_again = live_client.post(f"{path}/answer", json={"answer": "red"})
     assert error_code(answer_again) == "episode.wrong_step"
     assert error_code(strike(live_client, path, RIGHT)) == "episode.wrong_step"
+    assert error_code(live_client.post(f"{path}/swap")) == "episode.wrong_step"
 
     decode(live_client, path, SECRET["shift"])
     assert error_code(decode(live_client, path, SECRET["shift"])) == "episode.wrong_step"

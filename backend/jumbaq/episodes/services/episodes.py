@@ -201,6 +201,9 @@ class EpisodeService:
         """The second riddle, for when the object is not at hand. No model call."""
         async with self._uow() as uow:
             episode = await self._playable(uow.episodes, family, episode_id)
+            # After the answer the riddle is solved: another one would not match the story.
+            if episode.answered_at is not None:
+                raise EpisodeWrongStepError()
             if episode.used_fallback_riddle:
                 raise RiddleAlreadySwappedError()
             swapped = replace(episode, used_fallback_riddle=True)
