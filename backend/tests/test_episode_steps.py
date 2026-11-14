@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jumbaq.cases.models import CaseRow
@@ -511,3 +511,24 @@ async def test_skip_of_another_family_gives_404_and_of_a_played_episode_409(
     other = live_client.post(f"{path}/skip")
     assert other.status_code == 404, other.text
     assert other.json()["error"]["code"] == "episode.not_found"
+
+
+@pytest.mark.parametrize("status", [EpisodeStatus.REQUESTED, EpisodeStatus.GENERATING])
+async def test_an_episode_still_being_written_gives_409_not_ready(
+    live_client: TestClient, sessionmaker: Sessionmaker, status: EpisodeStatus
+) -> None:
+    episode_id, path = await ready_episode(live_client, sessionmaker)
+    async with sessionmaker() as session:
+        await session.execute(
+            update(EpisodeRow).where(EpisodeRow.id == uuid.UUID(episode_id)).values(status=status)
+        )
+        await session.commit()
+
+    for response in (
+        live_client.post(f"{path}/answer", json={"answer": "blue"}),
+        decode(live_client, path, SECRET["shift"]),
+        strike(live_client, path, RIGHT),
+        live_client.post(f"{path}/skip"),
+    ):
+        assert error_code(response) == "episode.not_ready"
+    assert (await stored(sessionmaker, episode_id)).answered_at is None
