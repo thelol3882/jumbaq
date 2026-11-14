@@ -210,6 +210,37 @@ async def test_the_episode_prompt_states_the_limits_and_the_banned_words() -> No
     assert "refused" not in prompt.user
 
 
+async def test_the_episode_prompt_states_the_word_budget_of_the_youngest_kid() -> None:
+    plan = await _stub_plan(1)
+    rules = TextRules(400, 250, ("climb",), words_min=50, words_max=80, paragraphs_min=2,
+                      paragraphs_max=3)  # fmt: skip
+    young = HomeInput((KidInput("Aru", 5), KidInput("Timur", 9)), ("kitchen",), ("fridge", "sofa"))
+    task = EpisodeInput(
+        young, plan.title, plan.setting, plan.suspects, 1, plan.clues[0], (), rules=rules
+    )
+
+    prompt = prompts.episode_prompt(task)
+
+    assert "2 to 3 short paragraphs, 50 to 80 words in total" in prompt.system
+    assert "word budget for a 5-year-old" in prompt.system
+    assert "read_aloud is 50 to 80 words in total" in prompt.system
+
+
+async def test_the_stub_writes_the_story_to_the_word_budget() -> None:
+    stub = StubProvider()
+    plan = await _stub_plan(1)
+    for low, high, low_p, high_p in ((50, 80, 2, 3), (80, 120, 3, 4), (110, 160, 3, 5)):
+        rules = TextRules(600, 400, (), low, high, low_p, high_p)
+        task = EpisodeInput(
+            HOME, plan.title, plan.setting, plan.suspects, 2, plan.clues[1], (), rules=rules
+        )
+        reply = await stub.complete_json(prompts.episode_prompt(task), prompts.EPISODE_SCHEMA)
+        paragraphs = parsing.episode_draft(reply.data).read_aloud
+
+        assert low <= sum(len(text.split()) for text in paragraphs) <= high
+        assert low_p <= len(paragraphs) <= high_p
+
+
 async def test_a_retry_says_why_the_last_draft_was_refused() -> None:
     plan = await _stub_plan(1)
     reason = "unsafe for small kids: climb in hint; leave the word out entirely"

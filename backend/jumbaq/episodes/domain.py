@@ -77,7 +77,22 @@ ANSWER_MAX_LENGTH = 60
 YOUNG_AGE = 6
 PARAGRAPH_LIMIT = {False: 600, True: 400}
 SHORT_TEXT_LIMIT = {False: 400, True: 250}
-MAX_PARAGRAPHS = 6
+
+
+# The words a parent reads aloud in one evening, set by the youngest kid: a small child loses the
+# thread of a long story. All paragraphs of read_aloud together, and how many paragraphs.
+@dataclass(frozen=True)
+class ReadAloudBudget:
+    words_min: int
+    words_max: int
+    paragraphs_min: int
+    paragraphs_max: int
+
+
+UNDER_6_BUDGET = ReadAloudBudget(50, 80, 2, 3)
+AGE_6_TO_7_BUDGET = ReadAloudBudget(80, 120, 3, 4)
+AGE_8_UP_BUDGET = ReadAloudBudget(110, 160, 3, 5)
+OLDER_BUDGET_AGE = 8
 
 # The oldest kid decides how hard the cipher is.
 NUMBER_CODE_AGE = 6
@@ -218,6 +233,18 @@ def _named_short_texts(payload: Payload) -> list[tuple[str, str]]:
     ]
 
 
+def read_aloud_budget(youngest_age: int) -> ReadAloudBudget:
+    if youngest_age < YOUNG_AGE:
+        return UNDER_6_BUDGET
+    if youngest_age < OLDER_BUDGET_AGE:
+        return AGE_6_TO_7_BUDGET
+    return AGE_8_UP_BUDGET
+
+
+def word_count(paragraphs: tuple[str, ...]) -> int:
+    return sum(len(text.split()) for text in paragraphs)
+
+
 def text_limits(youngest_age: int) -> tuple[int, int]:
     """The longest read-aloud paragraph and the longest short text, in characters."""
     young = youngest_age < YOUNG_AGE
@@ -282,8 +309,24 @@ def draft_problems(
     if not payload.fallback_riddle.hint.strip():
         problems.append("the fallback riddle needs its own hint")
     young = youngest_age < YOUNG_AGE
-    if not payload.read_aloud or len(payload.read_aloud) > MAX_PARAGRAPHS:
-        problems.append(f"needs 1 to {MAX_PARAGRAPHS} paragraphs")
+    budget = read_aloud_budget(youngest_age)
+    count = len(payload.read_aloud)
+    if not budget.paragraphs_min <= count <= budget.paragraphs_max:
+        problems.append(
+            f"read_aloud needs {budget.paragraphs_min} to {budget.paragraphs_max} paragraphs "
+            f"for a {youngest_age}-year-old, it has {count}"
+        )
+    words = word_count(payload.read_aloud)
+    if words < budget.words_min:
+        problems.append(
+            f"read_aloud is too short: {words} words, the budget for a {youngest_age}-year-old "
+            f"is {budget.words_min} to {budget.words_max} words"
+        )
+    elif words > budget.words_max:
+        problems.append(
+            f"read_aloud is too long: {words} words, the budget for a {youngest_age}-year-old "
+            f"is {budget.words_min} to {budget.words_max} words; cut it"
+        )
     paragraph_max, short_max = PARAGRAPH_LIMIT[young], SHORT_TEXT_LIMIT[young]
     for index, text in enumerate(payload.read_aloud, start=1):
         if len(text) > paragraph_max:
@@ -350,6 +393,7 @@ def built_in_payload(
     last: bool,
     slot: str,
     model_riddle: Riddle | None = None,
+    youngest_age: int = YOUNG_AGE,
 ) -> Payload:
     """A plain episode for when the model fails: always safe and always playable. A safe
     riddle the model wrote for this home is kept. Only objects with safe names are used; a home
@@ -373,10 +417,7 @@ def built_in_payload(
     resolution_template = f"You found it: {slot}. Great detective work!"
     return Payload(
         recap=f"Welcome back to {title}, detectives.",
-        read_aloud=(
-            "The detectives open their notebook and read the notes once more.",
-            "Something in this home is hiding a secret code. Can you find it?",
-        ),
+        read_aloud=_built_in_story(read_aloud_budget(youngest_age)),
         riddle=first,
         hint=hint,
         fallback_riddle=replace(second, hint=hint, resolution_template=resolution_template),
@@ -384,6 +425,45 @@ def built_in_payload(
         case_clue=clue,
         cliffhanger=ending,
     )
+
+
+_STORY_START = "The detectives open their notebook and read the notes once more."
+_STORY_END = "Something in this home is hiding a secret code. Can you find it?"
+_STORY_MIDDLE = (
+    "The lamp is warm and the room is quiet.",
+    "A small clock ticks on the shelf.",
+    "The detectives sit close together and think.",
+    "Every clue is a little piece of the puzzle.",
+    "Good detectives look slowly and listen well.",
+    "The pencil is sharp and the page is clean.",
+    "Somewhere in the home a secret is waiting.",
+    "The first clue is easy to miss.",
+    "The detectives smile because they love a mystery.",
+    "A cozy blanket lies on the couch.",
+    "Everyone takes a deep breath together.",
+    "The notebook has room for one more note.",
+    "A friendly cat watches from the corner.",
+    "The detectives are brave and kind.",
+    "They whisper and share their ideas.",
+    "A soft light shines on the notebook.",
+    "The night is calm and the home is safe.",
+    "Each detective has a very important job.",
+    "The puzzle is a little tricky tonight.",
+    "But the detectives never give up.",
+)  # fmt: skip
+
+
+def _built_in_story(budget: ReadAloudBudget) -> tuple[str, ...]:
+    """Sentences up to the middle of the word budget, in the fewest paragraphs it allows."""
+    target = (budget.words_min + budget.words_max) // 2
+    sentences = [_STORY_START]
+    for sentence in _STORY_MIDDLE:
+        if len(" ".join([*sentences, _STORY_END]).split()) >= target:
+            break
+        sentences.append(sentence)
+    sentences.append(_STORY_END)
+    size = -(-len(sentences) // budget.paragraphs_min)
+    return tuple(" ".join(sentences[i : i + size]) for i in range(0, len(sentences), size))
 
 
 def safe_objects(objects: tuple[str, ...]) -> tuple[str, ...]:

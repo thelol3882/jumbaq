@@ -96,6 +96,41 @@ def _riddle(objects: list[str], index: int) -> dict[str, Any]:
     }
 
 
+_FILLER = (
+    "The bakery smelled of warm bread and honey.",
+    "A tiny bell rang above the door.",
+    "The detectives looked at every shelf with care.",
+    "Nobody in the forest had seen the cake.",
+    "A soft breeze moved the curtains.",
+    "Everyone went very quiet and listened.",
+    "The notebook was ready for the next clue.",
+    "A little mouse waved from the counter.",
+)
+
+
+def _read_aloud(names: str, number: int, data: dict[str, Any]) -> list[str]:
+    """Paragraphs with as many words as the middle of the budget in the data, or about 100."""
+    budget = data.get("read_aloud_budget") or {
+        "words_min": 80,
+        "words_max": 120,
+        "paragraphs_min": 3,
+        "paragraphs_max": 4,
+    }
+    target = (budget["words_min"] + budget["words_max"]) // 2
+    sentences = [
+        f"{names}, the bakery needs you.",
+        f"This is evening {number}. Look closely.",
+        "Someone left a riddle on the door.",
+    ]
+    index = 0
+    while sum(len(text.split()) for text in sentences) < target:
+        sentences.append(_FILLER[index % len(_FILLER)])
+        index += 1
+    count = budget["paragraphs_min"]
+    size = -(-len(sentences) // count)
+    return [" ".join(sentences[i : i + size]) for i in range(0, len(sentences), size)]
+
+
 def _episode(data: dict[str, Any]) -> dict[str, Any]:
     number = data["episode_number"]
     objects = data["home"]["objects"]
@@ -108,11 +143,7 @@ def _episode(data: dict[str, Any]) -> dict[str, Any]:
     )
     return {
         "recap": recap,
-        "read_aloud": [
-            f"{names}, the bakery needs you.",
-            f"This is evening {number}. Look closely.",
-            "Someone left a riddle on the door.",
-        ],
+        "read_aloud": _read_aloud(names, number, data),
         "riddle": _riddle(objects, number - 1),
         "hint": "Look in the room where you spend the most time.",
         "fallback_riddle": {
