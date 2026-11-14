@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, inOpening, type Case } from "@/features/cases";
-import { FamilySummary, type Family } from "@/features/families";
+import { FamilySummary, type FamilyState } from "@/features/families";
 import { NotebookPage, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
 import { Tonight, TonightPending, type Waiting } from "./Tonight";
@@ -11,7 +11,7 @@ export function FamilyMobile({
   current,
   waiting,
 }: {
-  family: Family;
+  family: FamilyState;
   current: Case | undefined;
   waiting: Waiting;
 }) {
@@ -26,7 +26,7 @@ export function FamilyMobile({
         {current ? <EveningBoxes episodes={current.episodes} /> : null}
       </div>
       <div className="mt-8 flex flex-col gap-9">
-        {current ? <Tonight current={current} waiting={waiting} detectives={detectives} /> : <TonightPending waiting={waiting} detectives={detectives} />}
+        {current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} /> : <TonightPending waiting={waiting} detectives={detectives} />}
         {current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilySummary family={family} />}
       </div>
     </NotebookPage>

@@ -4,6 +4,8 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { inOpening, tonight, WritingProgress, type Case } from "@/features/cases";
 import { useOpenNowMutation } from "@/features/episodes";
+import { toApiError } from "@/shared/api/errors";
+import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, StampLink, TypedButton } from "@/shared/components/notebook";
 import { formatOpening } from "@/shared/lib/dates";
 import { Opening } from "./Opening";
@@ -16,16 +18,20 @@ export function Tonight({
   current,
   waiting,
   detectives,
+  demoMode,
   large = false,
 }: {
   current: Case;
   waiting: Waiting;
   detectives: readonly string[];
+  /** From the server: only then may a waiting evening be opened early. */
+  demoMode: boolean;
   large?: boolean;
 }) {
   const t = useTranslations("widget.family");
+  const errorMessage = useApiErrorMessage();
   const [openNow, opening] = useOpenNowMutation();
-  // Without demo mode the server refuses; then the button goes away for good.
+  // Demo mode can be turned off while the page is open; then the button goes away for good.
   const [demoRefused, setDemoRefused] = useState(false);
   const step = tonight(current, new Date());
   const base = `/cases/${current.number}`;
@@ -63,20 +69,26 @@ export function Tonight({
           <p className="text-body">
             {t("opens", { number: step.evening.number, when: formatOpening(step.opensAt) })}
           </p>
-          {demoRefused || !step.evening.id ? null : (
-            <TypedButton
-              className="self-start"
-              disabled={opening.isLoading}
-              onClick={async () => {
-                try {
-                  await openNow(step.evening.id as string).unwrap();
-                } catch {
-                  setDemoRefused(true);
-                }
-              }}
-            >
-              {t("openNow")}
-            </TypedButton>
+          {!demoMode || demoRefused || !step.evening.id ? null : (
+            <div className="flex flex-col items-start gap-2">
+              <TypedButton
+                disabled={opening.isLoading}
+                onClick={async () => {
+                  try {
+                    await openNow(step.evening.id as string).unwrap();
+                  } catch (error) {
+                    if (toApiError(error).code === "episode.demo_mode_off") setDemoRefused(true);
+                  }
+                }}
+              >
+                {t("openNow")}
+              </TypedButton>
+              {opening.error && toApiError(opening.error).code !== "episode.demo_mode_off" ? (
+                <p role="alert" className="font-type text-label text-gentle-error-fg">
+                  {errorMessage(opening.error)}
+                </p>
+              ) : null}
+            </div>
           )}
         </div>
       );

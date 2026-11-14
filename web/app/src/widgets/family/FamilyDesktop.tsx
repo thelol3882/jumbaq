@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, inOpening, type Case } from "@/features/cases";
-import { FamilyBoard, type Family } from "@/features/families";
+import { FamilyBoard, type FamilyState } from "@/features/families";
 import { NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
 import { Tonight, TonightPending, type Waiting } from "./Tonight";
@@ -12,7 +12,7 @@ export function FamilyDesktop({
   current,
   waiting,
 }: {
-  family: Family;
+  family: FamilyState;
   current: Case | undefined;
   waiting: Waiting;
 }) {
@@ -32,7 +32,7 @@ export function FamilyDesktop({
       <div className="mt-11">
         <NotebookSpread
           sideLabel={t("boardLabel")}
-          main={current ? <Tonight current={current} waiting={waiting} detectives={detectives} large /> : <TonightPending waiting={waiting} detectives={detectives} large />}
+          main={current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} large /> : <TonightPending waiting={waiting} detectives={detectives} large />}
           side={current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilyBoard family={family} />}
         />
       </div>

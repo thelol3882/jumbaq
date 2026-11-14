@@ -1,5 +1,5 @@
 import { baseApi } from "@/shared/api/baseApi";
-import type { Family, FamilyCreate } from "../types";
+import type { Family, FamilyCreate, FamilyState } from "../types";
 
 export const familiesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -9,7 +9,7 @@ export const familiesApi = baseApi.injectEndpoints({
       invalidatesTags: ["Family"],
     }),
     // 401 family.no_session when this browser has no family yet.
-    getFamily: builder.query<Family, void>({
+    getFamily: builder.query<FamilyState, void>({
       query: () => "/family",
       providesTags: ["Family"],
     }),
