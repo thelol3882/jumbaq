@@ -2,15 +2,21 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { FamilySummary, useFamily } from "@/features/families";
+import { useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
+import { useIsMobile } from "@/shared/hooks/useIsMobile";
+import { FamilyDesktop } from "./FamilyDesktop";
+import { FamilyMobile } from "./FamilyMobile";
 
 /** The case file of this browser's family, or the way to open one. */
 export function Family() {
   const t = useTranslations("widget.family");
   const errorMessage = useApiErrorMessage();
   const { family, loading, missing, error, retry } = useFamily();
+  const isMobile = useIsMobile();
+
+  if (family) return isMobile ? <FamilyMobile family={family} /> : <FamilyDesktop family={family} />;
 
   return (
     <NotebookPage margin>
@@ -26,15 +32,6 @@ export function Family() {
           <h1 className="text-title">{t("missing.title")}</h1>
           <HandNote>{t("missing.note")}</HandNote>
           <StampLink href="/setup">{t("missing.start")}</StampLink>
-        </div>
-      ) : family ? (
-        <div className="mt-8 flex flex-col gap-8">
-          <div>
-            <p className="font-type text-case">{t("eyebrow")}</p>
-            <h1 className="mt-2 text-title">{t("title")}</h1>
-          </div>
-          <FamilySummary family={family} />
-          <HandNote lead={t("next.lead")}>{t("next.text")}</HandNote>
         </div>
       ) : (
         <div role="alert" className="mt-10 flex flex-col items-start gap-3">

@@ -1,20 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { useFormErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, StampButton } from "@/shared/components/notebook";
-import { useSetupForm } from "../hooks/useSetupForm";
+import type { SetupFormState } from "../hooks/useSetupForm";
 import { MAX_AGE, MIN_AGE, MIN_OBJECTS } from "../services/setupForm";
 import { OBJECT_PRESETS, ROOM_PRESETS } from "../services/presets";
 import { ChoiceChips } from "./ChoiceChips";
 
-/** The one-minute setup. `onCreated` runs once the family exists and the cookie is set. */
-export function SetupForm({ onCreated }: { onCreated: () => void }) {
-  const t = useTranslations("families");
-  const formError = useFormErrorMessage();
-  const form = useSetupForm(onCreated);
-  const { errors } = form;
-
+/** The `<form>` around the fields and the submit, wherever the layout puts them. */
+export function SetupFormShell({ form, children }: { form: SetupFormState; children: ReactNode }) {
   return (
     <form
       noValidate
@@ -22,10 +18,23 @@ export function SetupForm({ onCreated }: { onCreated: () => void }) {
         e.preventDefault();
         void form.submit();
       }}
-      className="flex flex-col gap-9"
     >
+      {children}
+    </form>
+  );
+}
+
+/** The three questions of the setup: detectives, scene, evidence. */
+export function SetupFields({ form, numbered = false }: { form: SetupFormState; numbered?: boolean }) {
+  const t = useTranslations("families");
+  const { errors } = form;
+  const legend = (key: "kids" | "rooms" | "objects", number: number) =>
+    numbered ? t("numberedTitle", { number, title: t(`${key}.title`) }) : t(`${key}.title`);
+
+  return (
+    <div className="flex flex-col gap-9">
       <fieldset className="flex flex-col gap-3">
-        <legend className="font-type text-case text-accent-red">{t("kids.title")}</legend>
+        <legend className="font-type text-case text-accent-red">{legend("kids", 1)}</legend>
         <HandNote className="text-note-sm">{t("kids.note")}</HandNote>
         {form.draft.kids.map((kid, index) => {
           const error = errors.kid?.[kid.key];
@@ -93,7 +102,7 @@ export function SetupForm({ onCreated }: { onCreated: () => void }) {
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="font-type text-case text-accent-red">{t("rooms.title")}</legend>
+        <legend className="font-type text-case text-accent-red">{legend("rooms", 2)}</legend>
         <HandNote className="text-note-sm">{t("rooms.note")}</HandNote>
         <ChoiceChips
           options={ROOM_PRESETS.map((key) => ({ value: key, label: t(`rooms.presets.${key}`) }))}
@@ -109,7 +118,7 @@ export function SetupForm({ onCreated }: { onCreated: () => void }) {
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="font-type text-case text-accent-red">{t("objects.title")}</legend>
+        <legend className="font-type text-case text-accent-red">{legend("objects", 3)}</legend>
         <HandNote className="text-note-sm">{t("objects.note", { min: MIN_OBJECTS })}</HandNote>
         <ChoiceChips
           options={OBJECT_PRESETS.map((key) => ({ value: key, label: t(`objects.presets.${key}`) }))}
@@ -125,17 +134,24 @@ export function SetupForm({ onCreated }: { onCreated: () => void }) {
           </p>
         ) : null}
       </fieldset>
+    </div>
+  );
+}
 
-      <div className="flex flex-col gap-3">
-        {form.error ? (
-          <p role="alert" className="border border-gentle-error-border bg-gentle-error-bg p-3 font-type text-label text-gentle-error-fg">
-            {formError(form.error)}
-          </p>
-        ) : null}
-        <StampButton type="submit" disabled={form.saving}>
-          {form.saving ? t("submitting") : t("submit")}
-        </StampButton>
-      </div>
-    </form>
+/** The error of the last try and the stamp that opens the case file. */
+export function SetupSubmit({ form }: { form: SetupFormState }) {
+  const t = useTranslations("families");
+  const formError = useFormErrorMessage();
+  return (
+    <div className="flex flex-col gap-3">
+      {form.error ? (
+        <p role="alert" className="border border-gentle-error-border bg-gentle-error-bg p-3 font-type text-label text-gentle-error-fg">
+          {formError(form.error)}
+        </p>
+      ) : null}
+      <StampButton type="submit" disabled={form.saving}>
+        {form.saving ? t("submitting") : t("submit")}
+      </StampButton>
+    </div>
   );
 }

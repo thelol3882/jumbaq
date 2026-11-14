@@ -64,3 +64,5 @@ export function useSetupForm(onCreated: () => void) {
     error,
   };
 }
+
+export type SetupFormState = ReturnType<typeof useSetupForm>;
