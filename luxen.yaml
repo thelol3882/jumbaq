@@ -1,0 +1,129 @@
+# Deploy of jumbaq to its server (2 vCPU, 4 GB) with Luxen.
+# Host, path and tokens are in the `jumbaq` profile of ~/.config/luxen/config.yml, not here.
+name: jumbaq
+
+git:
+  develop: main
+  production: main
+  # [skip ci]: the release commit only bumps the version; the code was checked before.
+  commit_format: "chore(release): {versions} ({bump_type}) [skip ci]"
+  remote_url: https://github.com/thelol3882/jumbaq
+
+components:
+  # One image, three services: the migration runs before the new API and worker start.
+  - name: backend
+    directory: backend
+    image: ghcr.io/thelol3882/jumbaq-backend
+    services: [migrate, api, worker]
+    build_compose: docker-compose.build.yml
+    source_root: /app
+    version:
+      file: pyproject.toml
+      tool: uv
+    # The integration tests need PostgreSQL and Redis, so only `make test` runs them.
+    ci:
+      - { name: ruff check, command: uv run ruff check . }
+      - { name: ruff format, command: uv run ruff format --check . }
+      - { name: import-linter, command: uv run lint-imports }
+      - { name: unit tests, command: uv run pytest }
+
+  - name: infra
+    directory: .
+    services: [postgres, db-setup, redis, nginx]
+    infra: true
+
+deploy:
+  path: /root/jumbaq
+  compose_file: deploy/docker-compose.yml
+  health_check:
+    method: docker_exec
+    # Inside the container, so it does not pass the Cloudflare gate of nginx.
+    container: api
+    command: >-
+      python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/api/v1/health/ready', timeout=5).read().decode())"
+    expect_json:
+      status: ok
+    retries: 10
+    delay: 3
+  config_files:
+    - local: deploy/nginx/00-cloudflare.conf
+      chmod: "644"
+      post_upload: &reload_nginx "docker compose exec -T nginx nginx -t && docker compose exec -T nginx nginx -s reload"
+    - local: deploy/nginx/proxy.inc
+      chmod: "644"
+      post_upload: *reload_nginx
+    - local: deploy/nginx/jumbaq.conf
+      chmod: "644"
+      post_upload: *reload_nginx
+    # Compose does not run a finished db-setup again when only these files change, so a new
+    # role would be missing when the migrations run. Safe to run again.
+    - { local: infra/postgres/setup.sh, chmod: "644", post_upload: &db_setup "docker compose run --rm db-setup" }
+    - { local: infra/postgres/setup.sql, chmod: "644", post_upload: *db_setup }
+
+database:
+  container: jumbaq-postgres-1
+
+notifications:
+  telegram:
+    enabled: true
+
+registry:
+  owner: thelol3882
+  keep: 5
+
+server:
+  shell:
+    container: api
+    command: python
+  log_services:
+    - { name: api, description: "FastAPI (uvicorn, 2 workers)" }
+    - { name: worker, description: "arq worker, delivers the outbox" }
+    - { name: migrate, description: "alembic upgrade head, once per deploy" }
+    - { name: nginx, description: "Cloudflare origin, TLS" }
+    - { name: postgres, description: "PostgreSQL 18" }
+
+monitoring:
+  postgres: {}
+  redis:
+    container: jumbaq-redis-1
+
+setup:
+  create_dirs: [deploy/ssl, deploy/nginx, infra/postgres]
+  env_template: .env.example
+  crons:
+    - schedule: "0 21 * * 0"
+      command: "docker image prune -af --filter until=168h >> /var/log/jumbaq-prune.log 2>&1"
+  harden:
+    ssh:
+      disable_password_auth: true
+    firewall:
+      allow: ["443"]
+      ssh_rate_limit: true
+    docker_logs:
+      max_size: 10m
+      max_file: "3"
+    fail2ban: true
+    auto_upgrades:
+      time: "00:00"      # UTC, 05:00 in Almaty
+      scope: security
+    watch_updates:
+      notify: true
+      schedule: "0 4 * * *"
+      security_only: true
+
+env:
+  # Secrets are hex (`luxen env gen <KEY>`), never base64: the passwords go into database
+  # URLs, where "/", "+" and "=" would break them.
+  schema:
+    POSTGRES_DB: { required: true, default: "jumbaq" }
+    POSTGRES_USER: { required: true, default: "postgres", description: "Superuser, only for db-setup" }
+    POSTGRES_PASSWORD:
+      { required: true, secret: true, generate: rand-hex-24, example: "change-me" }
+    JUMBAQ_OWNER_PASSWORD:
+      { required: true, secret: true, generate: rand-hex-24, example: "change-me", description: "Owns the tables, runs migrations" }
+    JUMBAQ_APP_PASSWORD:
+      { required: true, secret: true, generate: rand-hex-24, example: "change-me", description: "API and worker, no DELETE" }
+    JUMBAQ_CORS_ORIGINS:
+      { required: true, default: "https://jumbaq.fun", description: "Web app origins that may call the API with cookies; comma separated" }
+    JUMBAQ_ENVIRONMENT: { default: "prod", description: "dev | prod" }
+    JUMBAQ_LOG_LEVEL: { default: "INFO" }

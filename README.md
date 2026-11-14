@@ -23,6 +23,11 @@ The API is on http://localhost:8000/api/v1, its docs on http://localhost:8000/ap
 ```
 backend/   FastAPI API and arq worker (package jumbaq)
 infra/     the local Docker Compose stack and the database setup
+deploy/    the server: its Docker Compose file and nginx behind Cloudflare
 ```
 
 How the backend is built and the rules for changing it: [backend/AGENTS.md](backend/AGENTS.md).
+
+## Deploy
+
+[Luxen](luxen.yaml) builds the backend image, pushes it to ghcr.io and deploys it to the server with `deploy/docker-compose.yml`. The API is at https://api.jumbaq.fun. The server `.env` comes from `.env.example`.

@@ -82,6 +82,15 @@ There is no web app yet. When it comes, it adds the same values to its translati
 
 `case` and `user` are reserved words in PostgreSQL. Name such tables like `case_file`. The default privileges give `jumbaq_app` SELECT, INSERT and UPDATE, so a migration needs no grants.
 
+## Adding a setting
+
+A field in `core/config.py` (env `JUMBAQ_<NAME>`) also goes to:
+
+- laptops: `infra/.env.example` and the `x-backend` part of `infra/docker-compose.yml`; a test value only to `$(TEST_TARGETS)` in the `Makefile`;
+- the server: `env.schema` in `luxen.yaml` (with a `generate` recipe for a secret), the root `.env.example` and the `x-backend` part of `deploy/docker-compose.yml`.
+
+A setting with a default that fits the server needs only the laptop part.
+
 ## Tests
 
 - Real PostgreSQL and Redis from `make up`: the `jumbaq_test` database and Redis database 1. No fake repositories.

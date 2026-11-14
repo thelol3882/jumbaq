@@ -1,0 +1,8 @@
+# Used by Luxen on the laptop to build and push the image.
+services:
+  backend:
+    build:
+      context: .
+    # The server is x86-64; without this a Mac with Apple silicon builds arm64.
+    platform: linux/amd64
+    image: ghcr.io/thelol3882/jumbaq-backend:${TAG:-latest}

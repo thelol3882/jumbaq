@@ -1,0 +1,177 @@
+# Compose file of the server. Luxen uploads it to /root/jumbaq/docker-compose.yml, so the
+# paths here are relative to /root/jumbaq. On laptops use infra/.
+#
+# Sized for 2 vCPU and 4 GB of RAM: the limits add up to about 2.2 GB, the rest is for the
+# OS, Docker and the page cache of PostgreSQL.
+name: jumbaq
+
+x-backend: &backend
+  image: ghcr.io/thelol3882/jumbaq-backend:${TAG:-latest}
+  environment:
+    JUMBAQ_ENVIRONMENT: ${JUMBAQ_ENVIRONMENT:-prod}
+    JUMBAQ_LOG_LEVEL: ${JUMBAQ_LOG_LEVEL:-INFO}
+    JUMBAQ_DATABASE_URL: postgresql+asyncpg://jumbaq_app:${JUMBAQ_APP_PASSWORD:?}@postgres:5432/${POSTGRES_DB}
+    JUMBAQ_REDIS_URL: redis://redis:6379/0
+    JUMBAQ_CORS_ORIGINS: ${JUMBAQ_CORS_ORIGINS:?}
+    # Only nginx may set X-Forwarded-For, so the client IP cannot be faked.
+    FORWARDED_ALLOW_IPS: 172.30.90.10
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Tuned for a 1 GB limit on a 4 GB machine.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=50
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    ports:
+      # Only on the host, for an SSH tunnel from a laptop. Never on the internet.
+      - "127.0.0.1:5432:5432"
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+    restart: unless-stopped
+
+  db-setup:
+    image: postgres:18-alpine
+    command: ["sh", "/setup/setup.sh", "${POSTGRES_DB}"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      JUMBAQ_OWNER_PASSWORD: ${JUMBAQ_OWNER_PASSWORD:?}
+      JUMBAQ_APP_PASSWORD: ${JUMBAQ_APP_PASSWORD:?}
+    volumes:
+      - ./infra/postgres:/setup:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Luxen deploys it together with api and worker, so a new image migrates before the new
+  # API starts, and a failed migration leaves the old API running.
+  migrate:
+    image: ghcr.io/thelol3882/jumbaq-backend:${TAG:-latest}
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      JUMBAQ_MIGRATION_DATABASE_URL: postgresql+asyncpg://jumbaq_owner:${JUMBAQ_OWNER_PASSWORD:?}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      db-setup:
+        condition: service_completed_successfully
+
+  redis:
+    image: redis:8-alpine
+    # The arq queue lives here, so Redis must never evict keys: a full Redis refuses new
+    # writes instead of dropping tasks.
+    command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    restart: unless-stopped
+
+  api:
+    <<: *backend
+    # Two processes, one per vCPU.
+    command:
+      - uvicorn
+      - jumbaq.main:create_app
+      - --factory
+      - --host=0.0.0.0
+      - --port=8000
+      - --proxy-headers
+      - --workers=2
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=2)"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  worker:
+    <<: *backend
+    command: ["arq", "jumbaq.worker.main.WorkerSettings"]
+    healthcheck:
+      test: ["CMD", "arq", "--check", "jumbaq.worker.main.WorkerSettings"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  nginx:
+    image: nginx:1.30-alpine
+    volumes:
+      # The whole folder, not single files: Luxen replaces a file on upload, and a
+      # single-file mount would keep showing the old one.
+      - ./deploy/nginx:/etc/nginx/conf.d:ro
+      # Cloudflare Origin CA certificate. Put on the server by hand, never in git.
+      - ./deploy/ssl:/etc/nginx/ssl:ro
+    ports:
+      # Only HTTPS: Cloudflare in Full (strict) mode talks to the origin on 443.
+      - "443:443"
+    networks:
+      default:
+        # Fixed, because the api trusts proxy headers only from this address.
+        ipv4_address: 172.30.90.10
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    restart: unless-stopped
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.90.0/24
+
+volumes:
+  postgres-data:
+  redis-data:
