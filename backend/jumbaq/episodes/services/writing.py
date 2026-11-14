@@ -140,7 +140,12 @@ class EpisodeWriting:
                 break
             payload = domain.with_plan_clue(_from_draft(draft), brief.clue.text)
             problems = domain.draft_problems(
-                payload, home.objects, youngest, ANSWER_SLOT, plan.secret
+                payload,
+                home.objects,
+                youngest,
+                ANSWER_SLOT,
+                plan.secret,
+                _context(brief),
             )
             if not problems:
                 return payload, False
@@ -159,6 +164,15 @@ class EpisodeWriting:
             youngest_age=youngest,
         )
         return built_in, True
+
+
+def _context(brief: EpisodeBrief) -> domain.DraftContext:
+    names = {suspect.id: suspect.name for suspect in brief.suspects}
+    return domain.DraftContext(
+        clue_text=brief.clue.text,
+        clue_suspect=names.get(brief.clue.suspect_id, ""),
+        suspect_names=tuple(names.values()),
+    )
 
 
 def _task(

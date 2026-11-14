@@ -224,8 +224,12 @@ riddle never reuses them.
 - resolution_template: two or three sentences that weave the kids' answer into the story. It \
 contains the text {ANSWER_SLOT} exactly once, where the answer goes. ANY answer must fit, so do \
 not expect a particular value.
-- case_clue: copy the clue text below exactly, word for word. The story reaches this clue \
-after the riddle.
+- case_clue: copy the clue text below exactly, word for word. The kids find this clue only \
+after the riddle and the code, at the very end of the evening, so the story itself never \
+says anything about the suspect of the clue being cleared or suspected tonight: no alibi, \
+no "was not in the bakery", no "was seen near", nothing that tells what the clue tells. \
+Code refuses a story whose paragraph names the suspect of the clue together with a word of \
+the clue.
 - cliffhanger: {ending}
 
 Never say or hint who the culprit is beyond what the clues say.

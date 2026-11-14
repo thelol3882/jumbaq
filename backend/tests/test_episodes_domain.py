@@ -24,11 +24,18 @@ OBJECTS = ("fridge", "sofa", "kettle")
 NOW = datetime(2026, 11, 14, 18, 0, tzinfo=UTC)
 
 
+PLAIN = [
+    *("the", "cat", "sat", "on", "the", "mat", "and"),
+    *("the", "dog", "was", "in", "the", "house", "with", "a", "ball"),
+]
+
+
 def story(words: int, paragraphs: int = 3) -> tuple[str, ...]:
-    """Exactly this many words, split over this many paragraphs."""
+    """Exactly this many words of plain English, split over this many paragraphs."""
     each, extra = divmod(words, paragraphs)
     return tuple(
-        " ".join(["quiet"] * (each + (1 if index < extra else 0))) for index in range(paragraphs)
+        " ".join(PLAIN[(index + n) % len(PLAIN)] for n in range(each + (1 if index < extra else 0)))
+        for index in range(paragraphs)
     )
 
 
@@ -90,8 +97,8 @@ def test_an_episode_that_breaks_a_rule_is_refused(payload: Payload, problem: str
 
 def test_texts_for_a_kid_under_6_are_shorter() -> None:
     # One paragraph of 405 characters: fine for a 7-year-old, too long for a 5-year-old.
-    long_one = " ".join(["longword"] * 45)
-    medium = replace(GOOD, read_aloud=(long_one, *story(40, 2)))
+    long_one = ("the cat sat on the mat and " * 20)[:405].strip()
+    medium = replace(GOOD, read_aloud=(long_one, *story(10, 2)))
     assert len(long_one) > domain.PARAGRAPH_LIMIT[True]
     assert problems(medium, youngest=7) == []
     assert any("paragraph is too long" in found for found in problems(medium, youngest=5))
@@ -448,7 +455,9 @@ def test_a_shift_secret_takes_two_words_when_three_do_not_fit() -> None:
 
 
 def test_a_shift_clue_with_no_window_gives_count() -> None:
-    assert domain.plan_cipher("Look at the kettle", 9) == CipherPlan(CipherLevel.COUNT, None, ())
+    plan = domain.plan_cipher("Look at the kettle", 9)
+
+    assert (plan.level, plan.secret) == (CipherLevel.COUNT, "KETTLE")
 
 
 def test_shift_decoys_are_phrases_of_the_other_clues_that_are_not_in_the_clue() -> None:
@@ -605,7 +614,8 @@ def test_the_words_to_keep_out_of_the_story_skip_filler() -> None:
 
 
 def test_a_draft_that_uses_the_secret_is_refused_and_says_where() -> None:
-    leaky = replace(GOOD, read_aloud=("The Feather was on the table.", "Quiet."))
+    first = f"The Feather was on the table. {GOOD.read_aloud[0]}"
+    leaky = replace(GOOD, read_aloud=(first, *GOOD.read_aloud[1:]))
 
     found = domain.draft_problems(leaky, OBJECTS, 7, ANSWER_SLOT, "FEATHER")
 
@@ -701,3 +711,68 @@ def test_a_draft_in_german_is_refused_with_a_clear_message() -> None:
     assert problems(GOOD) == []
     found = problems(replace(GOOD, read_aloud=(GERMAN,)))
     assert any("write in English" in problem for problem in found), found
+
+
+DAISY = domain.DraftContext(
+    clue_text="Daisy Duck was baking cupcakes in the bakery all evening.",
+    clue_suspect="Daisy Duck",
+    suspect_names=("Daisy Duck", "Felix the Fox", "Boris the Bear"),
+)
+
+
+def with_story(*paragraphs: str) -> Payload:
+    return replace(GOOD, read_aloud=(*paragraphs, *story(90, 2)))
+
+
+def clue_problems(payload: Payload, context: domain.DraftContext = DAISY) -> list[str]:
+    return [
+        found
+        for found in domain.draft_problems(payload, OBJECTS, 7, ANSWER_SLOT, context=context)
+        if "tells the clue" in found
+    ]
+
+
+def test_a_story_that_retells_the_clue_before_the_decode_is_refused() -> None:
+    payload = with_story("Daisy Duck was not in the bakery that evening.")
+
+    (found,) = clue_problems(payload)
+
+    assert "paragraph 1" in found and "Daisy Duck" in found and "bakery" in found
+    assert "before the kids decode it" in found
+
+
+@pytest.mark.parametrize(
+    "paragraph",
+    [
+        "Then Daisy said she was busy with the cupcakes.",
+        "The DUCK looked up from the bakery counter.",
+        "Daisy's bakery smelled of sugar.",
+    ],
+)
+def test_the_suspect_by_first_name_last_name_or_with_an_apostrophe_counts(paragraph: str) -> None:
+    assert clue_problems(with_story(paragraph)) != []
+
+
+def test_the_name_alone_or_the_clue_words_alone_are_fine() -> None:
+    assert clue_problems(with_story("Daisy Duck waved from the far end of the street.")) == []
+    assert clue_problems(with_story("The bakery was full of warm bread.")) == []
+    # Other suspects are not the clue's: Felix may be named with a clue word.
+    assert clue_problems(with_story("Felix the Fox walked past the bakery.")) == []
+
+
+def test_the_name_and_the_clue_word_must_share_a_paragraph() -> None:
+    separate = with_story("Daisy Duck waved at the detectives.", "The bakery was full of bread.")
+
+    assert clue_problems(separate) == []
+
+
+def test_filler_words_and_names_are_not_content_words() -> None:
+    words = domain.clue_content_words(DAISY.clue_text, DAISY.suspect_names)
+
+    assert words == {"baking", "cupcake", "bakery", "evening"}
+
+
+def test_the_check_is_skipped_without_the_brief() -> None:
+    payload = with_story("Daisy Duck was not in the bakery that evening.")
+
+    assert clue_problems(payload, domain.DraftContext()) == []
