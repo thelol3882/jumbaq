@@ -28,7 +28,14 @@ GOOD = Payload(
     read_aloud=("The bakery was quiet.", "A note lay on the table."),
     riddle=Riddle("I keep the milk cold.", "fridge", "colour", "Look at the fridge door."),
     hint="It hums in the kitchen.",
-    fallback_riddle=Riddle("You sit on me.", "sofa", "number", "Count the cushions."),
+    fallback_riddle=Riddle(
+        "You sit on me.",
+        "sofa",
+        "number",
+        "Count the cushions.",
+        hint="It is soft and in the living room.",
+        resolution_template=f"The cushions said {ANSWER_SLOT}! The door opened.",
+    ),
     resolution_template=f"The code was {ANSWER_SLOT}! The door opened.",
     case_clue="A grey feather lies by the plate.",
     cliffhanger="Who was here before you?",
@@ -54,6 +61,13 @@ def test_a_good_episode_has_no_problems() -> None:
          "same object"),
         (replace(GOOD, resolution_template="The door opened."), "exactly once"),
         (replace(GOOD, resolution_template=f"{ANSWER_SLOT} and {ANSWER_SLOT}"), "exactly once"),
+        (replace(GOOD, fallback_riddle=replace(GOOD.fallback_riddle, resolution_template="No.")),
+         "fallback riddle's own resolution_template"),
+        (replace(GOOD, fallback_riddle=replace(
+            GOOD.fallback_riddle, resolution_template=f"{ANSWER_SLOT} {ANSWER_SLOT}")),
+         "fallback riddle's own resolution_template"),
+        (replace(GOOD, fallback_riddle=replace(GOOD.fallback_riddle, hint=" ")),
+         "fallback riddle needs its own hint"),
         (replace(GOOD, read_aloud=()), "paragraphs"),
         (replace(GOOD, read_aloud=("x",) * 7), "paragraphs"),
         (replace(GOOD, read_aloud=("word " * 130,)), "paragraph is too long"),
@@ -169,6 +183,24 @@ def test_the_swap_changes_the_riddle_in_use() -> None:
     assert episode(used_fallback_riddle=True).riddle == GOOD.fallback_riddle
 
 
+def test_the_swap_also_changes_the_hint_and_the_resolution() -> None:
+    assert episode().hint == GOOD.hint
+    assert episode().resolution_template == GOOD.resolution_template
+    swapped = episode(used_fallback_riddle=True)
+    assert swapped.hint == GOOD.fallback_riddle.hint
+    assert swapped.resolution_template == GOOD.fallback_riddle.resolution_template
+
+
+def test_an_older_swapped_riddle_with_no_texts_of_its_own_uses_the_episode_s() -> None:
+    bare = replace(GOOD.fallback_riddle, hint="", resolution_template="")
+    old = replace(GOOD, fallback_riddle=bare)
+
+    swapped = episode(payload=old, used_fallback_riddle=True)
+
+    assert swapped.hint == GOOD.hint
+    assert swapped.resolution_template == GOOD.resolution_template
+
+
 @pytest.mark.parametrize(("number", "last"), [(1, False), (5, True)])
 def test_the_built_in_episode_is_always_playable(number: int, last: bool) -> None:
     payload = domain.built_in_payload(
@@ -188,6 +220,15 @@ def test_the_built_in_episode_keeps_a_safe_riddle_of_the_model() -> None:
     assert payload.riddle == model_riddle
     assert payload.fallback_riddle.target_object != "kettle"
     assert problems(payload) == []
+
+
+def test_the_built_in_fallback_riddle_has_its_own_hint_and_resolution() -> None:
+    payload = domain.built_in_payload("A case", "Clue.", OBJECTS, 1, False, ANSWER_SLOT)
+
+    assert payload.fallback_riddle.hint
+    assert payload.fallback_riddle.resolution_template.count(ANSWER_SLOT) == 1
+    swapped = episode(payload=payload, used_fallback_riddle=True)
+    assert swapped.hint == payload.hint
 
 
 UNSAFE_HOME = ("kitchen knife", "gas stove", "windows", "fridge")

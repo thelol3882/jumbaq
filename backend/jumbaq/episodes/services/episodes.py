@@ -126,8 +126,9 @@ class EpisodeService:
             answered = replace(
                 episode,
                 answer=cleaned,
+                # The riddle in use decides: after a swap the story is the second riddle's.
                 resolution=domain.resolution(
-                    episode.payload.resolution_template, cleaned, ANSWER_SLOT
+                    episode.resolution_template or "", cleaned, ANSWER_SLOT
                 ),
                 answered_at=now,
             )
@@ -307,7 +308,7 @@ def _content(episode: Episode) -> ContentView | None:
         recap=payload.recap,
         read_aloud=payload.read_aloud,
         riddle=episode.riddle,
-        hint=payload.hint,
+        hint=episode.hint or payload.hint,
         swapped=episode.used_fallback_riddle,
         step=step,
         answered=answered,

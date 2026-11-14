@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jumbaq.ai.models import LlmCallRow
@@ -242,10 +242,14 @@ async def test_an_episode_is_answered_once_and_swapped_once(
     swapped = live_client.post(f"{path}/swap").json()
     assert swapped["content"]["swapped"] is True
     assert swapped["content"]["riddle"] != episode["content"]["riddle"]
+    # The story and the hint go with the riddle that is played.
+    assert swapped["content"]["hint"] != episode["content"]["hint"]
     again = live_client.post(f"{path}/swap")
     assert again.json()["error"]["code"] == "episode.already_swapped"
 
-    assert live_client.post(f"{path}/answer", json={"answer": "red"}).status_code == 200
+    answered = live_client.post(f"{path}/answer", json={"answer": "red"})
+    assert answered.status_code == 200
+    assert answered.json()["content"]["answered"]["resolution"].startswith("Second riddle solved")
     twice = live_client.post(f"{path}/answer", json={"answer": "red"})
     assert twice.status_code == 409
     assert twice.json()["error"]["code"] == "episode.wrong_step"
@@ -395,3 +399,27 @@ async def test_a_draft_that_gives_the_clue_away_is_refused_and_the_second_try_le
     assert episode.status == "ready" and not episode.is_fallback
     assert episode.payload is not None
     assert "feather" not in str(episode.payload["read_aloud"]).lower()
+
+
+async def test_an_older_episode_without_texts_in_its_fallback_riddle_still_swaps(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    await deliver_all(sessionmaker)
+    row = await episode_1(sessionmaker, family_id)
+    async with sessionmaker() as session:
+        await session.execute(
+            text(
+                "UPDATE episode SET payload = jsonb_set(payload, '{fallback_riddle}',"
+                " (payload->'fallback_riddle') - 'hint' - 'resolution_template') WHERE id = :id"
+            ),
+            {"id": row.id},
+        )
+        await session.commit()
+    path = f"/api/v1/episodes/{row.id}"
+
+    swapped = live_client.post(f"{path}/swap").json()["content"]
+    answered = live_client.post(f"{path}/answer", json={"answer": "red"}).json()["content"]
+
+    assert row.payload is not None and swapped["hint"] == row.payload["hint"]
+    assert answered["answered"]["resolution"] == "You said red. That is exactly the secret code!"

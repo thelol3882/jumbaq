@@ -128,6 +128,10 @@ class Riddle:
     target_object: str
     answer_type: str
     parent_note: str
+    # Written for this riddle. Empty: the hint and the resolution_template of the payload.
+    # Only the fallback riddle has its own, and an older payload has none.
+    hint: str = ""
+    resolution_template: str = ""
 
 
 @dataclass(frozen=True)
@@ -183,6 +187,19 @@ class Episode:
             return None
         return self.payload.fallback_riddle if self.used_fallback_riddle else self.payload.riddle
 
+    @property
+    def hint(self) -> str | None:
+        """The hint of the riddle in use, so it never talks about the other object."""
+        riddle = self.riddle
+        return None if riddle is None or self.payload is None else riddle.hint or self.payload.hint
+
+    @property
+    def resolution_template(self) -> str | None:
+        riddle = self.riddle
+        if riddle is None or self.payload is None:
+            return None
+        return riddle.resolution_template or self.payload.resolution_template
+
 
 def _named_short_texts(payload: Payload) -> list[tuple[str, str]]:
     # The names are the fields of the model's answer, so a refusal tells it what to fix.
@@ -196,6 +213,8 @@ def _named_short_texts(payload: Payload) -> list[tuple[str, str]]:
         ("riddle.parent_note", payload.riddle.parent_note),
         ("fallback_riddle.text", payload.fallback_riddle.text),
         ("fallback_riddle.parent_note", payload.fallback_riddle.parent_note),
+        ("fallback_riddle.hint", payload.fallback_riddle.hint),
+        ("fallback_riddle.resolution_template", payload.fallback_riddle.resolution_template),
     ]
 
 
@@ -258,6 +277,10 @@ def draft_problems(
         problems.append("both riddles point at the same object")
     if payload.resolution_template.count(slot) != 1:
         problems.append(f"the resolution needs {slot} exactly once")
+    if payload.fallback_riddle.resolution_template.count(slot) != 1:
+        problems.append(f"the fallback riddle's own resolution_template needs {slot} exactly once")
+    if not payload.fallback_riddle.hint.strip():
+        problems.append("the fallback riddle needs its own hint")
     young = youngest_age < YOUNG_AGE
     if not payload.read_aloud or len(payload.read_aloud) > MAX_PARAGRAPHS:
         problems.append(f"needs 1 to {MAX_PARAGRAPHS} paragraphs")
@@ -332,6 +355,10 @@ def built_in_payload(
     riddle the model wrote for this home is kept. Only objects with safe names are used; a home
     with none gets the generic riddles, which need nothing from the home."""
     safe = safe_objects(objects)
+    # The model's riddle keeps only its object and texts: its own hint and resolution were not
+    # checked and the built-in ones fit any riddle.
+    if model_riddle is not None:
+        model_riddle = replace(model_riddle, hint="", resolution_template="")
     first = model_riddle or (
         _built_in_riddle(safe[(number - 1) % len(safe)]) if safe else _GENERIC_RIDDLES[0]
     )
@@ -342,6 +369,8 @@ def built_in_payload(
         if last
         else "But the case is not solved yet. More clues are waiting for tomorrow."
     )
+    hint = "Walk slowly through the home and look carefully."
+    resolution_template = f"You found it: {slot}. Great detective work!"
     return Payload(
         recap=f"Welcome back to {title}, detectives.",
         read_aloud=(
@@ -349,9 +378,9 @@ def built_in_payload(
             "Something in this home is hiding a secret code. Can you find it?",
         ),
         riddle=first,
-        hint="Walk slowly through the home and look carefully.",
-        fallback_riddle=second,
-        resolution_template=f"You found it: {slot}. Great detective work!",
+        hint=hint,
+        fallback_riddle=replace(second, hint=hint, resolution_template=resolution_template),
+        resolution_template=resolution_template,
         case_clue=clue,
         cliffhanger=ending,
     )

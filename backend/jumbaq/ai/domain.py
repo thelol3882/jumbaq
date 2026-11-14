@@ -133,6 +133,11 @@ class RiddleDraft:
     target_object: str
     answer_type: AnswerType
     parent_note: str
+    # Only the fallback riddle has them: a hint and a resolution written for this riddle, because
+    # the family plays it instead of the first one. Empty for the first riddle, which uses the
+    # hint and the resolution_template of the episode.
+    hint: str = ""
+    resolution_template: str = ""
 
 
 @dataclass(frozen=True)

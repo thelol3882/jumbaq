@@ -115,7 +115,11 @@ def _episode(data: dict[str, Any]) -> dict[str, Any]:
         ],
         "riddle": _riddle(objects, number - 1),
         "hint": "Look in the room where you spend the most time.",
-        "fallback_riddle": _riddle(objects, number),
+        "fallback_riddle": {
+            **_riddle(objects, number),
+            "hint": "Look in the room where you eat your snacks.",
+            "resolution_template": f"Second riddle solved: {ANSWER_SLOT}. The door opened!",
+        },
         "resolution_template": f"You said {ANSWER_SLOT}. That is exactly the secret code!",
         "case_clue": data["clue_for_this_episode"]["text"],
         "cliffhanger": "But who left the riddle? Tomorrow we will know more.",
