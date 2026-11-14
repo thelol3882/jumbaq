@@ -17,6 +17,7 @@ x-backend: &backend
     JUMBAQ_AI_API_KEY: ${JUMBAQ_AI_API_KEY:-}
     JUMBAQ_STRIPE_SECRET_KEY: ${JUMBAQ_STRIPE_SECRET_KEY:-}
     JUMBAQ_STRIPE_WEBHOOK_SECRET: ${JUMBAQ_STRIPE_WEBHOOK_SECRET:-}
+    JUMBAQ_DEMO_MODE: ${JUMBAQ_DEMO_MODE:-false}
     # Only nginx may set X-Forwarded-For, so the client IP cannot be faked.
     FORWARDED_ALLOW_IPS: 172.30.90.10
   depends_on:

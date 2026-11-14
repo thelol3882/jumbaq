@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Self
 
-from pydantic import SecretStr, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     billing_currency: str = "usd"
     # Where Stripe sends the parent back after the payment page.
     web_app_url: str = "https://jumbaq.fun"
+
+    # One episode per evening: the next one opens this long after the previous one was played.
+    # Hours, not a time of day, until families have a time zone.
+    episode_gap_hours: int = Field(default=16, ge=1)
+    # Allows the endpoint that opens the next episode at once, so the jury can play five
+    # evenings in five minutes.
+    demo_mode: bool = False
 
     @field_validator("stripe_secret_key")
     @classmethod
