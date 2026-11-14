@@ -40,6 +40,11 @@ export const episodesApi = baseApi.injectEndpoints({
       query: (episodeId) => ({ url: `/episodes/${episodeId}/open-now`, method: "POST" }),
       invalidatesTags: (_result, _error, episodeId) => episodeChanged(episodeId),
     }),
+    // Demo mode too: plays the rest of an available evening with the right answers.
+    skipEpisode: builder.mutation<Episode, string>({
+      query: (episodeId) => ({ url: `/episodes/${episodeId}/skip`, method: "POST" }),
+      invalidatesTags: (_result, _error, episodeId) => episodeChanged(episodeId),
+    }),
   }),
 });
 
@@ -50,4 +55,5 @@ export const {
   useStrikeSuspectMutation,
   useSwapRiddleMutation,
   useOpenNowMutation,
+  useSkipEpisodeMutation,
 } = episodesApi;

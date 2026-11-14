@@ -3,10 +3,10 @@
 import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { inOpening, tonight, WritingProgress, type Case } from "@/features/cases";
-import { useOpenNowMutation } from "@/features/episodes";
+import { useOpenNowMutation, useSkipEvening } from "@/features/episodes";
 import { toApiError } from "@/shared/api/errors";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, StampLink, TypedButton } from "@/shared/components/notebook";
+import { DemoControls, HandNote, StampLink, TypedButton } from "@/shared/components/notebook";
 import { formatOpening } from "@/shared/lib/dates";
 import { Opening } from "./Opening";
 
@@ -33,6 +33,7 @@ export function Tonight({
   const [openNow, opening] = useOpenNowMutation();
   // Demo mode can be turned off while the page is open; then the button goes away for good.
   const [demoRefused, setDemoRefused] = useState(false);
+  const skipper = useSkipEvening();
   const step = tonight(current, new Date());
   const base = `/cases/${current.number}`;
   const title = large ? "text-[2.875rem] leading-[1.12]" : "text-title";
@@ -59,6 +60,24 @@ export function Tonight({
           <HandNote lead={t("note.lead")} className="max-w-xl -rotate-1">
             {t("note.text")}
           </HandNote>
+          {!demoMode || demoRefused || skipper.refused || !step.evening.id ? null : (
+            <DemoControls title={t("demo.title")} note={t("demo.note")}>
+              <TypedButton
+                disabled={skipper.skipping}
+                onClick={() => {
+                  const id = step.evening.id;
+                  if (id) void skipper.skip(id);
+                }}
+              >
+                {t("demo.skip")}
+              </TypedButton>
+              {skipper.error ? (
+                <p role="alert" className="font-type text-label text-gentle-error-fg">
+                  {errorMessage(skipper.error)}
+                </p>
+              ) : null}
+            </DemoControls>
+          )}
         </div>
       );
     case "waits":
@@ -70,7 +89,7 @@ export function Tonight({
             {t("opens", { number: step.evening.number, when: formatOpening(step.opensAt) })}
           </p>
           {!demoMode || demoRefused || !step.evening.id ? null : (
-            <div className="flex flex-col items-start gap-2">
+            <DemoControls title={t("demo.title")} note={t("demo.note")}>
               <TypedButton
                 disabled={opening.isLoading}
                 onClick={async () => {
@@ -83,14 +102,14 @@ export function Tonight({
                   }
                 }}
               >
-                {t("openNow")}
+                {t("demo.openNow")}
               </TypedButton>
               {opening.error && toApiError(opening.error).code !== "episode.demo_mode_off" ? (
                 <p role="alert" className="font-type text-label text-gentle-error-fg">
                   {errorMessage(opening.error)}
                 </p>
               ) : null}
-            </div>
+            </DemoControls>
           )}
         </div>
       );
