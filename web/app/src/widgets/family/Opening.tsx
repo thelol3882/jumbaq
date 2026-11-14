@@ -52,6 +52,7 @@ export function Opening({
         <HandNote lead={t("opening.note.lead")} className="max-w-xl -rotate-1">
           {t("opening.note.text")}
         </HandNote>
+        <HandNote className="max-w-xl">{t("opening.saved")}</HandNote>
       </div>
 
       <ReadAloud label={t("opening.readAloud")}>
