@@ -4,6 +4,7 @@ import uuid
 from typing import Any
 
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jumbaq.ai.providers.stub import StubProvider
@@ -53,6 +54,19 @@ async def deliver_all(
         if await delivery.deliver_due() == 0:
             return
     raise AssertionError("the outbox did not get quiet")
+
+
+async def make_due(sessionmaker: async_sessionmaker[AsyncSession], family_id: uuid.UUID) -> None:
+    """Ends the waits of the waiting rows of a family, so the next `deliver_due()` retries them."""
+    async with sessionmaker() as session:
+        await session.execute(
+            text(
+                "UPDATE outbox SET next_attempt_at = now() WHERE family_id = :family_id"
+                " AND processed_at IS NULL AND failed_at IS NULL"
+            ),
+            {"family_id": family_id},
+        )
+        await session.commit()
 
 
 async def play_evening(

@@ -23,11 +23,12 @@ from jumbaq.core.clock import SystemClock
 from jumbaq.core.config import Settings
 from jumbaq.core.csrf import CSRF_HEADER
 from jumbaq.core.family import FamilyRef
-from jumbaq.core.outbox import OutboxDelivery, OutboxRow
+from jumbaq.core.outbox import MAX_ATTEMPTS, OutboxDelivery, OutboxRow
+from jumbaq.episodes.models import EpisodeRow
 from jumbaq.families.deps import FAMILY_COOKIE
 from jumbaq.families.public import FamilyCreated
 from tests.conftest import TEST_SETTINGS
-from tests.flows import create_family, deliver_all, stub_handlers
+from tests.flows import create_family, deliver_all, make_due, stub_handlers
 from tests.stripe_events import signed, subscription_event
 
 pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
@@ -166,15 +167,22 @@ async def test_two_bad_plans_give_the_built_in_one(
     assert await events(sessionmaker, family_id, CasePlanned.topic) == 1
 
 
-async def test_the_daily_cap_fails_the_case_instead_of_retrying(
+async def test_the_daily_cap_gives_the_built_in_plan(
     live_client: TestClient, sessionmaker: Sessionmaker
 ) -> None:
     family_id, _ = create_family(live_client)
 
     await deliver_all(sessionmaker, handlers_with(sessionmaker, StubProvider(), daily_limit=0))
 
-    assert await case_1(sessionmaker, family_id) == ("failed", False, None)
-    assert await events(sessionmaker, family_id, CasePlanned.topic) == 0
+    assert await case_1(sessionmaker, family_id) == ("active", True, FALLBACK_PLAN.title)
+    assert await events(sessionmaker, family_id, CasePlanned.topic) == 1
+    async with sessionmaker() as session:
+        requested = await session.scalar(
+            select(func.count())
+            .select_from(EpisodeRow)
+            .where(EpisodeRow.family_id == family_id, EpisodeRow.number == 1)
+        )
+    assert requested == 1
 
 
 async def test_a_model_that_is_down_leaves_the_case_for_the_next_try(
@@ -196,6 +204,33 @@ async def test_a_model_that_is_down_leaves_the_case_for_the_next_try(
             )
         ).one()
     assert tuple(row) == (1, "AiUnavailableError")
+
+
+async def test_a_model_that_stays_down_gives_the_built_in_plan_on_the_last_attempt(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    delivery = OutboxDelivery(sessionmaker, handlers_with(sessionmaker, Down()))
+    await delivery.deliver_due()  # FamilyCreated: opens the case
+
+    for _ in range(MAX_ATTEMPTS - 1):
+        await delivery.deliver_due()
+        await make_due(sessionmaker, family_id)
+    assert (await case_1(sessionmaker, family_id))[0] == "planning"
+
+    await delivery.deliver_due()  # the last attempt
+
+    assert await case_1(sessionmaker, family_id) == ("active", True, FALLBACK_PLAN.title)
+    assert await events(sessionmaker, family_id, CasePlanned.topic) == 1
+    async with sessionmaker() as session:
+        row = (
+            await session.execute(
+                select(OutboxRow.attempts, OutboxRow.processed_at, OutboxRow.failed_at).where(
+                    OutboxRow.family_id == family_id, OutboxRow.topic == CaseOpened.topic
+                )
+            )
+        ).one()
+    assert row.attempts == MAX_ATTEMPTS and row.processed_at and row.failed_at is None
 
 
 async def test_planning_twice_changes_nothing(

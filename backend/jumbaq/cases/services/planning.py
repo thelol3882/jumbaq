@@ -19,6 +19,7 @@ from jumbaq.cases import domain
 from jumbaq.cases.domain import FIRST_CASE, CaseStatus, Clue, Plan, Suspect
 from jumbaq.cases.events import CaseOpened, CasePlanned
 from jumbaq.cases.uow import CasesUoWFactory
+from jumbaq.core.context import is_last_attempt
 from jumbaq.core.family import FamilyRef
 from jumbaq.episodes.public import banned_words, safe_objects
 from jumbaq.families.public import Family
@@ -45,7 +46,9 @@ class CasePlanning:
     async def plan(self, family: FamilyRef, case_id: uuid.UUID) -> None:
         """Safe to run twice: a case that is not in planning is left alone.
 
-        AiUnavailableError goes up, so the outbox tries again later.
+        AiUnavailableError goes up, so the outbox tries again later. On the last attempt, and when
+        the family reached the daily cap, the case gets the built-in plan, so it never stays in
+        planning and never fails because of the model.
         """
         async with self._uow() as uow:
             case = await uow.cases.get(family, case_id)
@@ -58,9 +61,13 @@ class CasePlanning:
             task = CasePlanInput(_home(home), case.number, clue_max_chars=domain.CLUE_MAX_CHARS)
             plan = await self._ask(family, task)
         except AiDailyLimitError:
-            logger.warning("case %s not planned: the family reached the daily cap", case_id)
-            await self._fail(family, case_id)
-            return
+            logger.warning("case %s: the family reached the daily cap, built-in plan", case_id)
+            plan = None
+        except Exception:
+            if not is_last_attempt():
+                raise
+            logger.exception("case %s: the model failed for good, built-in plan", case_id)
+            plan = None
         await self._save(family, case_id, plan)
 
     async def _ask(self, family: FamilyRef, task: CasePlanInput) -> Plan | None:
@@ -95,15 +102,6 @@ class CasePlanning:
             )
             await uow.cases.update(active)
             await uow.publish(CasePlanned(family.family_id, case_id))
-            await uow.commit()
-
-    async def _fail(self, family: FamilyRef, case_id: uuid.UUID) -> None:
-        """The daily cap: a status the web app shows, instead of an error that retries."""
-        async with self._uow() as uow:
-            case = await uow.cases.get(family, case_id, for_update=True)
-            if case is None or not domain.can_move(case.status, CaseStatus.FAILED):
-                return
-            await uow.cases.update(replace(case, status=CaseStatus.FAILED))
             await uow.commit()
 
 

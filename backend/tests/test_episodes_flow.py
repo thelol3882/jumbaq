@@ -12,17 +12,17 @@ from jumbaq.ai.models import LlmCallRow
 from jumbaq.ai.prompts import EPISODE_SCHEMA, Prompt
 from jumbaq.ai.providers.base import Reply
 from jumbaq.ai.providers.stub import StubProvider
-from jumbaq.ai.public import Provider, build_story_writer
+from jumbaq.ai.public import AiUnavailableError, Provider, build_story_writer
 from jumbaq.cases.public import CasePlanned
 from jumbaq.core.clock import SystemClock
 from jumbaq.core.csrf import CSRF_HEADER
 from jumbaq.core.deps import get_settings
-from jumbaq.core.outbox import OutboxRow
+from jumbaq.core.outbox import MAX_ATTEMPTS, OutboxDelivery, OutboxRow
 from jumbaq.episodes.models import EpisodeRow
 from jumbaq.episodes.public import EpisodeRequested
 from jumbaq.families.deps import FAMILY_COOKIE
 from tests.conftest import TEST_SETTINGS
-from tests.flows import create_family, deliver_all, play_evening, stub_handlers
+from tests.flows import create_family, deliver_all, make_due, play_evening, stub_handlers
 from tests.stripe_events import signed, subscription_event
 
 pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
@@ -48,6 +48,17 @@ class EpisodeChanger:
             self.episode_calls += 1
             self._change(reply.data)
         return reply
+
+
+class EpisodesDown:
+    """The stub, but every episode call fails as a model that is down."""
+
+    name, model = "episodes-down", "test"
+
+    async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
+        if schema is EPISODE_SCHEMA:
+            raise AiUnavailableError("timeout")
+        return await StubProvider().complete_json(prompt, schema)
 
 
 def unsafe(data: dict[str, Any]) -> None:
@@ -246,6 +257,28 @@ async def test_the_daily_cap_gives_the_built_in_episode(
 
     row = await episode_1(sessionmaker, family_id)
     assert (row.status, row.is_fallback) == ("ready", True)
+
+
+async def test_a_model_that_stays_down_gives_the_built_in_episode_on_the_last_attempt(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    delivery = OutboxDelivery(sessionmaker, handlers_with(sessionmaker, EpisodesDown()))
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, EpisodesDown()))  # to the first try
+    row = await episode_1(sessionmaker, family_id)
+    assert row.status == "generating"
+
+    for _ in range(MAX_ATTEMPTS - 2):
+        await make_due(sessionmaker, family_id)
+        await delivery.deliver_due()
+    assert (await episode_1(sessionmaker, family_id)).status == "generating"
+
+    await make_due(sessionmaker, family_id)
+    await delivery.deliver_due()  # the last attempt
+
+    row = await episode_1(sessionmaker, family_id)
+    assert (row.status, row.is_fallback) == ("ready", True)
+    assert row.payload is not None and row.payload["cipher_secret"]
 
 
 async def test_handlers_run_twice_give_the_same_result(
