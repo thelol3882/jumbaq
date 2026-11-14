@@ -84,16 +84,9 @@ export function StepMain({
       />
     );
   }
-  if (step === "strike" && strike && answered) {
+  if (step === "strike" && strike) {
     return (
-      <StrikeStep
-        episodeId={episode.id}
-        number={episode.number}
-        strike={strike}
-        suspects={current.suspects}
-        resolution={answered.resolution}
-        large={large}
-      />
+      <StrikeStep episodeId={episode.id} number={episode.number} strike={strike} suspects={current.suspects} large={large} />
     );
   }
   return null;

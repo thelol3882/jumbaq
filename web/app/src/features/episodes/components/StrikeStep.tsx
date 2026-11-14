@@ -9,20 +9,18 @@ import { ClueTag } from "./EpisodeResultView";
 import { PickButton, ReadAloud } from "./ReadAloud";
 
 /** The last step of an evening: the clue of tonight, then the kids pick a suspect. The suspects
- * come from the case, so the widget passes them in. */
+ * come from the case, so the widget passes them in. The resolution was read on the decode step. */
 export function StrikeStep({
   episodeId,
   number,
   strike,
   suspects,
-  resolution,
   large = false,
 }: {
   episodeId: string;
   number: number;
   strike: Strike;
   suspects: readonly { id: string; name: string }[];
-  resolution: string;
   large?: boolean;
 }) {
   const t = useTranslations("episodes");
@@ -31,9 +29,6 @@ export function StrikeStep({
 
   return (
     <div className="flex flex-col gap-7">
-      <ReadAloud large={large}>
-        <p>{resolution}</p>
-      </ReadAloud>
       <ClueTag number={number} text={strike.clue} />
       {strike.revealed_word && strike.decoded_word ? (
         <HandNote>{t("strike.revealed", { word: strike.decoded_word })}</HandNote>
