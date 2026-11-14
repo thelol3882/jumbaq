@@ -38,6 +38,7 @@ export function AccuseForm({ current, onSolved }: { current: Case; onSolved: (re
               <input
                 type="radio"
                 name="suspect"
+                aria-label={s.name}
                 value={s.id}
                 checked={form.picked === s.id}
                 onChange={() => form.pick(s.id)}

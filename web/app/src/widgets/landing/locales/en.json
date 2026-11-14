@@ -7,7 +7,7 @@
   "steps": {
     "read": "You read the story aloud.",
     "hunt": "The kids hunt the room for the thing in the riddle.",
-    "type": "You type what they found. A clue drops."
+    "crack": "They crack the code and cross out a suspect."
   },
   "example": {
     "label": "from the case files",

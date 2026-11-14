@@ -41,7 +41,7 @@ export function EveningDesktop({
                 <StepMain current={current} episode={episode} codeBreaker={codeBreaker} large />
               ) : (
                 <div className="flex flex-col gap-9">
-                  <StoryText content={episode.content} large />
+                  <StoryText content={episode.content} first={episode.number === 1} large />
                   <AnswerForm episodeId={episode.id} content={episode.content} />
                 </div>
               )}

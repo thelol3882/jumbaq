@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import type { CaseProgress } from "@/features/cases";
 import { DetectivesTag, EvidenceTag, HandNote, PlansLink, StampLink, Wordmark } from "@/shared/components/notebook";
 
-const STEPS = ["read", "hunt", "type"] as const;
+const STEPS = ["read", "hunt", "crack"] as const;
 // The hand-drawn list is a little uneven on purpose.
 const STEP_INDENT = ["", "ml-3.5", "ml-1"] as const;
 
