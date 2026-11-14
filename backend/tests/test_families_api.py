@@ -43,6 +43,7 @@ def test_the_family_of_the_cookie(live_client: TestClient) -> None:
     assert [(kid["nickname"], kid["age"]) for kid in body["kids"]] == [("Aru", 7), ("Timur", 9)]
     assert body["rooms"] == ["kitchen", "living room", "bedroom"]
     assert body["objects"] == ["fridge", "sofa", "bookshelf", "kettle"]
+    assert body["demo_mode"] is True
 
 
 def test_without_a_cookie_there_is_no_family(live_client: TestClient) -> None:
