@@ -95,7 +95,7 @@ export interface paths {
         put?: never;
         /**
          * Start Checkout
-         * @description A Stripe payment page (test mode) for $7.99 a month. An active subscription gives 409
+         * @description A Stripe payment page (test mode) for the monthly price. An active subscription gives 409
          *     `billing.already_subscribed`; a server without Stripe keys gives 503
          *     `billing.not_configured`.
          */
@@ -136,7 +136,7 @@ export interface paths {
         };
         /**
          * Get Subscription
-         * @description `status` is null before the first payment. `active` opens the cases after the free one.
+         * @description `status` is null before the first payment. `active` opens the cases after the free cases.
          */
         get: operations["get_subscription_api_v1_billing_subscription_get"];
         put?: never;
@@ -175,7 +175,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Solved Cases
+         * @description The family's solved cases, newest first. Empty before the first one is solved.
+         */
+        get: operations["list_solved_cases_api_v1_cases_get"];
         put?: never;
         /**
          * Start Next Case
@@ -219,7 +223,8 @@ export interface paths {
         };
         /**
          * Get Certificate
-         * @description Only for a solved case (409 `case.not_solved`). Another family's case gives 404.
+         * @description Any solved case of the family, not only the current one (409 `case.not_solved`). Another
+         *     family's case gives 404.
          */
         get: operations["get_certificate_api_v1_cases__case_id__certificate_get"];
         put?: never;
@@ -372,7 +377,7 @@ export interface paths {
         /**
          * Open Episode Now
          * @description Opens a waiting episode at once, so the jury can play a case in minutes. Only in demo
-         *     mode (403 `episode.demo_mode_off`).
+         *     mode (403 `episode.demo_mode_off`). A played episode gives 409 `episode.wrong_step`.
          */
         post: operations["open_episode_now_api_v1_episodes__episode_id__open_now_post"];
         delete?: never;
@@ -504,7 +509,8 @@ export interface components {
         };
         /**
          * CaseStatus
-         * @description planning -> active -> accusing -> solved, and planning -> failed.
+         * @description planning -> active -> accusing -> solved. Nothing sets `failed`: the model failing gives a
+         *     built-in plan.
          * @enum {string}
          */
         CaseStatus: "planning" | "active" | "accusing" | "solved" | "failed";
@@ -746,6 +752,27 @@ export interface components {
             /** Parent Note */
             parent_note: string;
         };
+        /**
+         * SolvedCaseOut
+         * @description A solved case in the list of past cases: no culprit and no reveal.
+         */
+        SolvedCaseOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /** Title */
+            title: string;
+            rank: components["schemas"]["Rank"];
+            /**
+             * Solved At
+             * Format: date-time
+             */
+            solved_at: string;
+        };
         /** StrikeIn */
         StrikeIn: {
             /** Suspect Id */
@@ -769,6 +796,8 @@ export interface components {
             status: components["schemas"]["SubscriptionStatus"] | null;
             /** Active */
             active: boolean;
+            /** Cancels At */
+            cancels_at: string | null;
         };
         /**
          * SubscriptionStatus
@@ -1032,6 +1061,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_solved_cases_api_v1_cases_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SolvedCaseOut"][];
                 };
             };
             /** @description Validation Error */
