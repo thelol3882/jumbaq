@@ -20,5 +20,6 @@ export function useAccusation(caseId: string) {
     return result;
   };
 
-  return { picked, pick: setPicked, wrongPick, submit, accusing: isLoading, error, result: data };
+  // The note belongs to the suspect it was said about; another pick starts clean.
+  return { picked, pick: setPicked, wrongPick: wrongPick === picked ? wrongPick : null, submit, accusing: isLoading, error, result: data };
 }
