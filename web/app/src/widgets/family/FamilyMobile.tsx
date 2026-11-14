@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { ManageSubscription } from "@/features/billing";
-import { EveningBoxes, inOpening, type Case } from "@/features/cases";
+import { EveningBoxes, inOpening, PastCases, type Case, type SolvedCase } from "@/features/cases";
 import { FamilySummary, type FamilyState } from "@/features/families";
 import { DetectivesTag, NotebookPage, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
@@ -17,6 +17,7 @@ export function FamilyMobile({
   problem,
   subscribed,
   cancelsAt,
+  pastCases,
 }: {
   family: FamilyState;
   detectivesLabel: string | undefined;
@@ -28,6 +29,8 @@ export function FamilyMobile({
   subscribed: boolean;
   /** When a canceled subscription ends, else null. */
   cancelsAt: string | null;
+  /** The solved cases, newest first. */
+  pastCases: readonly SolvedCase[];
 }) {
   const t = useTranslations("widget.family");
   const detectives = family.kids.map((kid) => kid.nickname);
@@ -52,6 +55,7 @@ export function FamilyMobile({
         {problem ?? (current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} /> : <TonightPending waiting={waiting} detectives={detectives} />)}
         {current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilySummary family={family} />}
         {subscribed ? <ManageSubscription cancelsAt={cancelsAt} /> : null}
+        {pastCases.length > 0 ? <PastCases cases={pastCases} /> : null}
         <NewFamily detectivesLabel={detectivesLabel} />
       </div>
     </NotebookPage>

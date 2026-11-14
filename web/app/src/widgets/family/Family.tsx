@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useGetSubscriptionQuery } from "@/features/billing";
-import { inOpening, tonight, useCurrentCase } from "@/features/cases";
+import { inOpening, tonight, useCurrentCase, useGetSolvedCasesQuery } from "@/features/cases";
 import { useDetectivesLabel, useFamily } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { HandNote, NotebookPage, PlansLink, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
@@ -20,6 +20,7 @@ export function Family() {
   const detectivesLabel = useDetectivesLabel();
   const { current, slow, error: caseError, retry: check } = useCurrentCase({ skip: !family });
   const subscription = useGetSubscriptionQuery(undefined, { skip: !family });
+  const pastCases = useGetSolvedCasesQuery(undefined, { skip: !family }).data ?? [];
   const isMobile = useIsMobile();
   const step = current && !inOpening(current) ? tonight(current, new Date()) : undefined;
   useRefetchAt(step?.kind === "waits" ? step.opensAt : null, check);
@@ -37,9 +38,9 @@ export function Family() {
         </div>
       ) : undefined;
     return isMobile ? (
-      <FamilyMobile family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} cancelsAt={cancelsAt} />
+      <FamilyMobile family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} cancelsAt={cancelsAt} pastCases={pastCases} />
     ) : (
-      <FamilyDesktop family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} cancelsAt={cancelsAt} />
+      <FamilyDesktop family={family} detectivesLabel={detectivesLabel} current={current} waiting={waiting} problem={problem} subscribed={subscribed} cancelsAt={cancelsAt} pastCases={pastCases} />
     );
   }
 

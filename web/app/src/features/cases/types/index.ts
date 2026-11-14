@@ -8,4 +8,5 @@ export type CaseEpisode = Schemas["CaseEpisodeOut"];
 export type EpisodeSlotStatus = Schemas["EpisodeSlotStatus"];
 export type Accusation = Schemas["AccusationOut"];
 export type Certificate = Schemas["CertificateOut"];
+export type SolvedCase = Schemas["SolvedCaseOut"];
 export type Rank = Schemas["Rank"];
