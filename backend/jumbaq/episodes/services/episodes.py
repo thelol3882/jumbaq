@@ -148,7 +148,8 @@ class EpisodeService:
             episode = await self._in_step(uow.episodes, family, episode_id, EveningStep.DECODE)
             assert episode.payload is not None
             secret = episode.payload.cipher_secret
-            # Count has no word: the kids clap or hop and any body passes.
+            # A count level with no secret (a clue with no short word, or an older episode)
+            # has no box to check: any body passes.
             if secret is None or (word is not None and domain.same_word(word, secret)):
                 decoded = replace(episode, decoded_at=now)
             else:
@@ -328,9 +329,12 @@ def _decode(episode: Episode) -> DecodeView | None:
     options: list[str] = []
     start = None
     shift = None
-    if secret is None:
+    if payload.cipher_level == CipherLevel.COUNT:
         count = domain.count_target(key)
-    else:
+        # The boxes keep their numbers, so they are never shuffled.
+        if secret is not None:
+            options = domain.count_options(secret, payload.cipher_decoys, count)
+    elif secret is not None:
         if payload.cipher_level == CipherLevel.NUMBER_CODE:
             start = domain.number_start(key)
             code = domain.number_code(key, secret)

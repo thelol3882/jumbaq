@@ -59,12 +59,15 @@ class DecodeOut(BaseModel):
     start: int | None
     # How far each letter moves in the shift level. Null for the other levels.
     shift: int | None
-    # The cipher text. Null for count: the kids clap or hop `count` times.
+    # The cipher text. Null for count.
     code: str | None
+    # Count only: the kids clap this many times (1 to 5), then point at the box with this number.
     count: int | None
     # The clue with the hidden word as ____. Null for count.
     clue_with_gap: str | None
-    # The secret and two decoys in a fixed order for this episode. Empty for count.
+    # Number code and shift: the secret and two decoys in a fixed order for this episode.
+    # Count: the words of boxes 1 to 5 in numbered order, the secret in box `count`. Empty for
+    # a count episode with no secret, where any pick passes.
     options: list[str]
     attempts: int
 
@@ -120,7 +123,7 @@ class AnswerIn(BaseModel):
 
 
 class DecodeIn(BaseModel):
-    # Null for the count level, where the kids only clap or hop.
+    # The picked word. Null only for a count episode with no boxes.
     word: Word | None = None
 
 
