@@ -34,7 +34,8 @@
         "already_subscribed": "This family already has a subscription.",
         "bad_signature": "The payment notice could not be checked.",
         "not_configured": "Payments are not set up yet. The free case still works.",
-        "unavailable": "Payments are not answering right now. Try again in a moment."
+        "unavailable": "Payments are not answering right now. Try again in a moment.",
+        "no_subscription": "This family has no subscription to manage."
       },
       "case": {
         "not_found": "Your first case is being prepared. Try again in a moment.",

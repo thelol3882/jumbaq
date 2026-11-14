@@ -11,6 +11,10 @@ class AlreadySubscribedError(ConflictError):
     code = ErrorCode.BILLING_ALREADY_SUBSCRIBED
 
 
+class NoSubscriptionError(ConflictError):
+    code = ErrorCode.BILLING_NO_SUBSCRIPTION
+
+
 class BadSignatureError(BadRequestError):
     """The webhook body is not signed by the payment provider with our secret."""
 

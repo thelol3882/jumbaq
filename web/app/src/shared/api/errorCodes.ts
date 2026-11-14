@@ -23,6 +23,7 @@ export const API_ERROR_CODES = [
   "billing.bad_signature",
   "billing.not_configured",
   "billing.unavailable",
+  "billing.no_subscription",
   "case.not_found",
   "case.not_accusing",
   "case.not_solved",

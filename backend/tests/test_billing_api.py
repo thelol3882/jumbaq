@@ -42,10 +42,15 @@ class FakeCheckout:
     def __init__(self, real: StripeProvider) -> None:
         self._real = real
         self.calls: list[tuple[uuid.UUID, str, str]] = []
+        self.portal_calls: list[tuple[str, str]] = []
 
     async def create_checkout(self, family_id: uuid.UUID, success_url: str, cancel_url: str) -> str:
         self.calls.append((family_id, success_url, cancel_url))
         return "https://checkout.stripe.com/c/pay/cs_test_fake"
+
+    async def create_portal(self, customer_ref: str, return_url: str) -> str:
+        self.portal_calls.append((customer_ref, return_url))
+        return "https://billing.stripe.com/p/session/test_fake"
 
     def parse_event(self, payload: bytes, signature: str | None) -> Any:
         return self._real.parse_event(payload, signature)
@@ -320,3 +325,67 @@ def test_an_event_with_a_family_that_is_no_id_gets_200(
     event["data"]["object"]["metadata"]["family_id"] = "not-an-id"
 
     assert send(stripe, settings, event).status_code == 200
+
+
+def test_a_subscribed_family_gets_the_portal(
+    live_client: TestClient, checkout: FakeCheckout, stripe: TestClient, settings: Settings
+) -> None:
+    family_id, _ = create_family(live_client)
+    send(
+        stripe,
+        settings,
+        subscription_event(family_id, "active", subscription_id=sub_id(), customer="cus_mine"),
+    )
+
+    response = live_client.post("/api/v1/billing/portal")
+
+    assert response.status_code == 200, response.text
+    assert response.json() == {"url": "https://billing.stripe.com/p/session/test_fake"}
+    assert checkout.portal_calls == [("cus_mine", f"{settings.web_app_url.rstrip('/')}/family")]
+
+
+def test_a_family_with_no_subscription_gets_409_from_the_portal(
+    live_client: TestClient, checkout: FakeCheckout, stripe: TestClient, settings: Settings
+) -> None:
+    family_id, _ = create_family(live_client)
+    # A cancelled subscription gives no access, so there is nothing to manage.
+    send(stripe, settings, subscription_event(family_id, "canceled", subscription_id=sub_id()))
+
+    cancelled = live_client.post("/api/v1/billing/portal")
+    assert cancelled.status_code == 409
+    assert cancelled.json()["error"]["code"] == "billing.no_subscription"
+
+    create_family(live_client)
+    never = live_client.post("/api/v1/billing/portal")
+    assert never.status_code == 409
+    assert never.json()["error"]["code"] == "billing.no_subscription"
+    assert checkout.portal_calls == []
+
+
+def test_the_portal_needs_a_family(live_client: TestClient, checkout: FakeCheckout) -> None:
+    live_client.cookies.delete(FAMILY_COOKIE)
+
+    response = live_client.post("/api/v1/billing/portal")
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "family.no_session"
+
+
+def test_one_family_never_opens_the_portal_of_another(
+    live_client: TestClient, checkout: FakeCheckout, stripe: TestClient, settings: Settings
+) -> None:
+    payer_id, payer_cookie = create_family(live_client)
+    send(
+        stripe,
+        settings,
+        subscription_event(payer_id, "active", subscription_id=sub_id(), customer="cus_payer"),
+    )
+    create_family(live_client)
+
+    response = live_client.post("/api/v1/billing/portal")
+
+    assert response.status_code == 409
+    assert checkout.portal_calls == []
+    live_client.cookies.set(FAMILY_COOKIE, payer_cookie)
+    assert live_client.post("/api/v1/billing/portal").status_code == 200
+    assert [call[0] for call in checkout.portal_calls] == ["cus_payer"]

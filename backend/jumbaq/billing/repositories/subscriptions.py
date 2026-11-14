@@ -10,6 +10,10 @@ from jumbaq.core.family import FamilyRef
 class SubscriptionRepository(Protocol):
     async def statuses(self, family: FamilyRef) -> list[SubscriptionStatus]: ...
 
+    async def latest_with_access(self, family: FamilyRef) -> Subscription | None:
+        """The newest subscription of the family that gives access, or None."""
+        ...
+
     async def get_for_update(self, family: FamilyRef, provider_ref: str) -> Subscription | None:
         """Locks the row, so two webhook events for one subscription run one after another."""
         ...
