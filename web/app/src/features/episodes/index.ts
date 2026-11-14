@@ -2,6 +2,7 @@ export { AnswerForm } from "./components/AnswerForm";
 export { CipherKey, DecodeParentNote, DecodeStep } from "./components/DecodeStep";
 export { ClueTag, EpisodeResultView } from "./components/EpisodeResultView";
 export { ParentNote } from "./components/ParentNote";
+export { ReadAloud } from "./components/ReadAloud";
 export { StrikeStep } from "./components/StrikeStep";
 export { StoryText } from "./components/StoryText";
 export { useOpenNow } from "./hooks/useOpenNow";

@@ -1,5 +1,5 @@
 {
-  "lastTime": "last time:",
+  "lastTime": "last time: {recap}",
   "readAloud": "read aloud",
   "riddle": "the riddle",
   "notAloud": "not for reading aloud",
