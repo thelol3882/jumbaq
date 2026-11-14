@@ -74,8 +74,10 @@ export function Tonight({
               <TypedButton
                 disabled={opening.isLoading}
                 onClick={async () => {
+                  const id = step.evening.id;
+                  if (!id) return;
                   try {
-                    await openNow(step.evening.id as string).unwrap();
+                    await openNow(id).unwrap();
                   } catch (error) {
                     if (toApiError(error).code === "episode.demo_mode_off") setDemoRefused(true);
                   }

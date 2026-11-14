@@ -13,7 +13,12 @@ import { useRefetchAt } from "@/shared/hooks/useRefetchAt";
 import { formatOpening } from "@/shared/lib/dates";
 import { EveningDesktop } from "./EveningDesktop";
 import { EveningMobile } from "./EveningMobile";
+import type { ShownEpisode } from "./parts";
 import { codeBreaker } from "./services/codeBreaker";
+
+function hasContent(episode: Episode | undefined): episode is ShownEpisode {
+  return episode?.content != null;
+}
 
 /** One evening of the current case: the riddle, the code, the suspect to cross out, then the result. */
 export function Evening({ caseNumber, evening }: { caseNumber: number; evening: number }) {
@@ -48,16 +53,9 @@ export function Evening({ caseNumber, evening }: { caseNumber: number; evening: 
                   : { kind: "missing" };
   useRefetchAt(state.kind === "later" ? state.at : null, recheck);
 
-  const ready = current && episode?.content ? { current, episode } : null;
-  if (ready) {
+  if (current && hasContent(episode)) {
     const View = isMobile ? EveningMobile : EveningDesktop;
-    return (
-      <View
-        current={ready.current}
-        episode={ready.episode as Episode & { content: NonNullable<Episode["content"]> }}
-        codeBreaker={codeBreaker(family?.kids ?? [])}
-      />
-    );
+    return <View current={current} episode={episode} codeBreaker={codeBreaker(family?.kids ?? [])} />;
   }
 
   return (
