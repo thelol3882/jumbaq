@@ -24,7 +24,7 @@ $(TEST_TARGETS): export JUMBAQ_DEMO_MODE = true
 # Number of the next migration file: 0002, 0003, ...
 NEXT_REV = $(shell printf '%04d' $$(( $$(ls backend/migrations/versions/*.py | wc -l) + 1 )))
 
-.PHONY: help env up down reset logs ps psql migration test test-unit lint fmt
+.PHONY: help env up down reset logs ps psql migration test test-unit lint fmt ai-status ai-on ai-off ai-limit
 
 help:
 	@echo "make env        create infra/.env, or add the keys that are new in the example"
@@ -34,6 +34,9 @@ help:
 	@echo "make logs       follow the logs"
 	@echo "make psql       psql in the dev database as the owner of the tables"
 	@echo "make migration m=\"add something\"   new migration from the models"
+	@echo "make ai-status  show if the model is on, its daily limit and today's calls"
+	@echo "make ai-on      let the model write stories (ai-off: built-in stories only)"
+	@echo "make ai-limit n=1000   set the daily limit of model calls for all families"
 	@echo "make test       all backend tests (needs make up)"
 	@echo "make test-unit  tests that need no services"
 	@echo "make lint       ruff, format check and import-linter"
@@ -70,6 +73,20 @@ migration:
 	@test -n "$(m)" || { echo 'usage: make migration m="add something"'; exit 1; }
 	cd backend && uv run alembic upgrade head \
 		&& uv run alembic revision --autogenerate --rev-id $(NEXT_REV) -m "$(m)"
+
+# The owner switch of the model, inside the running api container of `make up`.
+ai-status:
+	$(COMPOSE) exec api python -m jumbaq.ai.control status
+
+ai-on:
+	$(COMPOSE) exec api python -m jumbaq.ai.control on
+
+ai-off:
+	$(COMPOSE) exec api python -m jumbaq.ai.control off
+
+ai-limit:
+	@test -n "$(n)" || { echo 'usage: make ai-limit n=1000'; exit 1; }
+	$(COMPOSE) exec api python -m jumbaq.ai.control limit $(n)
 
 # pyproject skips integration tests by default; -m "" runs all of them.
 test:
