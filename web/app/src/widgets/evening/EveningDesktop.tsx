@@ -17,10 +17,14 @@ export function EveningDesktop({
   current,
   episode,
   codeBreaker,
+  detectivesLabel,
+  demoMode,
 }: {
   current: Case;
   episode: ShownEpisode;
   codeBreaker?: string;
+  detectivesLabel: string | undefined;
+  demoMode: boolean;
 }) {
   const t = useTranslations("widget.evening");
   const { step, result, decode } = episode.content;
@@ -28,7 +32,7 @@ export function EveningDesktop({
   const main = useStepScroll<HTMLElement>(step);
   return (
     <NotebookPage width="wide">
-      <EveningHeader current={current} episode={episode} wide />
+      <EveningHeader current={current} episode={episode} detectivesLabel={detectivesLabel} wide />
       <div className="mt-10">
         <NotebookSpread
           sideLabel={done ? t("boardLabel") : t("parentLabel")}
@@ -69,7 +73,7 @@ export function EveningDesktop({
         />
       </div>
       <div className="mt-10 pl-14">
-        <EveningDemo episode={episode} />
+        <EveningDemo episode={episode} demoMode={demoMode} />
       </div>
     </NotebookPage>
   );

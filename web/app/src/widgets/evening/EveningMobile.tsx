@@ -9,16 +9,20 @@ export function EveningMobile({
   current,
   episode,
   codeBreaker,
+  detectivesLabel,
+  demoMode,
 }: {
   current: Case;
   episode: ShownEpisode;
   codeBreaker?: string;
+  detectivesLabel: string | undefined;
+  demoMode: boolean;
 }) {
   const { step, result } = episode.content;
   const main = useStepScroll<HTMLDivElement>(step);
   return (
     <NotebookPage margin>
-      <EveningHeader current={current} episode={episode} />
+      <EveningHeader current={current} episode={episode} detectivesLabel={detectivesLabel} />
       <div ref={main} className="mt-8 flex scroll-mt-4 flex-col gap-9">
         {step === "done" && result ? (
           <>
@@ -37,7 +41,7 @@ export function EveningMobile({
             <AnswerForm episodeId={episode.id} content={episode.content} />
           </>
         )}
-        <EveningDemo episode={episode} />
+        <EveningDemo episode={episode} demoMode={demoMode} />
       </div>
     </NotebookPage>
   );
