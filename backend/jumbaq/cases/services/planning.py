@@ -53,12 +53,22 @@ class CasePlanning:
         async with self._uow() as uow:
             case = await uow.cases.get(family, case_id)
             home = await uow.families.get(family)
+            earlier = await uow.cases.earlier_plans(family, case_id)
         if case is None or home is None or case.status != CaseStatus.PLANNING:
             return
 
         # No unit of work is open here: the model call can take a while.
         try:
-            task = CasePlanInput(_home(home), case.number, clue_max_chars=domain.CLUE_MAX_CHARS)
+            world, missing_thing = domain.world_for(case_id)
+            task = CasePlanInput(
+                _home(home),
+                case.number,
+                clue_max_chars=domain.CLUE_MAX_CHARS,
+                world=world,
+                missing_thing=missing_thing,
+                used_titles=tuple(old.title for old in earlier),
+                used_suspect_names=tuple(s.name for old in earlier for s in old.suspects),
+            )
             plan = await self._ask(family, task)
         except AiDailyLimitError:
             logger.warning("case %s: the family reached the daily cap, built-in plan", case_id)
@@ -79,7 +89,12 @@ class CasePlanning:
                 logger.info("plan of the wrong shape, try %s", attempt)
                 continue
             problems = domain.plan_problems(
-                plan, SUSPECTS_PER_CASE, EPISODES_PER_CASE, banned_words
+                plan,
+                SUSPECTS_PER_CASE,
+                EPISODES_PER_CASE,
+                banned_words,
+                task.used_titles,
+                task.used_suspect_names,
             )
             if not problems:
                 return plan

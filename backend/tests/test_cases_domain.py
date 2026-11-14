@@ -275,3 +275,22 @@ def test_a_clue_is_one_short_sentence() -> None:
     long = with_clue(1, Clue(2, "Bear " + "word " * 29, "s3", False))
     assert any("the clue of episode 2 has 150 characters" in found for found in problems(long))
     assert problems(GOOD) == []
+
+
+def test_there_are_many_kid_friendly_worlds_each_with_things_to_lose() -> None:
+    assert len(domain.WORLDS) >= 12
+    assert len({world.place for world in domain.WORLDS}) == len(domain.WORLDS)
+    for world in domain.WORLDS:
+        assert len(world.things) >= 3
+        assert banned_words(world.place) == []
+        assert all(banned_words(thing) == [] for thing in world.things)
+
+
+def test_the_world_of_a_case_is_stable_and_cases_differ() -> None:
+    case_id = uuid.uuid4()
+    assert domain.world_for(case_id) == domain.world_for(case_id)
+    chosen = {domain.world_for(uuid.UUID(int=n)) for n in range(300)}
+    assert len({place for place, _ in chosen}) == len(domain.WORLDS)
+    for place, thing in chosen:
+        world = next(w for w in domain.WORLDS if w.place == place)
+        assert thing in world.things

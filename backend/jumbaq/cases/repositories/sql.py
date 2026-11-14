@@ -39,6 +39,18 @@ class SqlCaseRepository:
             .limit(1)
         )
 
+    async def earlier_plans(self, family: FamilyRef, case_id: uuid.UUID) -> list[Plan]:
+        rows = await self._session.scalars(
+            select(CaseRow.plan)
+            .where(
+                CaseRow.family_id == family.family_id,
+                CaseRow.id != case_id,
+                CaseRow.plan.is_not(None),
+            )
+            .order_by(CaseRow.number)
+        )
+        return [_plan(data) for data in rows]
+
     async def update(self, case: Case) -> None:
         await self._session.execute(
             update(CaseRow)

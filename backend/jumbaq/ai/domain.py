@@ -56,6 +56,13 @@ class CasePlanInput:
     case_number: int
     # The longest clue the caller accepts. Episodes quote clues word for word, so they stay short.
     clue_max_chars: int | None = None
+    # Picked by code, so cases of one family look different: where the case happens and what
+    # goes missing there.
+    world: str | None = None
+    missing_thing: str | None = None
+    # What the family played before. The new case must not reuse any of it.
+    used_titles: tuple[str, ...] = ()
+    used_suspect_names: tuple[str, ...] = ()
     # Why the previous plan was refused, so the next try fixes exactly that.
     fix: tuple[str, ...] = ()
 

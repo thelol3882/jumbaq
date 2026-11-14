@@ -1,5 +1,6 @@
 """Cases through the worker and the API on the real database, with the stub model."""
 
+import json
 import uuid
 from functools import partial
 from typing import Any
@@ -408,3 +409,100 @@ async def test_the_next_case_needs_a_solved_case_and_a_subscription(
 def test_cases_need_a_family(live_client: TestClient) -> None:
     live_client.cookies.delete(FAMILY_COOKIE)
     assert live_client.get("/api/v1/cases/current").status_code == 401
+
+
+class PlanRecorder:
+    """The stub, keeping every plan prompt it gets."""
+
+    name, model = "plan-recorder", "test"
+
+    def __init__(self) -> None:
+        self.prompts: list[Prompt] = []
+
+    async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
+        if schema is CASE_PLAN_SCHEMA:
+            self.prompts.append(prompt)
+        return await StubProvider().complete_json(prompt, schema)
+
+
+def data_of(prompt: Prompt) -> dict[str, Any]:
+    return json.loads(prompt.user.split("<family_data>")[1].split("</family_data>")[0])
+
+
+async def test_the_next_case_gets_its_world_and_avoids_the_titles_and_names_already_played(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    recorder = PlanRecorder()
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, recorder))
+    first = live_client.get("/api/v1/cases/current").json()
+    await play_all(sessionmaker, family_id, first["id"])
+    live_client.post(f"/api/v1/cases/{first['id']}/accuse", json={"suspect_id": CULPRIT})
+    secret = TEST_SETTINGS.stripe_webhook_secret
+    assert secret is not None
+    event = subscription_event(family_id, "active", subscription_id=f"sub_{uuid.uuid4().hex}")
+    body, header = signed(event, secret.get_secret_value())
+    live_client.post(
+        "/api/v1/billing/webhook",
+        content=body,
+        headers={"Stripe-Signature": header, CSRF_HEADER: ""},
+    ).raise_for_status()
+    assert live_client.post("/api/v1/cases").status_code == 201
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, recorder))
+
+    one, two = (data_of(prompt) for prompt in recorder.prompts[:2])
+    assert "earlier_cases" not in one
+    assert two["earlier_cases"]["titles"] == ["Case 1: the missing honey cake"]
+    assert two["earlier_cases"]["suspect_names"] == [
+        "Felix the Fox", "Olga the Owl", "Boris the Bear",
+    ]  # fmt: skip
+    assert one["world"] and one["missing_thing"] and two["world"] and two["missing_thing"]
+    async with sessionmaker() as session:
+        status, is_fallback = (
+            await session.execute(
+                select(CaseRow.status, CaseRow.is_fallback).where(
+                    CaseRow.family_id == family_id, CaseRow.number == 2
+                )
+            )
+        ).one()
+    assert (status, is_fallback) == ("active", False)
+
+
+async def test_a_plan_that_reuses_an_earlier_suspect_name_is_refused(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    await deliver_all(sessionmaker)
+    first = live_client.get("/api/v1/cases/current").json()
+    await play_all(sessionmaker, family_id, first["id"])
+    live_client.post(f"/api/v1/cases/{first['id']}/accuse", json={"suspect_id": CULPRIT})
+    secret = TEST_SETTINGS.stripe_webhook_secret
+    assert secret is not None
+    event = subscription_event(family_id, "active", subscription_id=f"sub_{uuid.uuid4().hex}")
+    body, header = signed(event, secret.get_secret_value())
+    live_client.post(
+        "/api/v1/billing/webhook",
+        content=body,
+        headers={"Stripe-Signature": header, CSRF_HEADER: ""},
+    ).raise_for_status()
+    assert live_client.post("/api/v1/cases").status_code == 201
+
+    class SameAgain(StubProvider):
+        async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
+            reply = await StubProvider().complete_json(prompt, schema)
+            if schema is CASE_PLAN_SCHEMA:
+                reply.data["suspects"][0]["name"] = "felix THE fox"
+            return reply
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, SameAgain()))
+
+    async with sessionmaker() as session:
+        status, is_fallback = (
+            await session.execute(
+                select(CaseRow.status, CaseRow.is_fallback).where(
+                    CaseRow.family_id == family_id, CaseRow.number == 2
+                )
+            )
+        ).one()
+    assert (status, is_fallback) == ("active", True)
