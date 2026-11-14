@@ -19,7 +19,12 @@ from jumbaq.ai.domain import (
     SuspectDraft,
     TextRules,
 )
-from jumbaq.ai.errors import AiBadOutputError, AiDailyLimitError, AiUnavailableError
+from jumbaq.ai.errors import (
+    AiBadOutputError,
+    AiDailyLimitError,
+    AiDisabledError,
+    AiUnavailableError,
+)
 from jumbaq.ai.prompts import ANSWER_SLOT, EPISODES_PER_CASE, SUSPECTS_PER_CASE
 from jumbaq.ai.providers.base import Provider
 from jumbaq.ai.providers.claude import ClaudeProvider
@@ -63,6 +68,7 @@ __all__ = [
     "SUSPECTS_PER_CASE",
     "AiBadOutputError",
     "AiDailyLimitError",
+    "AiDisabledError",
     "AiUnavailableError",
     "AnswerType",
     "CaseDraft",
