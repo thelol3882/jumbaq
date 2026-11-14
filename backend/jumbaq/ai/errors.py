@@ -1,10 +1,21 @@
 from jumbaq.core.error_codes import ErrorCode
-from jumbaq.core.errors import AppError
+from jumbaq.core.errors import AppError, BadRequestError
 
 
 class AiDailyLimitError(AppError):
     status = 429
     code = ErrorCode.AI_DAILY_LIMIT_REACHED
+
+
+class AiDisabledError(AppError):
+    """The owner switched the model off. Like the daily cap, a caller uses its built-in story."""
+
+    status = 503
+    code = ErrorCode.AI_DISABLED
+
+
+class AiLimitInvalidError(BadRequestError):
+    """The daily cap set by the owner cannot be negative."""
 
 
 class AiBadOutputError(AppError):

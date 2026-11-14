@@ -16,6 +16,7 @@ export const API_ERROR_CODES = [
   "family.no_session",
   "family.kid_nickname_repeated",
   "ai.daily_limit_reached",
+  "ai.disabled",
   "ai.bad_output",
   "ai.unavailable",
   "billing.payment_required",

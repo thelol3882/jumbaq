@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Index
+from sqlalchemy import CheckConstraint, ForeignKey, Index, SmallInteger
 from sqlalchemy.orm import Mapped, mapped_column
 
 from jumbaq.ai.domain import CallOutcome, TaskKind
@@ -29,3 +29,19 @@ class LlmCallRow(Base):
     duration_ms: Mapped[int]
     outcome: Mapped[str]
     created_at: Mapped[datetime]
+
+
+class AiControlRow(Base):
+    """The owner switch of the model: one row with id 1, written from the server."""
+
+    __tablename__ = "ai_control"
+    __table_args__ = (
+        CheckConstraint("id = 1", name="single_row"),
+        CheckConstraint("daily_call_limit >= 0", name="limit_not_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    enabled: Mapped[bool]
+    # NULL: the cap comes from the settings.
+    daily_call_limit: Mapped[int | None]
+    updated_at: Mapped[datetime]

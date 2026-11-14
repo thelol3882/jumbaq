@@ -180,6 +180,31 @@ class LlmCall:
     created_at: datetime
 
 
+@dataclass(frozen=True)
+class AiControl:
+    """The switch of the model, set by the owner from the server.
+
+    No row means nobody used the switch yet: the model is on and the settings give the cap. A
+    row with no limit takes the cap from the settings too.
+    """
+
+    enabled: bool
+    daily_call_limit: int | None
+    updated_at: datetime
+
+
+@dataclass(frozen=True)
+class AiStatus:
+    """What the writer applies right now, and where it comes from."""
+
+    enabled: bool
+    daily_call_limit: int
+    calls_today: int
+    # False: no row, the settings decide.
+    from_table: bool
+    limit_from_settings: bool
+
+
 def day_start(now: datetime, zone: tzinfo = FAMILY_TIME_ZONE) -> datetime:
     """The last midnight in the family time zone, as an aware time."""
     local = now.astimezone(zone)
@@ -194,3 +219,13 @@ def day_end(now: datetime, zone: tzinfo = FAMILY_TIME_ZONE) -> datetime:
 
 def limit_reached(calls_today: int, daily_limit: int) -> bool:
     return calls_today >= daily_limit
+
+
+def effective_limit(control: AiControl | None, setting: int) -> int:
+    if control is None or control.daily_call_limit is None:
+        return setting
+    return control.daily_call_limit
+
+
+def is_enabled(control: AiControl | None) -> bool:
+    return control is None or control.enabled
