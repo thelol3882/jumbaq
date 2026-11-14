@@ -2,6 +2,7 @@
   "progress": "{played} of {total} evenings played",
   "cleared": "cleared",
   "stillSuspect": "still a suspect",
+  "pointedAt": "a clue points here",
   "noEvidence": "No evidence yet. The first clue comes tonight.",
   "rankAwarded": "rank awarded",
   "writing": {
