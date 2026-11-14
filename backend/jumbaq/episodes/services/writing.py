@@ -105,9 +105,18 @@ class EpisodeWriting:
         plan: CipherPlan,
     ) -> tuple[Payload, bool]:
         """The model's episode, or the built-in one. The second item is True for the built-in."""
-        youngest = home.kids[0].age if home.kids else domain.YOUNG_AGE
+        youngest = min((kid.age for kid in home.kids), default=domain.YOUNG_AGE)
         paragraph_max, short_max = domain.text_limits(youngest)
-        rules = TextRules(paragraph_max, short_max, domain.BANNED_WORDS)
+        budget = domain.read_aloud_budget(youngest)
+        rules = TextRules(
+            paragraph_max,
+            short_max,
+            domain.BANNED_WORDS,
+            budget.words_min,
+            budget.words_max,
+            budget.paragraphs_min,
+            budget.paragraphs_max,
+        )
         task = replace(
             _task(episode, brief, home, played),
             rules=rules,
@@ -147,6 +156,7 @@ class EpisodeWriting:
             last=episode.number == EPISODES_PER_CASE,
             slot=ANSWER_SLOT,
             model_riddle=safe_riddle,
+            youngest_age=youngest,
         )
         return built_in, True
 

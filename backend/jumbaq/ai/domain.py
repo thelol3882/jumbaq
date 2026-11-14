@@ -109,6 +109,11 @@ class TextRules:
     paragraph_max_chars: int
     short_text_max_chars: int
     banned_words: tuple[str, ...]
+    # The read-aloud budget for the youngest kid: all paragraphs together.
+    words_min: int = 0
+    words_max: int = 0
+    paragraphs_min: int = 1
+    paragraphs_max: int = 5
 
 
 @dataclass(frozen=True)

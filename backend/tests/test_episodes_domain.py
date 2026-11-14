@@ -23,9 +23,18 @@ from jumbaq.episodes.domain import (
 OBJECTS = ("fridge", "sofa", "kettle")
 NOW = datetime(2026, 11, 14, 18, 0, tzinfo=UTC)
 
+
+def story(words: int, paragraphs: int = 3) -> tuple[str, ...]:
+    """Exactly this many words, split over this many paragraphs."""
+    each, extra = divmod(words, paragraphs)
+    return tuple(
+        " ".join(["quiet"] * (each + (1 if index < extra else 0))) for index in range(paragraphs)
+    )
+
+
 GOOD = Payload(
     recap="Last time you found the first clue.",
-    read_aloud=("The bakery was quiet.", "A note lay on the table."),
+    read_aloud=story(100),
     riddle=Riddle("I keep the milk cold.", "fridge", "colour", "Look at the fridge door."),
     hint="It hums in the kitchen.",
     fallback_riddle=Riddle(
@@ -48,7 +57,8 @@ def problems(payload: Payload, youngest: int = 7) -> list[str]:
 
 def test_a_good_episode_has_no_problems() -> None:
     assert problems(GOOD) == []
-    assert problems(GOOD, youngest=4) == []
+    assert problems(replace(GOOD, read_aloud=story(65, 2)), youngest=4) == []
+    assert problems(replace(GOOD, read_aloud=story(135, 4)), youngest=9) == []
 
 
 @pytest.mark.parametrize(
@@ -69,7 +79,7 @@ def test_a_good_episode_has_no_problems() -> None:
         (replace(GOOD, fallback_riddle=replace(GOOD.fallback_riddle, hint=" ")),
          "fallback riddle needs its own hint"),
         (replace(GOOD, read_aloud=()), "paragraphs"),
-        (replace(GOOD, read_aloud=("x",) * 7), "paragraphs"),
+        (replace(GOOD, read_aloud=story(100, 7)), "paragraphs"),
         (replace(GOOD, read_aloud=("word " * 130,)), "paragraph is too long"),
         (replace(GOOD, hint="word " * 90), "text is too long"),
     ],
@@ -79,9 +89,59 @@ def test_an_episode_that_breaks_a_rule_is_refused(payload: Payload, problem: str
 
 
 def test_texts_for_a_kid_under_6_are_shorter() -> None:
-    medium = replace(GOOD, read_aloud=("the cat sat " * 42,))
+    # One paragraph of 405 characters: fine for a 7-year-old, too long for a 5-year-old.
+    long_one = " ".join(["longword"] * 45)
+    medium = replace(GOOD, read_aloud=(long_one, *story(40, 2)))
+    assert len(long_one) > domain.PARAGRAPH_LIMIT[True]
     assert problems(medium, youngest=7) == []
-    assert any("too long" in found for found in problems(medium, youngest=5))
+    assert any("paragraph is too long" in found for found in problems(medium, youngest=5))
+
+
+@pytest.mark.parametrize(
+    ("age", "low", "high", "paragraphs"),
+    [(3, 50, 80, (2, 3)), (5, 50, 80, (2, 3)), (6, 80, 120, (3, 4)), (7, 80, 120, (3, 4)),
+     (8, 110, 160, (3, 5)), (12, 110, 160, (3, 5))],
+)  # fmt: skip
+def test_the_youngest_kid_sets_the_word_budget(
+    age: int, low: int, high: int, paragraphs: tuple[int, int]
+) -> None:
+    budget = domain.read_aloud_budget(age)
+
+    assert (budget.words_min, budget.words_max) == (low, high)
+    assert (budget.paragraphs_min, budget.paragraphs_max) == paragraphs
+    fits = replace(GOOD, read_aloud=story(low, paragraphs[0]))
+    assert problems(fits, youngest=age) == []
+    assert problems(replace(fits, read_aloud=story(high, paragraphs[1])), youngest=age) == []
+
+
+@pytest.mark.parametrize("age", [4, 7, 9])
+def test_a_story_outside_the_budget_is_refused_with_the_numbers(age: int) -> None:
+    budget = domain.read_aloud_budget(age)
+    short = replace(GOOD, read_aloud=story(budget.words_min - 1, budget.paragraphs_min))
+    long = replace(GOOD, read_aloud=story(budget.words_max + 1, budget.paragraphs_min))
+
+    (too_short,) = problems(short, youngest=age)
+    (too_long,) = problems(long, youngest=age)
+
+    assert "too short" in too_short and f"{budget.words_min - 1} words" in too_short
+    assert f"{budget.words_min} to {budget.words_max} words" in too_short
+    assert "too long" in too_long and f"{budget.words_max + 1} words" in too_long
+
+
+def test_a_five_and_a_nine_year_old_do_not_get_the_same_length() -> None:
+    ninety = replace(GOOD, read_aloud=story(95, 3))
+
+    assert problems(ninety, youngest=7) == []
+    assert any("too long" in found for found in problems(ninety, youngest=5))
+    assert any("too short" in found for found in problems(ninety, youngest=9))
+
+
+def test_the_paragraph_count_follows_the_age_too() -> None:
+    one = replace(GOOD, read_aloud=story(60, 1))
+
+    assert any("2 to 3 paragraphs" in found for found in problems(one, youngest=5))
+    five = replace(GOOD, read_aloud=story(100, 5))
+    assert any("3 to 4 paragraphs" in found for found in problems(five, youngest=7))
 
 
 @pytest.mark.parametrize(
@@ -204,11 +264,21 @@ def test_an_older_swapped_riddle_with_no_texts_of_its_own_uses_the_episode_s() -
 @pytest.mark.parametrize(("number", "last"), [(1, False), (5, True)])
 def test_the_built_in_episode_is_always_playable(number: int, last: bool) -> None:
     payload = domain.built_in_payload(
-        "A case", "The plan clue.", OBJECTS, number, last, ANSWER_SLOT
+        "A case", "The plan clue.", OBJECTS, number, last, ANSWER_SLOT, youngest_age=3
     )
 
     assert problems(payload, youngest=3) == []
     assert payload.case_clue == "The plan clue."
+
+
+@pytest.mark.parametrize("age", [3, 5, 6, 7, 8, 12])
+def test_the_built_in_story_fits_the_word_budget_of_every_age(age: int) -> None:
+    for number in range(1, 6):
+        payload = domain.built_in_payload(
+            "A case", "Clue.", OBJECTS, number, number == 5, ANSWER_SLOT, youngest_age=age
+        )
+
+        assert problems(payload, youngest=age) == [], (age, number)
 
 
 def test_the_built_in_episode_keeps_a_safe_riddle_of_the_model() -> None:
@@ -593,7 +663,7 @@ def test_an_older_payload_has_no_steps_and_the_new_one_has() -> None:
 
 def test_the_plan_clue_is_not_measured_again() -> None:
     # The clue is quoted from the plan, which checks it; the episode cannot change it.
-    assert problems(replace(GOOD, case_clue="word " * 80), youngest=4) == []
+    assert problems(replace(GOOD, case_clue="word " * 80), youngest=7) == []
 
 
 ENGLISH = (

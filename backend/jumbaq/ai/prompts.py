@@ -154,9 +154,15 @@ Use American English spelling in every text you write (color, favorite, cozy, gr
 
 def _limits(rules: TextRules) -> str:
     words = ", ".join(f'"{word}"' for word in rules.banned_words)
+    budget = (
+        f"\n- read_aloud is {rules.words_min} to {rules.words_max} words in total and "
+        f"{rules.paragraphs_min} to {rules.paragraphs_max} paragraphs."
+        if rules.words_max
+        else ""
+    )
     return f"""\
 Hard limits. Code checks every episode before anyone sees it, and refuses one that breaks a limit:
-- Each read_aloud paragraph is at most {rules.paragraph_max_chars} characters.
+- Each read_aloud paragraph is at most {rules.paragraph_max_chars} characters.{budget}
 - recap, hint, resolution_template, cliffhanger, and the text and the parent_note of both \
 riddles are at most {rules.short_text_max_chars} characters each.
 - These words never appear in any text, not even about a character of the story, and neither \
@@ -172,6 +178,17 @@ def _secret_rule(words: tuple[str, ...]) -> str:
         f"it away: never use the word or words {listed} in read_aloud, recap, "
         "resolution_template, cliffhanger or any riddle text. Only case_clue may hold them. Use "
         "other words, even when the clue is about the same thing.\n"
+    )
+
+
+def _read_aloud(rules: TextRules | None, youngest: int) -> str:
+    if rules is None or not rules.words_max:
+        return "three to five short paragraphs."
+    return (
+        f"{rules.paragraphs_min} to {rules.paragraphs_max} short paragraphs, "
+        f"{rules.words_min} to {rules.words_max} words in total, all paragraphs together. "
+        f"This is a word budget for a {youngest}-year-old, who loses the thread of a long story: "
+        "code counts the words and refuses a story that is shorter or longer."
     )
 
 
@@ -192,7 +209,7 @@ that a {youngest}-year-old follows.
 The episode:
 - recap: two or three sentences about the story so far, using what the kids answered before. \
 For episode 1, a short welcome to the case instead.
-- read_aloud: three to five short paragraphs. Use the kids' nicknames as the detectives.
+- read_aloud: {_read_aloud(task.rules, youngest)} Use the kids' nicknames as the detectives.
 - riddle: a riddle that leads the kids to exactly one household object. target_object is \
 copied exactly, letter by letter, from the "objects" list in the data. The kids read something \
 off the object: answer_type tells what ({", ".join(t.value for t in AnswerType)}). \
@@ -231,6 +248,13 @@ Never say or hint who the culprit is beyond what the clues say.
         },
         "earlier_episodes": [asdict(played) for played in task.played],
     }
+    if task.rules is not None and task.rules.words_max:
+        data["read_aloud_budget"] = {
+            "words_min": task.rules.words_min,
+            "words_max": task.rules.words_max,
+            "paragraphs_min": task.rules.paragraphs_min,
+            "paragraphs_max": task.rules.paragraphs_max,
+        }
     user = f"Write episode {task.number}.\n\n{_retry(task.fix)}" + data_block(data)
     return Prompt(system, user)
 
