@@ -22,7 +22,7 @@ def _data(prompt: Prompt) -> dict[str, Any]:
 
 
 def _plan(case_number: int) -> dict[str, Any]:
-    # s2 did it. Clue 2 rules out s1, clue 3 rules out s3, the others point at s2.
+    # s2 did it. Clues 1 and 3 rule out s1, clue 2 rules out s3, and only the last two point at s2.
     return {
         "title": f"Case {case_number}: the missing honey cake",
         "setting": "The honey cake vanished from the forest bakery before the party.",
@@ -35,20 +35,20 @@ def _plan(case_number: int) -> dict[str, Any]:
         "clues": [
             {
                 "episode": 1,
-                "text": "A grey feather lies by the empty plate.",
-                "suspect_id": "s2",
-                "points_at": True,
-            },
-            {
-                "episode": 2,
-                "text": "Felix was at his grandma's all evening.",
+                "text": "A grey feather lies by the empty plate, and Felix has only fur.",
                 "suspect_id": "s1",
                 "points_at": False,
             },
             {
-                "episode": 3,
+                "episode": 2,
                 "text": "Boris snored in the back room the whole night.",
                 "suspect_id": "s3",
+                "points_at": False,
+            },
+            {
+                "episode": 3,
+                "text": "Felix was at his grandma's all evening.",
+                "suspect_id": "s1",
                 "points_at": False,
             },
             {

@@ -92,6 +92,10 @@ names one suspect and either points at that suspect (points_at true) or rules th
 - Every innocent suspect is ruled out by at least one clue. No clue rules out the culprit. \
 No clue points at an innocent suspect: small kids take a clue at its word, so there are no \
 false trails.
+- Only clues 4 and 5 may point at a suspect (points_at true), and they point at the culprit. \
+Clues 1, 2 and 3 only rule suspects out (points_at false): a pointing clue early on would \
+solve the game at once. With {SUSPECTS_PER_CASE} suspects there are {SUSPECTS_PER_CASE - 1} \
+innocents, and clues 1 to 3 rule all of them out, so one of them is ruled out twice.
 - The reveal: a few sentences that explain how the clues fit together.
 {_clue_limit(task)}
 {_SAFETY}

@@ -233,7 +233,7 @@ async def test_two_bad_episodes_give_the_built_in_one(
     assert (row.status, row.is_fallback) == ("ready", True)
     assert row.payload is not None and "window" not in str(row.payload).lower()
     # The family still sees the plan's clue.
-    assert row.payload["case_clue"] == "A grey feather lies by the empty plate."
+    assert row.payload["case_clue"].startswith("A grey feather lies by the empty plate")
 
 
 async def test_the_daily_cap_gives_the_built_in_episode(

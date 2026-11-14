@@ -97,6 +97,9 @@ class EpisodeBrief:
 
 # Every episode quotes its clue word for word to the kids, so a clue is one short sentence.
 CLUE_MAX_CHARS = 140
+# Only the last episodes may point at someone, and the culprit is the only one they point at: a
+# clue that points at a suspect early would solve the game at once.
+POINTING_EPISODES = 2
 
 
 def plan_problems(plan: Plan, suspects: int, episodes: int) -> list[str]:
@@ -125,6 +128,13 @@ def plan_problems(plan: Plan, suspects: int, episodes: int) -> list[str]:
     # Small kids take a clue at its word, so a false trail would only confuse them.
     if any(clue.points_at and clue.suspect_id != plan.culprit_id for clue in plan.clues):
         problems.append("a clue points at an innocent suspect")
+    first_pointing = episodes - POINTING_EPISODES + 1
+    early = sorted(c.episode for c in plan.clues if c.points_at and c.episode < first_pointing)
+    if early:
+        problems.append(
+            f"the clue of episode {early[0]} points at a suspect: only episodes "
+            f"{first_pointing} to {episodes} may point, the earlier ones only rule suspects out"
+        )
     return problems
 
 
@@ -139,11 +149,11 @@ FALLBACK_PLAN = Plan(
     ),
     culprit_id="s2",
     clues=(
-        Clue(1, "A black and white feather lies where the balloon was tied.", "s2", True),
-        Clue(2, "Rosa was at the carrot market all morning, many saw her.", "s1", False),
-        Clue(3, "Toby is far too slow to catch a flying balloon.", "s3", False),
-        Clue(4, "A red ribbon hangs from the tall tree where magpies nest.", "s2", True),
-        Clue(5, "Someone heard happy chattering from the magpie nest.", "s2", True),
+        Clue(1, "Rosa was at the carrot market all morning, many saw her.", "s1", False),
+        Clue(2, "Toby is far too slow to catch a flying balloon.", "s3", False),
+        Clue(3, "Rosa has no wings, so she could not reach the high branch.", "s1", False),
+        Clue(4, "A black and white feather lies where the balloon was tied.", "s2", True),
+        Clue(5, "A red ribbon hangs from the tall tree where magpies nest.", "s2", True),
     ),
     reveal="Milo the Magpie took the balloon because it was the shiniest thing he had ever "
     "seen. He kept it safe in his nest and is glad to bring it to the party.",

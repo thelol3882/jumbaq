@@ -13,7 +13,7 @@ from jumbaq.cases.domain import FALLBACK_PLAN, Case, CaseStatus, Clue, Plan, Ran
 NOW = datetime(2026, 11, 14, 18, 0, tzinfo=UTC)
 S = CaseStatus
 
-# s1 did it. Clue 2 rules out s2, clue 3 rules out s3.
+# s1 did it. Clues 1 and 3 rule out s2, clue 2 rules out s3, only clues 4 and 5 point.
 GOOD = Plan(
     title="The missing cake",
     setting="A bakery",
@@ -24,9 +24,9 @@ GOOD = Plan(
     ),
     culprit_id="s1",
     clues=(
-        Clue(1, "Red fur", "s1", True),
-        Clue(2, "Owl was away", "s2", False),
-        Clue(3, "Bear was asleep", "s3", False),
+        Clue(1, "Owl was away", "s2", False),
+        Clue(2, "Bear was asleep", "s3", False),
+        Clue(3, "Owl has no paws", "s2", False),
         Clue(4, "Fox paw prints", "s1", True),
         Clue(5, "Crumbs at the den", "s1", True),
     ),
@@ -58,13 +58,26 @@ def test_a_good_plan_and_the_fallback_plan_are_playable() -> None:
         (replace(GOOD, clues=GOOD.clues[:4]), "one clue for each"),
         (with_clue(4, Clue(4, "again", "s1", True)), "one clue for each"),
         (with_clue(4, Clue(5, "a stranger", "s9", True)), "not a suspect"),
-        (with_clue(2, Clue(3, "Bear is big", "s1", True)), "never ruled out"),
+        (with_clue(1, Clue(2, "Bear is big", "s2", False)), "never ruled out"),
         (with_clue(4, Clue(5, "Fox was away", "s1", False)), "rules out the culprit"),
-        (with_clue(0, Clue(1, "Owl feathers", "s2", True)), "points at an innocent"),
+        (with_clue(3, Clue(4, "Owl feathers", "s2", True)), "points at an innocent"),
+        (with_clue(0, Clue(1, "Red fur", "s1", True)), "episode 1 points at a suspect"),
+        (with_clue(2, Clue(3, "Fox paw prints", "s1", True)), "episode 3 points at a suspect"),
     ],
 )
 def test_a_plan_that_breaks_a_rule_is_not_playable(plan: Plan, problem: str) -> None:
     assert any(problem in found for found in problems(plan)), problems(plan)
+
+
+def test_the_fallback_plan_points_only_in_the_last_two_episodes() -> None:
+    pointing = [clue.episode for clue in FALLBACK_PLAN.clues if clue.points_at]
+    assert pointing == [4, 5]
+    assert {c.suspect_id for c in FALLBACK_PLAN.clues if c.points_at} == {FALLBACK_PLAN.culprit_id}
+
+
+def test_the_last_two_episodes_may_point_at_the_culprit() -> None:
+    assert problems(with_clue(2, Clue(3, "Owl is shy", "s2", False))) == []
+    assert not any("points at a suspect" in found for found in problems(GOOD))
 
 
 def test_the_status_moves_only_forward() -> None:
