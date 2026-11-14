@@ -229,6 +229,18 @@ def test_the_plan_prompt_states_the_clue_limit_and_the_retry_reasons() -> None:
     assert reason in prompt.user and reason not in prompt.system
 
 
+async def test_both_prompts_demand_english_whatever_the_language_of_the_home() -> None:
+    plan = await _stub_plan(1)
+    episode = EpisodeInput(HOME, plan.title, plan.setting, plan.suspects, 1, plan.clues[0], ())
+
+    for system in (
+        prompts.case_plan_prompt(CasePlanInput(HOME, 1)).system,
+        prompts.episode_prompt(episode).system,
+    ):
+        assert "Always write in English" in system
+        assert "in the language the parent used" not in system
+
+
 def test_the_plan_prompt_says_which_clues_may_point() -> None:
     system = prompts.case_plan_prompt(CasePlanInput(HOME, 1)).system
 

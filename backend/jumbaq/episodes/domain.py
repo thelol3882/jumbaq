@@ -35,15 +35,41 @@ class CipherLevel(StrEnum):
 
 
 # Things a small child must never be sent to or asked to do, matched as whole words in any case.
-# Plurals are listed on their own. One list, so it is easy to read and to extend. It is English:
-# a story in another language is checked by the prompt's rules only.
+# Every entry also matches its regular forms (see _forms), so only what is irregular is written
+# out (knives, left the house). One list, easy to read and to extend. The stories are English
+# only, so the words are too.
 BANNED_WORDS = (
-    "knife", "knives", "scissors", "blade", "medicine", "pill", "pills", "tablet", "stove",
-    "oven", "hob", "matches", "matchbox", "lighter", "outlet", "socket", "plug", "wire",
-    "street", "road", "outside", "leave the home", "leave the house", "leave home",
-    "front door", "climb", "climbing", "balcony", "window", "stranger", "strangers",
+    "knife", "knives", "scissors", "blade", "medicine", "pill", "tablet", "stove", "oven", "hob",
+    "matches", "matchbox", "lighter", "outlet", "socket", "plug", "wire", "street", "road",
+    "outside", "leave the home", "leave the house", "leave home", "left the home",
+    "left the house", "left home", "front door", "climb", "balcony", "window", "stranger",
 )  # fmt: skip
-_BANNED = re.compile(r"\b(" + "|".join(re.escape(word) for word in BANNED_WORDS) + r")\b", re.I)
+
+
+def _forms(word: str) -> str:
+    """The word and its regular forms as a regex: s, es, ed, ing, er, ers, y to ies and ied, a
+    dropped final e (wiring) and a doubled final consonant (plugged)."""
+    base = re.escape(word)
+    if word.endswith("y"):
+        return rf"(?:{base}(?:s|ing|er)?|{re.escape(word[:-1])}(?:ies|ied))"
+    if word.endswith("e"):
+        return rf"(?:{base}(?:s|d|r|rs)?|{re.escape(word[:-1])}ing)"
+    last = re.escape(word[-1])
+    return rf"(?:{base}(?:s|es|ed|ing|er|ers)?|{base}{last}(?:ed|ing|er|ers))"
+
+
+def _banned_pattern(entry: str) -> str:
+    # A phrase takes the forms on its first and last word, and any run of spaces between words.
+    words = entry.split()
+    if len(words) == 1:
+        return _forms(words[0])
+    middle = [re.escape(word) for word in words[1:-1]]
+    return r"\s+".join([_forms(words[0]), *middle, _forms(words[-1])])
+
+
+_BANNED = re.compile(
+    r"\b(?:" + "|".join(_banned_pattern(entry) for entry in BANNED_WORDS) + r")\b", re.I
+)
 
 ANSWER_MAX_LENGTH = 60
 # The youngest kid decides: under 6, the texts are shorter.
@@ -156,7 +182,7 @@ def text_limits(youngest_age: int) -> tuple[int, int]:
 
 
 def banned_words(text: str) -> list[str]:
-    return [found.group(0).lower() for found in _BANNED.finditer(text)]
+    return [" ".join(found.group(0).lower().split()) for found in _BANNED.finditer(text)]
 
 
 def draft_problems(

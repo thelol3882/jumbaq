@@ -88,8 +88,33 @@ def test_unsafe_words_anywhere_are_refused(payload: Payload) -> None:
 
 
 def test_safe_words_that_only_look_alike_pass() -> None:
-    # "plugin" is not "plug", "climbs" is not in the list, "doorway" is not "front door".
-    assert domain.banned_words("the cat walks in the doorway of the roadshow") == []
+    # Only suffixes make a form: "plugin", "plughole" and "doorway" are other words.
+    text = "the cat walks in the doorway of the roadshow, past the plugin and the plughole"
+    assert domain.banned_words(text) == []
+
+
+def test_the_reviewer_s_text_is_caught_in_every_form() -> None:
+    text = "windows, sockets and plugs; climbed; leave the house"
+    assert domain.banned_words(text) == [
+        "windows", "sockets", "plugs", "climbed", "leave the house",
+    ]  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Two Knives", "the matches", "ovens", "he plugged it", "she is climbing", "a climber",
+        "balconies", "the wiring", "wired up", "front doors", "strangers", "pills and tablets",
+        "medicines", "the scissors", "lighters", "streets", "It was outside", "WINDOW",
+        "leaving home", "she leaves the house", "they left the house", "leave   the\nhome",
+    ],
+)  # fmt: skip
+def test_plurals_and_regular_forms_of_unsafe_words_are_found(text: str) -> None:
+    assert domain.banned_words(text) != [], text
+
+
+def test_a_found_phrase_has_single_spaces_and_lower_case() -> None:
+    assert domain.banned_words("Please LEAVE   the\n House now") == ["leave the house"]
 
 
 def test_the_clue_is_always_the_plan_s() -> None:
