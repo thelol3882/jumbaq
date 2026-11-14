@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCheckout } from "@/features/billing";
-import { CertificateCard, RankStamp, useGetCertificateQuery, useStartNextCaseMutation, type Accusation, type Case } from "@/features/cases";
-import { toApiError } from "@/shared/api/errors";
+import { CertificateCard, RankStamp, useGetCertificateQuery, useStartNextCase, type Accusation, type Case } from "@/features/cases";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { StampButton } from "@/shared/components/notebook";
 import { formatDay } from "@/shared/lib/dates";
@@ -60,28 +59,18 @@ function NextCase({ current }: { current: Case }) {
   const t = useTranslations("widget.accuse");
   const router = useRouter();
   const errorMessage = useApiErrorMessage();
-  const [startNext, starting] = useStartNextCaseMutation();
   const { checkout, redirecting, error: checkoutError } = useCheckout();
+  // Case 2 and later need a subscription: the payment page, then back to start it.
+  const { start, starting, error: startError } = useStartNextCase({ onStarted: () => router.push("/family"), onNotYet: checkout });
   const next = current.number + 1;
-
-  const start = async () => {
-    try {
-      await startNext().unwrap();
-      router.push("/family");
-    } catch (error) {
-      // Case 2 and later need a subscription: the payment page, then back to start it.
-      if (toApiError(error).code === "billing.payment_required") await checkout();
-    }
-  };
-
-  const error = checkoutError ?? (starting.error && toApiError(starting.error).code !== "billing.payment_required" ? starting.error : undefined);
+  const error = checkoutError ?? startError;
   return (
     <div className="mt-2 border-[1.5px] border-dashed border-rule-divider px-5.5 py-5">
       <p className="font-type text-label text-ink-muted">{t("next.label", { number: next })}</p>
       <button
         type="button"
         onClick={() => void start()}
-        disabled={starting.isLoading || redirecting}
+        disabled={starting || redirecting}
         className="mt-1.5 inline-block border-b-2 border-ink py-1.5 text-left font-type text-[1.3125rem] font-bold disabled:opacity-60"
       >
         {t("next.start", { number: next })}
