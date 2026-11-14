@@ -1,0 +1,103 @@
+# The local stack for laptops. The server has its own compose.
+name: jumbaq
+
+x-backend: &backend
+  build: ../backend
+  environment:
+    JUMBAQ_ENVIRONMENT: ${JUMBAQ_ENVIRONMENT:-dev}
+    JUMBAQ_LOG_LEVEL: ${JUMBAQ_LOG_LEVEL:-INFO}
+    # The API and the worker connect as jumbaq_app, which does not own the tables.
+    JUMBAQ_DATABASE_URL: postgresql+asyncpg://jumbaq_app:${JUMBAQ_APP_PASSWORD:?}@postgres:5432/${POSTGRES_DB}
+    JUMBAQ_REDIS_URL: redis://redis:6379/0
+    JUMBAQ_FAMILY_COOKIE_SECURE: ${JUMBAQ_FAMILY_COOKIE_SECURE:-true}
+    JUMBAQ_CORS_ORIGINS: ${JUMBAQ_CORS_ORIGINS:-}
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # PostgreSQL 18 images keep the data under /var/lib/postgresql/18/docker.
+      - postgres-data:/var/lib/postgresql
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # Creates the roles, the database and the test database. Changes nothing when they exist.
+  db-setup:
+    image: postgres:18-alpine
+    command: ["sh", "/setup/setup.sh", "${POSTGRES_DB}", "${POSTGRES_DB}_test"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      JUMBAQ_OWNER_PASSWORD: ${JUMBAQ_OWNER_PASSWORD:?}
+      JUMBAQ_APP_PASSWORD: ${JUMBAQ_APP_PASSWORD:?}
+    volumes:
+      - ./postgres:/setup:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  migrate:
+    build: ../backend
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      JUMBAQ_MIGRATION_DATABASE_URL: postgresql+asyncpg://jumbaq_owner:${JUMBAQ_OWNER_PASSWORD:?}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      db-setup:
+        condition: service_completed_successfully
+
+  redis:
+    image: redis:8-alpine
+    volumes:
+      - redis-data:/data
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    <<: *backend
+    ports:
+      - "127.0.0.1:${API_HOST_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=2)"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    <<: *backend
+    command: ["arq", "jumbaq.worker.main.WorkerSettings"]
+    healthcheck:
+      test: ["CMD", "arq", "--check", "jumbaq.worker.main.WorkerSettings"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres-data:
+  redis-data:
