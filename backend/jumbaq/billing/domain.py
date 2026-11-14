@@ -50,6 +50,7 @@ class SubscriptionChange:
     status: SubscriptionStatus
     # The time of the event at the provider, not when it reached us.
     changed_at: datetime
+    event_type: str = ""
 
 
 @dataclass(frozen=True)

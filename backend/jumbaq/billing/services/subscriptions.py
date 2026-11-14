@@ -1,5 +1,7 @@
 """The monthly subscription: the payment page, the provider's webhook and the status."""
 
+import logging
+
 from jumbaq.billing import domain
 from jumbaq.billing.domain import Subscription, SubscriptionChange
 from jumbaq.billing.errors import AlreadySubscribedError
@@ -9,6 +11,8 @@ from jumbaq.billing.queries import SubscriptionView
 from jumbaq.billing.uow import BillingUoWFactory
 from jumbaq.core.clock import Clock
 from jumbaq.core.family import FamilyRef
+
+logger = logging.getLogger(__name__)
 
 
 class SubscriptionService:
@@ -41,6 +45,14 @@ class SubscriptionService:
         # The family comes from the signed event, which our checkout filled.
         family = FamilyRef(change.family_id)
         async with self._uow() as uow:
+            if await uow.families.get(family) is None:
+                # Answered 200: an error would make Stripe send the event again for days.
+                logger.warning(
+                    "Stripe event %s of type %s names an unknown family, ignored",
+                    change.event_id,
+                    change.event_type,
+                )
+                return
             if not await uow.subscriptions.remember_event(
                 family, change.event_id, self._clock.now()
             ):

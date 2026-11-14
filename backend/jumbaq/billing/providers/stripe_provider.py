@@ -91,15 +91,21 @@ class StripeProvider:
             logger.info("Stripe event %s has no family, ignored", event.id)
             return None
         try:
+            family = uuid.UUID(family_id)
+        except ValueError:
+            logger.warning("Stripe event %s has a family id that is no id, ignored", event.id)
+            return None
+        try:
             status = SubscriptionStatus(subscription["status"])
         except ValueError:
             logger.warning("Stripe event %s has an unknown status, ignored", event.id)
             return None
         return SubscriptionChange(
             event_id=event.id,
-            family_id=uuid.UUID(family_id),
+            family_id=family,
             provider_ref=subscription["id"],
             customer_ref=str(subscription.get("customer") or ""),
             status=status,
             changed_at=datetime.fromtimestamp(event.created, UTC),
+            event_type=event.type,
         )
