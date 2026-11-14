@@ -1,19 +1,32 @@
 import type { Case } from "@/features/cases";
-import { AnswerForm, EpisodeResultView, ParentNote, StoryText } from "@/features/episodes";
+import { AnswerForm, DecodeParentNote, EpisodeResultView, ParentNote, StoryText } from "@/features/episodes";
 import { NotebookPage } from "@/shared/components/notebook";
-import { AfterTheAnswer, EveningHeader, type ShownEpisode } from "./parts";
+import { AfterTheAnswer, EveningHeader, StepMain, type ShownEpisode } from "./parts";
 
 /** Designs D2 and D3: one page, read top to bottom. */
-export function EveningMobile({ current, episode }: { current: Case; episode: ShownEpisode }) {
-  const played = episode.status === "played" && episode.content.result;
+export function EveningMobile({
+  current,
+  episode,
+  codeBreaker,
+}: {
+  current: Case;
+  episode: ShownEpisode;
+  codeBreaker?: string;
+}) {
+  const { step, result } = episode.content;
   return (
     <NotebookPage margin>
       <EveningHeader current={current} episode={episode} />
       <div className="mt-8 flex flex-col gap-9">
-        {played && episode.content.result ? (
+        {step === "done" && result ? (
           <>
-            <EpisodeResultView result={episode.content.result} />
+            <EpisodeResultView result={result} />
             <AfterTheAnswer current={current} episode={episode} />
+          </>
+        ) : step === "decode" || step === "strike" ? (
+          <>
+            <StepMain current={current} episode={episode} codeBreaker={codeBreaker} inlineKey />
+            {step === "decode" ? <DecodeParentNote /> : null}
           </>
         ) : (
           <>

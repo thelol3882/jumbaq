@@ -30,5 +30,6 @@
     "title": "No case file yet",
     "note": "This browser hasn't opened a case. It takes a minute.",
     "start": "Open a case file"
-  }
+  },
+  "revealedSuspect": "The clue was about {name}."
 }
