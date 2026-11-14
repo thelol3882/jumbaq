@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Cookie, Depends
 
 from jumbaq.core.context import family_id_var
-from jumbaq.core.deps import ClockDep, SessionmakerDep, TaskQueueDep
+from jumbaq.core.deps import ClockDep, SessionmakerDep, SettingsDep, TaskQueueDep
 from jumbaq.core.family import FamilyRef
 from jumbaq.core.outbox import nudge_worker
 from jumbaq.families.services.families import FamilyService
@@ -20,8 +20,10 @@ def get_uow_factory(sessionmaker: SessionmakerDep, queue: TaskQueueDep) -> Famil
 FamiliesUoWFactoryDep = Annotated[FamiliesUoWFactory, Depends(get_uow_factory)]
 
 
-def get_family_service(uow: FamiliesUoWFactoryDep, clock: ClockDep) -> FamilyService:
-    return FamilyService(uow, clock)
+def get_family_service(
+    uow: FamiliesUoWFactoryDep, clock: ClockDep, settings: SettingsDep
+) -> FamilyService:
+    return FamilyService(uow, clock, settings.demo_mode)
 
 
 FamilyServiceDep = Annotated[FamilyService, Depends(get_family_service)]
