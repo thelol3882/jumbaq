@@ -3,6 +3,10 @@
   "back": "Back to the case file",
   "loading": "Getting the accusation ready…",
   "retry": "Try again",
+  "slow": {
+    "lead": "taking longer than usual:",
+    "text": "the storyteller is slow right now. You can close this page and come back later; the case keeps its place."
+  },
   "title": "Who did it?",
   "intro": "Read the five clues out loud. Then let the detectives decide.",
   "evidence": "evidence collected",

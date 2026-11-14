@@ -15,7 +15,7 @@ export function Accuse({ caseNumber }: { caseNumber: number }) {
   const t = useTranslations("widget.accuse");
   const errorMessage = useApiErrorMessage();
   const isMobile = useIsMobile();
-  const { current, loading, error, retry } = useCurrentCase();
+  const { current, loading, error, slow, retry } = useCurrentCase();
   // Right after the last answer the worker still has to move the case to the accusation.
   const almost =
     current?.status === "active" && current.episodes.length > 0 && playedCount(current.episodes) === current.episodes.length;
@@ -32,7 +32,12 @@ export function Accuse({ caseNumber }: { caseNumber: number }) {
     <NotebookPage margin>
       <Wordmark text={t("wordmark")} size="sm" />
       <div className="mt-10 flex flex-col gap-6">
-        {loading || almost ? (
+        {almost && slow ? (
+          <div role="status" className="flex flex-col items-start gap-2">
+            <HandNote lead={t("slow.lead")}>{t("slow.text")}</HandNote>
+            <TypedButton onClick={() => void retry()}>{t("retry")}</TypedButton>
+          </div>
+        ) : loading || almost ? (
           <p role="status" className="font-type text-case font-normal text-ink-muted">
             {t("loading")}
           </p>
