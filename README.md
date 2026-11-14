@@ -67,16 +67,16 @@ The rules for changing the code: [backend/AGENTS.md](backend/AGENTS.md) and [web
 
 ## What a case costs
 
-Measured on 14 November 2026 with three families playing three full cases through the live pipeline (`claude-sonnet-5-5`):
+Measured on jumbaq.fun on 14 November 2026: three new families each played a whole case, five evenings and the accusation, with `claude-sonnet-5-5`. The token counts are the ones the server records for every model call.
 
 | | Family 1 (one kid, 5) | Family 2 (4 and 7) | Family 3 (6 and 9) |
 |---|---|---|---|
-| Model calls per case | 6 | 7 (one draft refused) | 6 |
-| Tokens, input / output | 14,014 / 4,170 | 17,026 / 4,925 | 14,397 / 4,607 |
-| Cost of the case | $0.070 | $0.083 | $0.075 |
-| Setup to the first evening | 30.5 s | 34.4 s | 26.4 s |
+| Model calls per case | 7 (two drafts refused) | 8 (two drafts refused) | 6 |
+| Tokens, input / output | 23,363 / 5,019 | 27,645 / 5,823 | 20,140 / 7,229 |
+| Cost of the case | $0.097 | $0.114 | $0.113 |
+| Setup to the first evening | about 23 s | about 34 s | about 28 s |
 
-At $2 and $10 per million input and output tokens, a whole free case costs about 8 cents, and a subscriber who plays four cases a month costs about 31 cents. The refused draft had the word "outside" in a riddle for a 4-year-old. The second draft passed, and the family never saw the first.
+At $2 and $10 per million input and output tokens, a whole case costs about 11 cents, and a subscriber who plays four cases a month costs about 43 cents. The refused drafts are the safety check at work: Family 2 got one draft with "outside" in a riddle and one that was not in English, and both were rewritten before anyone saw them. Family 1's evening 2 was refused twice ("outside", then "front door") and played the built-in evening instead. An evening now gets three tries before that happens.
 
 ## Dependencies
 
