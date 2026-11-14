@@ -32,6 +32,10 @@ class EpisodeRow(Base):
     resolution: Mapped[str | None]
     available_at: Mapped[datetime | None]
     played_at: Mapped[datetime | None]
+    answered_at: Mapped[datetime | None]
+    decode_attempts: Mapped[int] = mapped_column(SmallInteger, server_default=text("0"))
+    decoded_at: Mapped[datetime | None]
+    strike_attempts: Mapped[int] = mapped_column(SmallInteger, server_default=text("0"))
     is_fallback: Mapped[bool] = mapped_column(server_default=text("false"))
     used_fallback_riddle: Mapped[bool] = mapped_column(server_default=text("false"))
     created_at: Mapped[datetime]

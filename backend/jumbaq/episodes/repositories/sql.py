@@ -88,6 +88,10 @@ class SqlEpisodeRepository:
                 resolution=episode.resolution,
                 available_at=episode.available_at,
                 played_at=episode.played_at,
+                answered_at=episode.answered_at,
+                decode_attempts=episode.decode_attempts,
+                decoded_at=episode.decoded_at,
+                strike_attempts=episode.strike_attempts,
                 is_fallback=episode.is_fallback,
                 used_fallback_riddle=episode.used_fallback_riddle,
             )
@@ -141,6 +145,10 @@ def _episode(row: EpisodeRow) -> Episode:
         played_at=row.played_at,
         is_fallback=row.is_fallback,
         used_fallback_riddle=row.used_fallback_riddle,
+        answered_at=row.answered_at,
+        decode_attempts=row.decode_attempts,
+        decoded_at=row.decoded_at,
+        strike_attempts=row.strike_attempts,
     )
 
 
