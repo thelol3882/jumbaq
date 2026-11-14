@@ -23,7 +23,7 @@
   },
   "decode": {
     "codeBreaker": "{name}, this code is yours.",
-    "countIntro": "The number they found is {key}. Everyone claps or hops {count, plural, one {# time} other {# times}}. Count out loud together!",
+    "countIntro": "Your answer makes the number {key}. Everyone clap {count, plural, one {# time} other {# times}}! Count out loud together!",
     "numberIntro": "Every number in this code hides a letter. Turn the numbers into a word with the key, then see which word fits the gap in the clue.",
     "shiftIntro": "Every letter in this code moved forward in the alphabet. Move each one back with the key, then see which words fit the gap in the clue.",
     "weDidIt": "We did it",
