@@ -7,6 +7,9 @@ import { useDetectivesLabel, useFamily, useStartHref } from "@/features/families
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { DetectivesTag, HandNote, NotebookPage, StampButton, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 
+/** The price shown to the family, said once here. */
+const PRICE = "$7.99";
+
 /** The price, the way to pay and the way to cancel. Open to a visitor with no family. One column on every screen. */
 export function Plans() {
   const t = useTranslations("widget.plans");
@@ -32,7 +35,7 @@ export function Plans() {
       <h1 className="mt-8 text-title">{t("title")}</h1>
       <ul className="mt-6 flex flex-col gap-3">
         <li className="text-body">{t("free")}</li>
-        <li className="text-body">{t("paid")}</li>
+        <li className="text-body">{t("paid", { price: PRICE })}</li>
         <li className="font-type text-case font-normal text-ink-muted">{t("cancel")}</li>
       </ul>
 
@@ -48,7 +51,7 @@ export function Plans() {
           </>
         ) : (
           <StampButton disabled={!subscription.isSuccess || redirecting} onClick={() => void checkout()}>
-            {t("checkout")}
+            {t("checkout", { price: PRICE })}
           </StampButton>
         )}
         <HandNote>{t("demo")}</HandNote>

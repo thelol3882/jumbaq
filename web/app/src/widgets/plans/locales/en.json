@@ -2,11 +2,11 @@
   "wordmark": "jumbaq",
   "title": "Plans",
   "free": "Case 1 is free.",
-  "paid": "$7.99 a month for a new case every week.",
+  "paid": "{price} a month for a new case every week.",
   "cancel": "Cancel anytime, in two clicks.",
   "start": "Start with the free case",
-  "checkout": "Subscribe for $7.99 a month",
-  "status": "Your subscription: {status, select, trialing {on a free trial} active {active} other {{status}}}.",
+  "checkout": "Subscribe for {price} a month",
+  "status": "Your subscription: {status, select, trialing {on a free trial} other {active}}.",
   "demo": "Demo: payments run in Stripe test mode. Use card 4242 4242 4242 4242, any future date, any CVC.",
   "retry": "Try again"
 }
