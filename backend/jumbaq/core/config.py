@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     ai_provider: Literal["stub", "claude", "openrouter"] = "stub"
     # The key of the chosen provider.
     ai_api_key: SecretStr | None = None
-    ai_model: str = "claude-opus-5-5"
+    ai_model: str = "claude-sonnet-5-5"
     # Free models come and go: https://openrouter.ai/models?q=free
     ai_openrouter_model: str = "google/gemma-4-31b-it:free"
     ai_timeout_seconds: float = 60
