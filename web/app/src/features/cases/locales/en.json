@@ -1,0 +1,28 @@
+{
+  "progress": "{played} of {total} evenings played",
+  "cleared": "cleared",
+  "stillSuspect": "still a suspect",
+  "noEvidence": "No evidence yet. The first clue comes tonight.",
+  "rankAwarded": "rank awarded",
+  "ranks": {
+    "chief_detective": "Chief Detective",
+    "detective": "Detective",
+    "junior_detective": "Junior Detective"
+  },
+  "accuse": {
+    "pickOne": "Pick one",
+    "submit": "Accuse {name}",
+    "submitEmpty": "Pick a suspect first",
+    "wrong": "The clues don't match. Read them again and look once more.",
+    "noteLead": "grown-ups:",
+    "note": "a wrong pick just gets \"look again\". There is no losing."
+  },
+  "certificate": {
+    "label": "Certificate of detection",
+    "title": "certificate of detection",
+    "intro": "This is to say that",
+    "and": "and",
+    "solved": "solved {title} in five evenings and earned the rank of {rank}.",
+    "chief": "chief of detectives"
+  }
+}

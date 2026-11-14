@@ -3,11 +3,11 @@ import { defaultLocale } from "./config";
 
 // Feature namespaces: locale files at src/features/<name>/locales/<locale>.json,
 // exposed at messages.<name>.*
-const FEATURE_LOCALES = ["families"] as const;
+const FEATURE_LOCALES = ["families", "cases", "episodes"] as const;
 
 // Widget namespaces: locale files at src/widgets/<name>/locales/<locale>.json,
 // exposed at messages.widget.<name>.*
-const WIDGET_LOCALES = ["landing", "setup", "family", "not-found"] as const;
+const WIDGET_LOCALES = ["landing", "setup", "family", "evening", "accuse", "billing-return", "not-found"] as const;
 
 async function loadAll<const T extends readonly string[]>(
   names: T,

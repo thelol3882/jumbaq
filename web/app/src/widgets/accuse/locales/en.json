@@ -1,0 +1,23 @@
+{
+  "wordmark": "jumbaq",
+  "back": "Back to the case file",
+  "loading": "Opening the case file…",
+  "retry": "Try again",
+  "title": "Who did it?",
+  "intro": "Read the five clues out loud. Then let the detectives decide.",
+  "evidence": "evidence collected",
+  "pickLabel": "the accusation",
+  "certificateLabel": "the certificate",
+  "closed": "Case {number}: closed",
+  "itWas": "It was {name} all along.",
+  "print": "Print the certificate",
+  "next": {
+    "label": "case {number}",
+    "start": "Start Case {number} · $7.99 a month",
+    "terms": "Cancel anytime. The cases you played stay yours."
+  },
+  "notYet": {
+    "title": "Not time to accuse yet",
+    "text": "The accusation comes after the fifth evening. Keep collecting clues."
+  }
+}

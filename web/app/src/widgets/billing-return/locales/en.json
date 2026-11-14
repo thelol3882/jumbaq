@@ -1,0 +1,14 @@
+{
+  "wordmark": "jumbaq",
+  "back": "Back to the case file",
+  "success": {
+    "title": "Thank you. The next case is yours.",
+    "text": "Your subscription is on. Cancel anytime; the cases you played stay yours.",
+    "start": "Start Case {number}",
+    "notYet": "The payment is still being confirmed. Try again in a few seconds."
+  },
+  "cancel": {
+    "title": "No payment was made",
+    "text": "Nothing changed. Case 1 is still yours, and the next case waits until you're ready."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "wordmark": "jumbaq",
+  "toCaseFile": "Back to the case file",
+  "eveningOf": "Evening {number} of {total}",
+  "loading": "Opening the notebook…",
+  "retry": "Try again",
+  "back": "Back to the case file",
+  "suspects": "suspects",
+  "doneTonight": "Done for tonight",
+  "toAccuse": "Make the accusation",
+  "writing": {
+    "title": "Tonight's story is being written",
+    "text": "It takes about a minute. This page updates by itself."
+  },
+  "later": {
+    "title": "This evening isn't open yet",
+    "text": "It unlocks {when}."
+  },
+  "missing": {
+    "title": "This page isn't in the case file",
+    "text": "This evening belongs to another case, or the link is old.",
+    "noCase": "This browser has no case yet."
+  },
+  "boardLabel": "the case board",
+  "parentLabel": "for the grown-up, not for reading aloud"
+}

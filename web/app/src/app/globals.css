@@ -10,3 +10,20 @@ body {
   margin: 0;
   min-height: 100dvh;
 }
+
+/* Printing the solved case gives only the certificate, on one page. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  [data-print="certificate"],
+  [data-print="certificate"] * {
+    visibility: visible;
+  }
+  [data-print="certificate"] {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    rotate: none;
+  }
+}
