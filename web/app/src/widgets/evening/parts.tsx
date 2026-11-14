@@ -24,7 +24,7 @@ export function EveningHeader({
   const t = useTranslations("widget.evening");
   return (
     <header
-      className={`flex flex-wrap items-center justify-between gap-4 ${wide ? "border-b-[1.5px] border-rule-strong pb-4.5" : ""}`}
+      className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 ${wide ? "border-b-[1.5px] border-rule-strong pb-4.5" : ""}`}
     >
       <div className="flex flex-col items-start">
         <Link href="/family" aria-label={t("toCaseFile")}>
@@ -32,8 +32,9 @@ export function EveningHeader({
         </Link>
         {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
       </div>
-      <div className="flex items-center gap-3">
-        <span className="font-type text-case">
+      {/* On a phone the evening takes its own row, so Plans stays at the right edge. */}
+      <div className="contents sm:flex sm:items-center sm:gap-3">
+        <span className="order-last basis-full font-type text-case sm:order-none sm:basis-auto">
           {t("eveningOf", { number: episode.number, total: current.episodes.length })}
         </span>
         {wide ? <EveningBoxes episodes={current.episodes} /> : null}

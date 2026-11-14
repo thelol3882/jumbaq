@@ -33,17 +33,20 @@ export function FamilyMobile({
   const detectives = family.kids.map((kid) => kid.nickname);
   return (
     <NotebookPage margin>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="flex flex-col items-start">
           <Link href="/">
             <Wordmark text={t("wordmark")} size="sm" />
           </Link>
           {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
         </div>
-        <div className="flex items-center gap-4">
-          {current ? <EveningBoxes episodes={current.episodes} /> : null}
-          <PlansLink />
-        </div>
+        <PlansLink />
+        {/* Five boxes are about 200px: on their own row below, so Plans never leaves the screen. */}
+        {current ? (
+          <div className="order-last basis-full">
+            <EveningBoxes episodes={current.episodes} />
+          </div>
+        ) : null}
       </div>
       <div className="mt-8 flex flex-col gap-9">
         {problem ?? (current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} /> : <TonightPending waiting={waiting} detectives={detectives} />)}
