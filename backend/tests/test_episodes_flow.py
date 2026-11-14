@@ -260,7 +260,7 @@ async def test_an_episode_is_answered_once_and_swapped_once(
 
 
 @pytest.mark.parametrize("change", [unsafe, wrong_shape, retells_the_clue])
-async def test_two_bad_episodes_give_the_built_in_one(
+async def test_three_bad_episodes_give_the_built_in_one(
     live_client: TestClient, sessionmaker: Sessionmaker, change: Any
 ) -> None:
     family_id, _ = create_family(live_client)
@@ -269,11 +269,33 @@ async def test_two_bad_episodes_give_the_built_in_one(
     await deliver_all(sessionmaker, handlers_with(sessionmaker, provider))
 
     row = await episode_1(sessionmaker, family_id)
-    assert provider.episode_calls == 2
+    assert provider.episode_calls == 3
     assert (row.status, row.is_fallback) == ("ready", True)
     assert row.payload is not None and "window" not in str(row.payload).lower()
     # The family still sees the plan's clue.
     assert row.payload["case_clue"].startswith("A grey feather lies by the empty plate")
+
+
+async def test_a_third_draft_after_two_unsafe_ones_is_kept(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    drafts = 0
+
+    def unsafe_twice(data: dict[str, Any]) -> None:
+        nonlocal drafts
+        drafts += 1
+        if drafts <= 2:
+            unsafe(data)
+
+    provider = EpisodeChanger(unsafe_twice)
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, provider))
+
+    row = await episode_1(sessionmaker, family_id)
+    assert provider.episode_calls == 3
+    assert (row.status, row.is_fallback) == ("ready", False)
+    assert row.payload is not None and "window" not in str(row.payload).lower()
 
 
 async def test_the_daily_cap_gives_the_built_in_episode(
@@ -476,12 +498,12 @@ async def test_a_refused_episode_draft_is_logged_as_refused(
     assert await episode_outcomes(sessionmaker, family_id) == ["refused", "ok"]
 
 
-async def test_two_refused_episode_drafts_are_both_logged_as_refused(
+async def test_every_refused_episode_draft_is_logged_as_refused(
     live_client: TestClient, sessionmaker: Sessionmaker
 ) -> None:
     family_id, _ = create_family(live_client)
 
     await deliver_all(sessionmaker, handlers_with(sessionmaker, EpisodeChanger(unsafe)))
 
-    assert await episode_outcomes(sessionmaker, family_id) == ["refused", "refused"]
+    assert await episode_outcomes(sessionmaker, family_id) == ["refused", "refused", "refused"]
     assert (await episode_1(sessionmaker, family_id)).is_fallback
