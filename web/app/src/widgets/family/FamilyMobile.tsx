@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { ManageSubscription } from "@/features/billing";
 import { EveningBoxes, inOpening, type Case } from "@/features/cases";
 import { FamilySummary, type FamilyState } from "@/features/families";
 import { DetectivesTag, NotebookPage, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
-import { Manage } from "./Manage";
 import { NewFamily } from "./NewFamily";
 import { Tonight, TonightPending, type Waiting } from "./Tonight";
 
@@ -15,6 +15,7 @@ export function FamilyMobile({
   current,
   waiting,
   problem,
+  subscribed,
 }: {
   family: FamilyState;
   detectivesLabel: string | undefined;
@@ -22,6 +23,8 @@ export function FamilyMobile({
   waiting: Waiting;
   /** Shown instead of tonight when the case did not load. */
   problem?: ReactNode;
+  /** The family has a subscription it can manage. */
+  subscribed: boolean;
 }) {
   const t = useTranslations("widget.family");
   const detectives = family.kids.map((kid) => kid.nickname);
@@ -42,7 +45,7 @@ export function FamilyMobile({
       <div className="mt-8 flex flex-col gap-9">
         {problem ?? (current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} /> : <TonightPending waiting={waiting} detectives={detectives} />)}
         {current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilySummary family={family} />}
-        <Manage />
+        {subscribed ? <ManageSubscription /> : null}
         <NewFamily detectivesLabel={detectivesLabel} />
       </div>
     </NotebookPage>

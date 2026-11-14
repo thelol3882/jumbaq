@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { ManageSubscription } from "@/features/billing";
 import { EveningBoxes, inOpening, type Case } from "@/features/cases";
 import { FamilyBoard, type FamilyState } from "@/features/families";
 import { DetectivesTag, NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
@@ -15,6 +16,7 @@ export function FamilyDesktop({
   current,
   waiting,
   problem,
+  subscribed,
 }: {
   family: FamilyState;
   detectivesLabel: string | undefined;
@@ -22,6 +24,8 @@ export function FamilyDesktop({
   waiting: Waiting;
   /** Shown instead of tonight when the case did not load. */
   problem?: ReactNode;
+  /** The family has a subscription it can manage. */
+  subscribed: boolean;
 }) {
   const t = useTranslations("widget.family");
   const detectives = family.kids.map((kid) => kid.nickname);
@@ -39,7 +43,12 @@ export function FamilyDesktop({
         <NotebookSpread
           sideLabel={t("boardLabel")}
           main={problem ?? (current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} large /> : <TonightPending waiting={waiting} detectives={detectives} large />)}
-          side={current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilyBoard family={family} />}
+          side={
+            <div className="flex flex-col gap-9">
+              {current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilyBoard family={family} />}
+              {subscribed ? <ManageSubscription /> : null}
+            </div>
+          }
         />
       </div>
       <div className="mt-12">
