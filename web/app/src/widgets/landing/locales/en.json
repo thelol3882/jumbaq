@@ -20,5 +20,12 @@
   },
   "start": "Start tonight's case",
   "free": "No sign-up. First case free, then $7.99 a month.",
+  "reviewers": {
+    "title": "For reviewers",
+    "login": "No login needed.",
+    "setup": "Setup takes one minute.",
+    "demo": "Demo controls skip the wait between evenings.",
+    "payments": "Payments are in test mode; the test card is on the <plans>Plans page</plans>."
+  },
   "facts": "five evenings · about 15 minutes each · ages 4 to 10"
 }

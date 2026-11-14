@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { EvidenceTag, HandNote, PlansLink, StampLink, Wordmark } from "@/shared/components/notebook";
 
@@ -71,5 +72,37 @@ export function Start({ href }: { href: string }) {
       <StampLink href={href}>{t("start")}</StampLink>
       <HandNote className="mt-2.5 ml-1.5">{t("free")}</HandNote>
     </div>
+  );
+}
+
+const REVIEWER_LINES = ["login", "setup", "demo"] as const;
+
+/** For the people who review the demo: what to expect, in the grown-up margin voice. */
+export function ForReviewers() {
+  const t = useTranslations("widget.landing");
+  return (
+    <section aria-labelledby="for-reviewers" className="mt-9 flex flex-col gap-1">
+      <h2 id="for-reviewers" className="font-type text-label text-ink-muted">
+        {t("reviewers.title")}
+      </h2>
+      <ul className="flex flex-col gap-1">
+        {REVIEWER_LINES.map((line) => (
+          <li key={line}>
+            <HandNote>{t(`reviewers.${line}`)}</HandNote>
+          </li>
+        ))}
+        <li>
+          <HandNote>
+            {t.rich("reviewers.payments", {
+              plans: (chunks) => (
+                <Link href="/plans" className="underline decoration-dotted decoration-2 underline-offset-4">
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </HandNote>
+        </li>
+      </ul>
+    </section>
   );
 }
