@@ -9,6 +9,7 @@ import pytest
 from jumbaq.ai.public import EPISODES_PER_CASE, SUSPECTS_PER_CASE
 from jumbaq.cases import domain
 from jumbaq.cases.domain import FALLBACK_PLAN, Case, CaseStatus, Clue, Plan, Rank, Suspect
+from jumbaq.episodes.domain import banned_words
 
 NOW = datetime(2026, 11, 14, 18, 0, tzinfo=UTC)
 S = CaseStatus
@@ -35,7 +36,7 @@ GOOD = Plan(
 
 
 def problems(plan: Plan) -> list[str]:
-    return domain.plan_problems(plan, SUSPECTS_PER_CASE, EPISODES_PER_CASE)
+    return domain.plan_problems(plan, SUSPECTS_PER_CASE, EPISODES_PER_CASE, banned_words)
 
 
 def with_clue(index: int, clue: Clue) -> Plan:
@@ -67,6 +68,38 @@ def test_a_good_plan_and_the_fallback_plan_are_playable() -> None:
 )
 def test_a_plan_that_breaks_a_rule_is_not_playable(plan: Plan, problem: str) -> None:
     assert any(problem in found for found in problems(plan)), problems(plan)
+
+
+@pytest.mark.parametrize(
+    ("plan", "where"),
+    [
+        (with_clue(1, Clue(2, "Bear was near the window", "s3", False)), "episode 2"),
+        (with_clue(4, Clue(5, "Crumbs lead out of the front doors", "s1", True)), "episode 5"),
+        (replace(GOOD, title="Climbing the hill"), "title"),
+        (replace(GOOD, setting="A bakery next to the road"), "setting"),
+        (replace(GOOD, reveal="The fox took a knife"), "reveal"),
+        (replace(GOOD, suspects=(Suspect("s1", "Fox", "plugs sockets"), *GOOD.suspects[1:])),
+         "the description of s1"),
+        (replace(GOOD, suspects=(*GOOD.suspects[:2], Suspect("s3", "Knife Bear", "big"))),
+         "the name of s3"),
+    ],
+)  # fmt: skip
+def test_a_plan_with_an_unsafe_word_anywhere_is_not_playable(plan: Plan, where: str) -> None:
+    assert any("unsafe" in found and where in found for found in problems(plan)), problems(plan)
+
+
+def test_the_unsafe_words_are_named_once_each() -> None:
+    found = problems(with_clue(1, Clue(2, "Windows, a window and a stove", "s3", False)))
+    assert [f for f in found if "unsafe" in f] == [
+        "unsafe for small kids: stove, window, windows in the clue of episode 2; "
+        "leave the word out entirely"
+    ]
+
+
+def test_a_clue_over_the_length_limit_is_not_playable() -> None:
+    long = Clue(2, "x" * (domain.CLUE_MAX_CHARS + 1), "s3", False)
+    assert any("the limit is 140" in found for found in problems(with_clue(1, long)))
+    assert problems(with_clue(1, replace(long, text="x" * domain.CLUE_MAX_CHARS))) == []
 
 
 def test_the_fallback_plan_points_only_in_the_last_two_episodes() -> None:
