@@ -381,6 +381,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/episodes/{episode_id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Skip Episode
+         * @description Plays the rest of an available evening with the right answers, so the jury can reach the
+         *     end of a case in minutes. Only in demo mode (403 `episode.demo_mode_off`). Like the steps:
+         *     409 `episode.not_ready`, `episode.not_available_yet` or, for a played one,
+         *     `episode.wrong_step`.
+         */
+        post: operations["skip_episode_api_v1_episodes__episode_id__skip_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/billing/webhook": {
         parameters: {
             query?: never;
@@ -1332,6 +1355,39 @@ export interface operations {
         };
     };
     open_episode_now_api_v1_episodes__episode_id__open_now_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    skip_episode_api_v1_episodes__episode_id__skip_post: {
         parameters: {
             query?: never;
             header?: never;
