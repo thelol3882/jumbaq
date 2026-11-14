@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from jumbaq import health
 from jumbaq.billing.routers import subscription as subscription_routers
 from jumbaq.billing.routers import webhook as webhook_routers
+from jumbaq.cases.routers import cases as case_routers
 from jumbaq.core.clock import SystemClock
 from jumbaq.core.config import CorsSettings, Settings
 from jumbaq.core.csrf import CSRF_HEADER, require_csrf_header_on_change
@@ -17,6 +18,7 @@ from jumbaq.core.db import create_engine, create_sessionmaker
 from jumbaq.core.exception_handlers import register_exception_handlers
 from jumbaq.core.logging import setup_logging
 from jumbaq.core.middleware import RequestContextMiddleware
+from jumbaq.episodes.routers import episodes as episode_routers
 from jumbaq.families.routers import family as family_routers
 
 API_PREFIX = "/api/v1"
@@ -56,6 +58,8 @@ def create_app() -> FastAPI:
     api.include_router(health.router)
     api.include_router(family_routers.router)
     api.include_router(subscription_routers.router)
+    api.include_router(case_routers.router)
+    api.include_router(episode_routers.router)
     app.include_router(api)
 
     # Payment providers cannot send the CSRF header or a family cookie. Each webhook checks
