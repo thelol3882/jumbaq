@@ -12,11 +12,6 @@ export function suspectMark(suspectId: string, clues: readonly Clue[]): SuspectM
   return about.length > 0 ? "pointed" : "suspect";
 }
 
-/** The clue that cleared the suspect, for the note next to the name. */
-export function clearingClue(suspectId: string, clues: readonly Clue[]): Clue | undefined {
-  return clues.find((c) => c.suspect_id === suspectId && c.rules_out);
-}
-
 export function playedCount(episodes: readonly CaseEpisode[]): number {
   return episodes.filter((e) => e.status === "played").length;
 }
