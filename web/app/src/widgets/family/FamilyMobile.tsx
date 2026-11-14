@@ -6,6 +6,7 @@ import { FamilySummary, type FamilyState } from "@/features/families";
 import { DetectivesTag, NotebookPage, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
 import { Manage } from "./Manage";
+import { NewFamily } from "./NewFamily";
 import { Tonight, TonightPending, type Waiting } from "./Tonight";
 
 export function FamilyMobile({
@@ -42,6 +43,7 @@ export function FamilyMobile({
         {problem ?? (current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} /> : <TonightPending waiting={waiting} detectives={detectives} />)}
         {current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilySummary family={family} />}
         <Manage />
+        <NewFamily detectivesLabel={detectivesLabel} />
       </div>
     </NotebookPage>
   );

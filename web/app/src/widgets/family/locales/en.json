@@ -8,6 +8,10 @@
   },
   "retry": "Try again",
   "tonight": "tonight",
+  "newFamily": {
+    "link": "Start a new family",
+    "note": "This phone will forget {names} and start over."
+  },
   "boardLabel": "the case board",
   "eveningOf": "tonight · evening {number} of {total}",
   "read": "Read tonight's story",
