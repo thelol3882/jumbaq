@@ -28,15 +28,15 @@
     "shiftIntro": "Every letter in this code moved forward in the alphabet. Move each one back with the key, then see which words fit the gap in the clue.",
     "weDidIt": "We did it",
     "pickLabel": "Which one fits the gap?",
-    "wrong": "Not quite. Check the letters once more.",
+    "wrong": "Not quite. One more try: check the letters again.",
     "keyNumbers": "the key: letter, then its number",
     "keyShift": "the key: coded letter, then the real one",
-    "parentNote": "Let them work it out on paper. The buttons are the check."
+    "parentNote": "Let them work it out on paper. The buttons are the check. After two wrong picks the answer is shown and the evening goes on."
   },
   "strike": {
     "revealed": "The word was {word}.",
     "askCrossOut": "Who can we cross out now?",
     "askPointsAt": "Who does this clue point at?",
-    "wrong": "Read the clue again: who does it talk about?"
+    "wrong": "Not quite. One more try: who does the clue talk about?"
   }
 }
