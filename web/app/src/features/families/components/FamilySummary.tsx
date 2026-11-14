@@ -16,8 +16,12 @@ export function FamilySummary({ family }: { family: Family }) {
         <ul className="flex flex-col gap-1">
           {family.kids.map((kid) => (
             <li key={kid.id} className="text-body">
-              <span className="font-semibold">{kid.nickname}</span>
-              <span className="font-type text-label text-ink-muted"> · {t("summary.age", { age: kid.age })}</span>
+              {t.rich("summary.kid", {
+                nickname: kid.nickname,
+                age: kid.age,
+                name: (chunks) => <span className="font-semibold">{chunks}</span>,
+                aside: (chunks) => <span className="font-type text-label text-ink-muted">{chunks}</span>,
+              })}
             </li>
           ))}
         </ul>

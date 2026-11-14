@@ -1,12 +1,13 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { EvidenceTag } from "@/shared/components/notebook";
 import type { Family } from "../types";
 
 /** The right page of the case file on a wide screen: who plays, where, and with what. */
 export function FamilyBoard({ family }: { family: Family }) {
   const t = useTranslations("families");
+  const format = useFormatter();
   return (
     <>
       <section aria-labelledby="board-detectives">
@@ -26,7 +27,7 @@ export function FamilyBoard({ family }: { family: Family }) {
         </ul>
       </section>
       <div className="w-72 -rotate-2">
-        <EvidenceTag label={t("summary.scene")}>{family.rooms.join(", ")}</EvidenceTag>
+        <EvidenceTag label={t("summary.scene")}>{format.list(family.rooms)}</EvidenceTag>
       </div>
       <section aria-labelledby="board-evidence">
         <h2 id="board-evidence" className="mb-2.5 font-type text-label font-normal text-ink-muted">
