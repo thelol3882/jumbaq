@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
+import type { EpisodeResult } from "@/features/episodes";
 import { withTonightsClue } from "./tonightsClues";
 
 const first = { episode: 1, text: "A feather.", suspect_id: "s1", rules_out: true };
-const result = { case_clue: "A crumb.", struck_suspect_id: "s2", rules_out: true };
+const result: EpisodeResult = {
+  answer: "a clock",
+  resolution: "It was a clock.",
+  case_clue: "A crumb.",
+  cliffhanger: "Who was it?",
+  decoded_word: null,
+  revealed_suspect: false,
+  struck_suspect_id: "s2",
+  rules_out: true,
+};
 
 describe("withTonightsClue", () => {
   it("adds tonight's clue when the case does not have it yet", () => {
