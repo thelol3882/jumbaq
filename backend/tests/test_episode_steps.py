@@ -1,6 +1,7 @@
 """The three steps of an evening through the API: answer, decode a cipher, strike out a suspect.
 The evening counts as played only after the third."""
 
+import re
 import uuid
 from typing import Any
 
@@ -9,6 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from jumbaq.cases.models import CaseRow
 from jumbaq.core.deps import get_settings
 from jumbaq.core.outbox import OutboxRow
 from jumbaq.episodes import domain
@@ -245,6 +247,26 @@ async def test_the_oldest_kid_sets_the_level_of_the_stored_episode(
     assert cipher["level"] == level and cipher["key"] == 42
 
 
+@pytest.mark.parametrize("ages", [(4, 5), (6, 7), (8, 9)])
+async def test_no_wrong_button_of_evening_1_comes_from_a_later_clue(
+    live_client: TestClient, sessionmaker: Sessionmaker, ages: tuple[int, ...]
+) -> None:
+    episode_id, _ = await ready_episode(live_client, sessionmaker, ages)
+    row = await stored(sessionmaker, episode_id)
+    async with sessionmaker() as session:
+        case = await session.get(CaseRow, row.case_id)
+    assert case is not None and case.plan is not None
+
+    later = {
+        word
+        for clue in case.plan["clues"]
+        if clue["episode"] > 1
+        for word in re.findall(r"[a-z]+", clue["text"].lower())
+    }
+    decoys = {word.lower() for decoy in row.payload["cipher_decoys"] for word in decoy.split()}
+    assert row.payload["cipher_decoys"] and not decoys & later
+
+
 async def test_the_number_code_level_shows_numbers_and_three_buttons(
     live_client: TestClient, sessionmaker: Sessionmaker
 ) -> None:
@@ -254,7 +276,7 @@ async def test_the_number_code_level_shows_numbers_and_three_buttons(
 
     assert cipher["code"] == domain.number_code(4, "FEATHER")
     assert cipher["clue_with_gap"] == "A grey ____ lies by the empty plate, and Felix has only fur."
-    # The wrong buttons are words of the other clues: none is in the sentence with the gap.
+    # The wrong buttons are kid words or earlier clues' words, never in the sentence with the gap.
     assert len(cipher["options"]) == 3 and "FEATHER" in cipher["options"]
     assert cipher["options"] == sorted(cipher["options"])
     assert not set(cipher["options"]) & set(cipher["clue_with_gap"].upper().split())

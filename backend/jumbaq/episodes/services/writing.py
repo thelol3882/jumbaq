@@ -78,7 +78,7 @@ class EpisodeWriting:
 
         # The cipher comes first: the story must not give its secret away.
         oldest = max((kid.age for kid in home.kids), default=0)
-        plan = domain.plan_cipher(brief.clue.text, oldest, brief.other_clues)
+        plan = domain.plan_cipher(brief.clue.text, oldest, brief.earlier_clues)
         # No unit of work is open here: the model call can take a while.
         targets = domain.pick_targets(home.objects, earlier)
         payload, is_fallback = await self._payload(

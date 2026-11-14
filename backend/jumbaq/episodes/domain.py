@@ -119,7 +119,7 @@ FILLER_WORDS = STOPWORDS | frozenset({
     "he", "she", "his", "her", "its", "my", "me", "we", "us", "be", "am", "no", "do", "go",
     "all", "any", "can", "one", "two", "too", "only", "just", "also", "ever", "each",
 })  # fmt: skip
-# Wrong buttons of the number code when the other clues have too few words. Kid words of 4 to 7
+# Wrong buttons of the number code when the earlier clues have too few words. Kid words of 4 to 7
 # letters, so the length of the right button does not give it away.
 KID_WORDS = (
     "APPLE", "CLOUD", "PENCIL", "BANANA", "GARDEN", "MONKEY", "ROCKET", "PUPPY", "BUTTER",
@@ -801,7 +801,7 @@ def _decoys(
 
 def _count_plan(words: list[str], others: list[list[str]]) -> CipherPlan:
     """The longest short word of the clue is the secret; the four other boxes hold short words
-    of the case's other clues, then kid words, and none of them is in this clue. A clue with no
+    of the case's earlier clues, then kid words, and none of them is in this clue. A clue with no
     such word gives a count level with no secret: any pick passes."""
     best: str | None = None
     for word in words:
@@ -822,13 +822,13 @@ def _count_plan(words: list[str], others: list[list[str]]) -> CipherPlan:
     return CipherPlan(CipherLevel.COUNT, best, decoys)
 
 
-def plan_cipher(clue: str, oldest_age: int, other_clues: tuple[str, ...] = ()) -> CipherPlan:
+def plan_cipher(clue: str, oldest_age: int, earlier_clues: tuple[str, ...] = ()) -> CipherPlan:
     """The level for the kids' age and the secret and decoys from the plan's clue. The decoys
-    come from the case's other clues, then from a list of kid words, and none of them is in
-    this clue. A clue with no secret that works gives the level count, which needs none."""
+    come from the clues of earlier episodes, then from a list of kid words, and none of them is
+    in this clue. A clue with no secret that works gives the level count, which needs none."""
     level = cipher_level_for(oldest_age)
     words = _clue_words(clue)
-    others = [_clue_words(other) for other in other_clues]
+    others = [_clue_words(other) for other in earlier_clues]
     index = _secret_index(words)
     if level == CipherLevel.COUNT or index is None:
         return _count_plan(words, others)
