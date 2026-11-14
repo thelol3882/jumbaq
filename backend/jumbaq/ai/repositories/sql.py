@@ -27,16 +27,22 @@ class SqlLlmCallRepository:
             )
         )
 
-    async def count_all_since(self, since: datetime) -> int:
-        count = await self._session.scalar(
-            select(func.count()).select_from(LlmCallRow).where(LlmCallRow.created_at >= since)
-        )
-        return count or 0
-
-    async def count_since(self, family: FamilyRef, since: datetime) -> int:
+    async def count_all_between(self, start: datetime, end: datetime) -> int:
         count = await self._session.scalar(
             select(func.count())
             .select_from(LlmCallRow)
-            .where(LlmCallRow.family_id == family.family_id, LlmCallRow.created_at >= since)
+            .where(LlmCallRow.created_at >= start, LlmCallRow.created_at < end)
+        )
+        return count or 0
+
+    async def count_between(self, family: FamilyRef, start: datetime, end: datetime) -> int:
+        count = await self._session.scalar(
+            select(func.count())
+            .select_from(LlmCallRow)
+            .where(
+                LlmCallRow.family_id == family.family_id,
+                LlmCallRow.created_at >= start,
+                LlmCallRow.created_at < end,
+            )
         )
         return count or 0

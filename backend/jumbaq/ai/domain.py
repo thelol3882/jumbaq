@@ -6,7 +6,7 @@ game is checked by the module that asked for it.
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, time, tzinfo
+from datetime import datetime, time, timedelta, tzinfo
 from enum import StrEnum
 from zoneinfo import ZoneInfo
 
@@ -155,6 +155,12 @@ def day_start(now: datetime, zone: tzinfo = FAMILY_TIME_ZONE) -> datetime:
     """The last midnight in the family time zone, as an aware time."""
     local = now.astimezone(zone)
     return datetime.combine(local.date(), time(), tzinfo=zone)
+
+
+def day_end(now: datetime, zone: tzinfo = FAMILY_TIME_ZONE) -> datetime:
+    """The next midnight in the family time zone: the day ends before it."""
+    local = now.astimezone(zone)
+    return datetime.combine(local.date() + timedelta(days=1), time(), tzinfo=zone)
 
 
 def limit_reached(calls_today: int, daily_limit: int) -> bool:

@@ -86,10 +86,11 @@ class StoryWriter:
         return result
 
     async def _check_limit(self, family: FamilyRef) -> None:
-        since = domain.day_start(self._clock.now())
+        now = self._clock.now()
+        start, end = domain.day_start(now), domain.day_end(now)
         async with self._uow() as uow:
-            calls_today = await uow.calls.count_since(family, since)
-            all_calls_today = await uow.calls.count_all_since(since)
+            calls_today = await uow.calls.count_between(family, start, end)
+            all_calls_today = await uow.calls.count_all_between(start, end)
         if domain.limit_reached(calls_today, self._daily_limit) or domain.limit_reached(
             all_calls_today, self._global_daily_limit
         ):

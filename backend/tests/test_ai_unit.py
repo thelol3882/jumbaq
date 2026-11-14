@@ -38,6 +38,11 @@ def test_the_day_starts_at_midnight_in_almaty() -> None:
     assert domain.day_start(datetime(2026, 11, 14, 18, 59, tzinfo=UTC)).day == 14
 
 
+def test_the_day_ends_at_the_next_midnight_in_almaty() -> None:
+    end = domain.day_end(datetime(2026, 11, 14, 20, 30, tzinfo=UTC))
+    assert end.isoformat() == "2026-11-16T00:00:00+05:00"
+
+
 def test_the_limit_is_reached_at_the_cap() -> None:
     assert not domain.limit_reached(39, 40)
     assert domain.limit_reached(40, 40)
