@@ -38,10 +38,11 @@ class CipherLevel(StrEnum):
 # out (knives, left the house). One list, easy to read and to extend. The stories are English
 # only, so the words are too.
 BANNED_WORDS = (
-    "knife", "knives", "scissors", "blade", "medicine", "pill", "tablet", "stove", "oven", "hob",
-    "matches", "matchbox", "lighter", "outlet", "socket", "plug", "wire", "street", "road",
-    "outside", "leave the home", "leave the house", "leave home", "left the home",
-    "left the house", "left home", "front door", "climb", "balcony", "window", "stranger",
+    "knife", "knives", "scissor", "scissors", "blade", "medicine", "medication", "pill",
+    "tablet", "stove", "oven", "hob", "matches", "matchbox", "matchstick", "lighter", "outlet",
+    "socket", "plug", "wire", "street", "road", "outside", "outdoor", "leave the home",
+    "leave the house", "leave home", "left the home", "left the house", "left home",
+    "front door", "climb", "balcony", "window", "stranger",
 )  # fmt: skip
 
 
@@ -58,12 +59,13 @@ def _forms(word: str) -> str:
 
 
 def _banned_pattern(entry: str) -> str:
-    # A phrase takes the forms on its first and last word, and any run of spaces between words.
+    # A phrase takes the forms on its first and last word, and any run of spaces or hyphens
+    # between words ("front door", "front-door").
     words = entry.split()
     if len(words) == 1:
         return _forms(words[0])
     middle = [re.escape(word) for word in words[1:-1]]
-    return r"\s+".join([_forms(words[0]), *middle, _forms(words[-1])])
+    return r"[\s-]+".join([_forms(words[0]), *middle, _forms(words[-1])])
 
 
 _BANNED = re.compile(
@@ -201,7 +203,8 @@ def text_limits(youngest_age: int) -> tuple[int, int]:
 
 
 def banned_words(text: str) -> list[str]:
-    return [" ".join(found.group(0).lower().split()) for found in _BANNED.finditer(text)]
+    found = (match.group(0).lower() for match in _BANNED.finditer(text))
+    return [" ".join(re.split(r"[\s-]+", word)) for word in found]
 
 
 def draft_problems(
