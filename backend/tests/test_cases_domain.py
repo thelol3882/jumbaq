@@ -206,8 +206,33 @@ def test_a_clue_over_the_length_limit_is_not_playable() -> None:
     assert problems(with_clue(1, replace(long, text=long.text[:-1]))) == []
 
 
-def test_the_built_in_plan_is_playable() -> None:
-    assert problems(FALLBACK_PLAN) == []
+@pytest.mark.parametrize("plan", domain.FALLBACK_PLANS, ids=lambda plan: plan.title)
+def test_every_built_in_plan_is_playable(plan: Plan) -> None:
+    assert problems(plan) == []
+
+
+def test_the_built_in_plans_have_their_own_worlds_titles_and_suspects() -> None:
+    plans = domain.FALLBACK_PLANS
+    assert len(plans) >= 3
+    assert len({plan.title for plan in plans}) == len(plans)
+    names = [suspect.name for plan in plans for suspect in plan.suspects]
+    assert len(set(names)) == len(names)
+    assert len({plan.culprit_id for plan in plans}) > 1
+
+
+def test_a_built_in_plan_is_written_in_american_english() -> None:
+    british = ("colour", "favourite", "cosy", "grey", "neighbour", "realise", "mum ")
+    for plan in domain.FALLBACK_PLANS:
+        texts = [plan.title, plan.setting, plan.reveal]
+        texts += [s.description for s in plan.suspects] + [c.text for c in plan.clues]
+        text = " ".join(texts).lower()
+        assert not [word for word in british if word in text]
+
+
+def test_the_built_in_plan_follows_the_case_number_and_wraps_round() -> None:
+    plans = domain.FALLBACK_PLANS
+    assert [domain.fallback_plan(n) for n in (1, 2, 3)] == list(plans)
+    assert domain.fallback_plan(len(plans) + 1) == plans[0]
 
 
 def test_the_status_moves_only_forward() -> None:
