@@ -19,6 +19,7 @@ def subscription_event(
     created: int | None = None,
     event_type: str = "customer.subscription.updated",
     event_id: str | None = None,
+    customer: str = "cus_test",
 ) -> dict[str, Any]:
     metadata = {"family_id": str(family_id)} if family_id else {}
     return {
@@ -31,7 +32,7 @@ def subscription_event(
             "object": {
                 "id": subscription_id,
                 "object": "subscription",
-                "customer": "cus_test",
+                "customer": customer,
                 "status": status,
                 "metadata": metadata,
             }

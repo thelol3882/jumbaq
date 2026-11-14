@@ -41,6 +41,8 @@ class ErrorCode(StrEnum):
     # No Stripe keys on this server. The rest of the app works.
     BILLING_NOT_CONFIGURED = "billing.not_configured"
     BILLING_UNAVAILABLE = "billing.unavailable"
+    # The family has no subscription that gives access, so there is nothing to manage.
+    BILLING_NO_SUBSCRIPTION = "billing.no_subscription"
 
     # cases
     # The family has no case yet: case 1 opens a moment after the setup.

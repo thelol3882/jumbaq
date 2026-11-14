@@ -75,6 +75,17 @@ class StripeProvider:
             raise BillingUnavailableError("Stripe gave no checkout url")
         return session.url
 
+    async def create_portal(self, customer_ref: str, return_url: str) -> str:
+        if self._client is None:
+            raise BillingNotConfiguredError("no Stripe secret key")
+        try:
+            session = await self._client.v1.billing_portal.sessions.create_async(
+                params={"customer": customer_ref, "return_url": return_url}
+            )
+        except (stripe.APIConnectionError, stripe.RateLimitError, stripe.APIError) as error:
+            raise BillingUnavailableError(type(error).__name__) from error
+        return session.url
+
     def parse_event(self, payload: bytes, signature: str | None) -> SubscriptionChange | None:
         if not self._webhook_secret:
             raise BillingNotConfiguredError("no Stripe webhook secret")

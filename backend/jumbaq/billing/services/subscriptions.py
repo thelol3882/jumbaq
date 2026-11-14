@@ -4,7 +4,7 @@ import logging
 
 from jumbaq.billing import domain
 from jumbaq.billing.domain import Subscription, SubscriptionChange
-from jumbaq.billing.errors import AlreadySubscribedError
+from jumbaq.billing.errors import AlreadySubscribedError, NoSubscriptionError
 from jumbaq.billing.events import SubscriptionActivated
 from jumbaq.billing.providers.base import PaymentProvider
 from jumbaq.billing.queries import SubscriptionView
@@ -34,6 +34,16 @@ class SubscriptionService:
             family.family_id,
             success_url=f"{self._web_app_url}/billing/success",
             cancel_url=f"{self._web_app_url}/billing/cancel",
+        )
+
+    async def open_portal(self, family: FamilyRef) -> str:
+        async with self._uow() as uow:
+            subscription = await uow.subscriptions.latest_with_access(family)
+        if subscription is None:
+            raise NoSubscriptionError()
+        # Outside the transaction: the provider call can take seconds.
+        return await self._provider.create_portal(
+            subscription.customer_ref, return_url=f"{self._web_app_url}/family"
         )
 
     async def receive_webhook(self, payload: bytes, signature: str | None) -> None:

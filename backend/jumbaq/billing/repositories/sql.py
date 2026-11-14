@@ -4,7 +4,7 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jumbaq.billing.domain import Subscription, SubscriptionStatus
+from jumbaq.billing.domain import ACCESS_STATUSES, Subscription, SubscriptionStatus
 from jumbaq.billing.models import PaymentEventRow, SubscriptionRow
 from jumbaq.core.family import FamilyRef
 
@@ -18,6 +18,33 @@ class SqlSubscriptionRepository:
             select(SubscriptionRow.status).where(SubscriptionRow.family_id == family.family_id)
         )
         return [SubscriptionStatus(status) for status in rows]
+
+    async def latest_with_access(self, family: FamilyRef) -> Subscription | None:
+        row = (
+            await self._session.execute(
+                select(
+                    SubscriptionRow.provider_ref,
+                    SubscriptionRow.customer_ref,
+                    SubscriptionRow.status,
+                    SubscriptionRow.changed_at,
+                )
+                .where(
+                    SubscriptionRow.family_id == family.family_id,
+                    SubscriptionRow.status.in_(ACCESS_STATUSES),
+                )
+                .order_by(SubscriptionRow.changed_at.desc())
+                .limit(1)
+            )
+        ).first()
+        if row is None:
+            return None
+        return Subscription(
+            family.family_id,
+            row.provider_ref,
+            row.customer_ref,
+            SubscriptionStatus(row.status),
+            row.changed_at,
+        )
 
     async def get_for_update(self, family: FamilyRef, provider_ref: str) -> Subscription | None:
         row = (
