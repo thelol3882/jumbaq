@@ -1,11 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import type { SetupDraft } from "../services/setupForm";
 
 /** The manila case file filling in while the parent answers the setup. */
 export function CaseFilePreview({ draft }: { draft: SetupDraft }) {
   const t = useTranslations("families");
+  const format = useFormatter();
   const kids = draft.kids.filter((k) => k.nickname.trim());
   const empty = <span className="font-type text-label text-tag-ink">{t("preview.empty")}</span>;
 
@@ -26,9 +27,9 @@ export function CaseFilePreview({ draft }: { draft: SetupDraft }) {
               : empty}
           </dd>
           <dt className="font-type text-label font-bold text-evidence-label">{t("rooms.title")}</dt>
-          <dd className="text-[1.1875rem] leading-[1.35]">{draft.rooms.length ? draft.rooms.join(", ") : empty}</dd>
+          <dd className="text-[1.1875rem] leading-[1.35]">{draft.rooms.length ? format.list(draft.rooms) : empty}</dd>
           <dt className="font-type text-label font-bold text-evidence-label">{t("objects.title")}</dt>
-          <dd className="text-[1.1875rem] leading-[1.35]">{draft.objects.length ? draft.objects.join(", ") : empty}</dd>
+          <dd className="text-[1.1875rem] leading-[1.35]">{draft.objects.length ? format.list(draft.objects) : empty}</dd>
         </dl>
       </div>
     </div>
