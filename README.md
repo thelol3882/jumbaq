@@ -30,6 +30,14 @@ brand/     logo, colours, type and tokens for the web app
 
 How the backend is built and the rules for changing it: [backend/AGENTS.md](backend/AGENTS.md). The web app: [web/app/AGENTS.md](web/app/AGENTS.md).
 
+## Limitations
+
+There are no accounts. A family lives in a cookie on one browser for a year. A new phone, another browser or cleared browser data loses the family and its progress. For a subscriber that also means the subscription can't be managed from the new device.
+
+## Roadmap
+
+An optional email to save the family and move it to another device. Playing as a guest stays the default.
+
 ## Deploy
 
 [Luxen](luxen.yaml) builds the backend and web images, pushes them to ghcr.io and deploys them to the server with `deploy/docker-compose.yml`. The web app is at https://jumbaq.fun, the API at https://api.jumbaq.fun. The server `.env` comes from `.env.example`.
