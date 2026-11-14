@@ -12,7 +12,7 @@
   "accuse": {
     "pickOne": "Pick one",
     "submit": "Accuse {name}",
-    "submitEmpty": "Pick a suspect first",
+    "submitEmpty": "Pick a suspect",
     "wrong": "The clues don't match. Read them again and look once more.",
     "noteLead": "grown-ups:",
     "note": "a wrong pick just gets \"look again\". There is no losing."

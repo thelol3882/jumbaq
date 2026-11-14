@@ -16,7 +16,8 @@ export function tonight(current: Case, now: Date): Tonight {
   if (current.status === "accusing") return { kind: "accuse" };
   if (isBeingWritten(current)) return { kind: "writing" };
   const evening = nextEvening(current.episodes);
-  if (!evening || evening.status === "failed") return { kind: "failed" };
+  if (!evening) return { kind: "writing" };
+  if (evening.status === "failed") return { kind: "failed" };
   if (evening.status === "locked") return { kind: "writing" };
   if (opensLater(evening, now) && evening.available_at) {
     return { kind: "waits", evening, opensAt: evening.available_at };
