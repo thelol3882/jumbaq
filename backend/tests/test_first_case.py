@@ -10,8 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from jumbaq.cases.models import CaseRow
 from jumbaq.core.outbox import OutboxDelivery, OutboxRow
 from jumbaq.families.public import FamilyCreated
-from jumbaq.worker.main import build_handlers
-from tests.flows import create_family
+from tests.flows import create_family, stub_handlers
 
 pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("quiet_outbox")]
 
@@ -40,7 +39,7 @@ async def test_a_new_family_gets_case_1_after_the_worker_runs(
         assert list(topics) == [FamilyCreated.topic]
     assert await cases_of(sessionmaker, family_id) == []
 
-    await OutboxDelivery(sessionmaker, build_handlers(sessionmaker)).deliver_due()
+    await OutboxDelivery(sessionmaker, stub_handlers(sessionmaker)).deliver_due()
 
     assert await cases_of(sessionmaker, family_id) == [(1, "planning")]
     live_client.get("/api/v1/family").raise_for_status()
@@ -50,7 +49,7 @@ async def test_the_handler_is_safe_to_run_twice(
     live_client: TestClient, sessionmaker: Sessionmaker
 ) -> None:
     family_id, _ = create_family(live_client)
-    family_created = build_handlers(sessionmaker)[FamilyCreated][0]
+    family_created = stub_handlers(sessionmaker)[FamilyCreated][0]
 
     await family_created(FamilyCreated(family_id))
     await family_created(FamilyCreated(family_id))
