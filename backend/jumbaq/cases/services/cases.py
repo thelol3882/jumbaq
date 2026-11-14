@@ -21,7 +21,7 @@ from jumbaq.core.clock import Clock
 from jumbaq.core.family import FamilyRef
 from jumbaq.episodes.public import EpisodeSlot
 
-# The status of an episode that does not exist yet.
+# Not an episode status: the case screen shows it for a slot whose episode is not requested yet.
 LOCKED = "locked"
 
 

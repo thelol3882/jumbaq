@@ -29,8 +29,8 @@ class AiBadOutputError(AppError):
 
 
 class AiUnavailableError(AppError):
-    """Temporary: a timeout, a network error, a 429 or a 5xx of the provider. A handler lets it
-    go up, so the outbox tries the event again later."""
+    """A temporary failure: a timeout, a network error, a 429 or a 5xx of the provider. A handler
+    lets it go up, so the outbox tries the event again later."""
 
     status = 503
     code = ErrorCode.AI_UNAVAILABLE

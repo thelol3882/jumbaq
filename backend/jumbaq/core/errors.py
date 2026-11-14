@@ -61,10 +61,10 @@ class TooLargeError(AppError):
 
 
 class FieldError(AppError):
-    """A field is wrong, but only the database can tell, for example an unknown room.
+    """A field is wrong, but only the database can tell, for example an unknown suspect.
 
     The answer looks like a validation error of pydantic:
-    {"code": "common.validation_failed", "fields": {"room": "case.room_not_found"}}
+    {"code": "common.validation_failed", "fields": {"suspect_id": "case.unknown_suspect"}}
     """
 
     status = 422

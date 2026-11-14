@@ -11,7 +11,7 @@ router = APIRouter(tags=["billing"])
 
 @router.post("/billing/checkout")
 async def start_checkout(family: FamilyDep, billing: SubscriptionServiceDep) -> CheckoutOut:
-    """A Stripe payment page (test mode) for $7.99 a month. An active subscription gives 409
+    """A Stripe payment page (test mode) for the monthly price. An active subscription gives 409
     `billing.already_subscribed`; a server without Stripe keys gives 503
     `billing.not_configured`."""
     return CheckoutOut(url=await billing.start_checkout(family))
@@ -26,5 +26,5 @@ async def open_portal(family: FamilyDep, billing: SubscriptionServiceDep) -> Por
 
 @router.get("/billing/subscription")
 async def get_subscription(family: FamilyDep, billing: SubscriptionServiceDep) -> SubscriptionOut:
-    """`status` is null before the first payment. `active` opens the cases after the free one."""
+    """`status` is null before the first payment. `active` opens the cases after the free cases."""
     return SubscriptionOut.model_validate(await billing.get(family))
