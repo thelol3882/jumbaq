@@ -46,7 +46,7 @@ The screens are from the live site: "The Case of the Missing Magic Wand", writte
 ## Inside
 
 <p align="center">
-  <img src="docs/images/core.webp" width="100%" alt="Five cards in a row: your home, code plans the evening, Claude writes, code checks the draft, refuse or show. An arrow goes back from the check to the model: rewrite, with the reason. In the playtest 1 of 19 drafts was refused.">
+  <img src="docs/images/core.webp" width="100%" alt="Five cards in a row: your home, code plans the evening, Claude writes, code checks the draft, refuse or show. An arrow goes back from the check to the model: rewrite, with the reason. On the live site 4 of 21 drafts were refused.">
 </p>
 
 **The model writes, code decides.** The case plan and every evening come from the model as strict JSON. Before a family sees anything, code checks the draft and sends it back with the reason if it fails:
