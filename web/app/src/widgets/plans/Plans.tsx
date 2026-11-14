@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ManageSubscription, useCheckout, useGetSubscriptionQuery } from "@/features/billing";
-import { useFamily, useStartHref } from "@/features/families";
+import { useDetectivesLabel, useFamily, useStartHref } from "@/features/families";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
-import { HandNote, NotebookPage, StampButton, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, HandNote, NotebookPage, StampButton, StampLink, TypedButton, Wordmark } from "@/shared/components/notebook";
 
 /** The price, the way to pay and the way to cancel. Open to a visitor with no family. One column on every screen. */
 export function Plans() {
@@ -16,15 +16,19 @@ export function Plans() {
   const hinted = startHref !== "/setup";
   const { family, missing, error, retry } = useFamily({ skip: !hinted });
   const subscription = useGetSubscriptionQuery(undefined, { skip: !family });
+  const detectivesLabel = useDetectivesLabel();
   const { checkout, redirecting, error: checkoutError } = useCheckout();
   const subscribed = subscription.data?.active === true;
   const anonymous = !hinted || missing;
 
   return (
     <NotebookPage margin>
-      <Link href="/" className="self-start">
-        <Wordmark text={t("wordmark")} size="sm" />
-      </Link>
+      <div className="flex flex-col items-start">
+        <Link href="/">
+          <Wordmark text={t("wordmark")} size="sm" />
+        </Link>
+        {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
+      </div>
       <h1 className="mt-8 text-title">{t("title")}</h1>
       <ul className="mt-6 flex flex-col gap-3">
         <li className="text-body">{t("free")}</li>

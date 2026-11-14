@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { HandNote, NotebookPage, NotebookSpread, PlansLink, RiddleCard, StampLink, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, HandNote, NotebookPage, NotebookSpread, PlansLink, RiddleCard, StampLink, Wordmark } from "@/shared/components/notebook";
 import { ForReviewers, Headline, Steps, WelcomeCard, type Welcome } from "./parts";
 
 /** Design F1: the story on the left page, a real page of a case on the right. */
@@ -9,6 +9,7 @@ export function LandingDesktop({ startHref, welcome }: { startHref: string; welc
     <NotebookPage width="wide">
       <header className="flex flex-wrap items-center justify-between gap-6 font-type text-label text-ink-muted">
         <span>{t("volume")}</span>
+        {welcome?.tag ? <DetectivesTag text={welcome.tag} /> : null}
         <span>{t("facts")}</span>
         <PlansLink />
       </header>

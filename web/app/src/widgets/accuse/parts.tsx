@@ -13,6 +13,7 @@ export type AccuseViewProps = {
   current: Case;
   solved: Accusation | null;
   onSolved: (result: Accusation) => void;
+  detectivesLabel: string | undefined;
 };
 
 export function SolvedStory({ current, solved, large = false }: { current: Case; solved: Accusation | null; large?: boolean }) {

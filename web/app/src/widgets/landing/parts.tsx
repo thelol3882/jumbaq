@@ -3,19 +3,19 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import type { CaseProgress } from "@/features/cases";
-import { EvidenceTag, HandNote, PlansLink, StampLink, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, EvidenceTag, HandNote, PlansLink, StampLink, Wordmark } from "@/shared/components/notebook";
 
 const STEPS = ["read", "hunt", "type"] as const;
 // The hand-drawn list is a little uneven on purpose.
 const STEP_INDENT = ["", "ml-3.5", "ml-1"] as const;
 
-export function Masthead() {
+export function Masthead({ tag }: { tag: string | undefined }) {
   const t = useTranslations("widget.landing");
   return (
     <>
       <div className="flex items-center justify-between gap-3 font-type text-label text-ink-muted">
         <span>{t("volume")}</span>
-        <span>{t("edition")}</span>
+        {tag ? <DetectivesTag text={tag} /> : <span>{t("edition")}</span>}
         <PlansLink />
       </div>
       <h1 className="mt-4.5 self-start">
@@ -67,7 +67,7 @@ export function ExampleCase() {
 }
 
 /** What the landing knows of a returning family: its names, already formatted, and where its case stands. */
-export type Welcome = { names: string; count: number; progress: CaseProgress | undefined };
+export type Welcome = { names: string; tag: string | undefined; count: number; progress: CaseProgress | undefined };
 
 /** Instead of the call to action: the family this browser remembers, its case and the way back in. */
 export function WelcomeCard({ welcome }: { welcome: Welcome }) {

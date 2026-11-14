@@ -3,18 +3,20 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { EveningBoxes, inOpening, type Case } from "@/features/cases";
 import { FamilySummary, type FamilyState } from "@/features/families";
-import { NotebookPage, PlansLink, Wordmark } from "@/shared/components/notebook";
+import { DetectivesTag, NotebookPage, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
 import { Manage } from "./Manage";
 import { Tonight, TonightPending, type Waiting } from "./Tonight";
 
 export function FamilyMobile({
   family,
+  detectivesLabel,
   current,
   waiting,
   problem,
 }: {
   family: FamilyState;
+  detectivesLabel: string | undefined;
   current: Case | undefined;
   waiting: Waiting;
   /** Shown instead of tonight when the case did not load. */
@@ -25,9 +27,12 @@ export function FamilyMobile({
   return (
     <NotebookPage margin>
       <div className="flex items-center justify-between gap-4">
-        <Link href="/">
-          <Wordmark text={t("wordmark")} size="sm" />
-        </Link>
+        <div className="flex flex-col items-start">
+          <Link href="/">
+            <Wordmark text={t("wordmark")} size="sm" />
+          </Link>
+          {detectivesLabel ? <DetectivesTag text={detectivesLabel} /> : null}
+        </div>
         <div className="flex items-center gap-4">
           {current ? <EveningBoxes episodes={current.episodes} /> : null}
           <PlansLink />

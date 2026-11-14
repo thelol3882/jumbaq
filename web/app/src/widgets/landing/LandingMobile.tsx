@@ -5,7 +5,7 @@ import { ExampleCase, Headline, ForReviewers, Masthead, Start, Steps, WelcomeCar
 export function LandingMobile({ startHref, welcome }: { startHref: string; welcome: Welcome | undefined }) {
   return (
     <NotebookPage>
-      <Masthead />
+      <Masthead tag={welcome?.tag} />
       <div className="mt-5.5">
         <Headline />
       </div>
