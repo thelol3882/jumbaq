@@ -100,6 +100,7 @@ SHIFT_AGE = 8
 # Wrong picks in one step before the server shows the right answer and moves on.
 MAX_ATTEMPTS = 2
 SECRET_WORD_LENGTHS = range(4, 8)
+CONTENT_WORD_LENGTH = 4
 # The count level hides a short word: the kids point at a box, not read a cipher.
 COUNT_WORD_LENGTHS = range(3, 7)
 COUNT_BOXES = 5
@@ -288,12 +289,76 @@ def is_english(text: str) -> bool:
     return common / len(words) >= ENGLISH_MIN_SHARE
 
 
+# Letters only, so "Daisy's" is Daisy and a lone s.
+_PLAIN_WORD = re.compile(r"[A-Za-z]+")
+
+
+@dataclass(frozen=True)
+class DraftContext:
+    """What the episode writer knows beyond the home: the brief of the evening. The checks that
+    need a part of it are skipped when it is missing."""
+
+    clue_text: str = ""
+    clue_suspect: str = ""
+    suspect_names: tuple[str, ...] = ()
+
+
+def _name_words(names: tuple[str, ...]) -> set[str]:
+    # "Felix the Fox" is Felix and Fox: a story names a suspect by either.
+    return {
+        word.lower()
+        for name in names
+        for word in _PLAIN_WORD.findall(name)
+        if len(word) >= 3 and word.lower() not in STOPWORDS
+    }
+
+
+def _stem(word: str) -> str:
+    return word[:-1] if word.endswith("s") and len(word) > 4 else word
+
+
+def clue_content_words(clue: str, suspect_names: tuple[str, ...]) -> set[str]:
+    """The words that carry the clue: 4 letters or more, no filler word, no suspect name."""
+    names = _name_words(suspect_names)
+    return {
+        _stem(word.lower())
+        for word in _PLAIN_WORD.findall(clue)
+        if len(word) >= CONTENT_WORD_LENGTH
+        and word.lower() not in STOPWORDS
+        and word.lower() not in names
+    }
+
+
+def retold_clue(paragraphs: tuple[str, ...], context: DraftContext) -> list[str]:
+    """The story must not give away the clue before the kids decode it: a paragraph that names
+    the suspect of the clue together with a word of the clue tells what the clue tells."""
+    if not context.clue_suspect or not context.clue_text:
+        return []
+    suspect = _name_words((context.clue_suspect,))
+    content = clue_content_words(context.clue_text, context.suspect_names)
+    found = []
+    for index, text in enumerate(paragraphs, start=1):
+        words = [word.lower() for word in _PLAIN_WORD.findall(text)]
+        if not suspect.intersection(words):
+            continue
+        shared = sorted(content.intersection(_stem(word) for word in words))
+        if shared:
+            found.append(
+                f"the story tells the clue before the kids decode it: read_aloud paragraph "
+                f"{index} names {context.clue_suspect} together with {', '.join(shared)}; the "
+                "clue is found only after the strike, so say nothing about that suspect "
+                "being cleared or suspected tonight"
+            )
+    return found
+
+
 def draft_problems(
     payload: Payload,
     objects: tuple[str, ...],
     youngest_age: int,
     slot: str,
     secret: str | None = None,
+    context: DraftContext | None = None,
 ) -> list[str]:
     """Why the episode cannot be read to the kids. Empty when it is fine."""
     problems = []
@@ -334,6 +399,7 @@ def draft_problems(
                 f"a read_aloud paragraph is too long: paragraph {index} has {len(text)} "
                 f"characters, the limit is {paragraph_max}"
             )
+    problems += retold_clue(payload.read_aloud, context or DraftContext())
     named = [(f"read_aloud paragraph {i}", text) for i, text in enumerate(payload.read_aloud, 1)]
     # The clue is the plan's text, checked when the case was planned: the episode cannot fix it.
     own = [(name, text) for name, text in _named_short_texts(payload) if name != "case_clue"]
@@ -610,8 +676,8 @@ def _decoys(
     seen: set[str],
     how_many: int = 2,
 ) -> tuple[str, ...]:
-    """The wrong buttons, two unless told otherwise. None of their words is in the clue, because the kids would see that
-    it is not the missing one."""
+    """The wrong buttons, two unless told otherwise. None of their words is in the clue,
+    because the kids would see that it is not the missing one."""
     chosen: list[str] = []
     for text in _length_order(candidates, secret) + _length_order(list(fallback), secret):
         if text == secret or text in chosen or any(word in seen for word in text.split()):

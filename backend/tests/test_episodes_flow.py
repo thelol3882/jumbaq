@@ -73,6 +73,10 @@ def unsafe(data: dict[str, Any]) -> None:
     data["hint"] = "Climb on the chair by the window."
 
 
+def retells_the_clue(data: dict[str, Any]) -> None:
+    data["read_aloud"][0] += " Felix the Fox said that the feather was nothing."
+
+
 def wrong_shape(data: dict[str, Any]) -> None:
     data.clear()
 
@@ -255,7 +259,7 @@ async def test_an_episode_is_answered_once_and_swapped_once(
     assert twice.json()["error"]["code"] == "episode.wrong_step"
 
 
-@pytest.mark.parametrize("change", [unsafe, wrong_shape])
+@pytest.mark.parametrize("change", [unsafe, wrong_shape, retells_the_clue])
 async def test_two_bad_episodes_give_the_built_in_one(
     live_client: TestClient, sessionmaker: Sessionmaker, change: Any
 ) -> None:

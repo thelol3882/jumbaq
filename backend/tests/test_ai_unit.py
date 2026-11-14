@@ -241,6 +241,16 @@ async def test_the_stub_writes_the_story_to_the_word_budget() -> None:
         assert low_p <= len(paragraphs) <= high_p
 
 
+async def test_the_episode_prompt_keeps_the_clue_out_of_the_story() -> None:
+    plan = await _stub_plan(1)
+    task = EpisodeInput(HOME, plan.title, plan.setting, plan.suspects, 1, plan.clues[0], ())
+
+    system = prompts.episode_prompt(task).system
+
+    assert "only after the riddle and the code" in system
+    assert "cleared or suspected tonight" in system
+
+
 async def test_a_retry_says_why_the_last_draft_was_refused() -> None:
     plan = await _stub_plan(1)
     reason = "unsafe for small kids: climb in hint; leave the word out entirely"
