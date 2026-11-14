@@ -85,14 +85,27 @@ def _plan(case_number: int) -> dict[str, Any]:
     return json.loads(text)
 
 
+_ASKS = {
+    AnswerType.NUMBER: "What number do you see on me?",
+    AnswerType.COLOUR: "What color am I?",
+    AnswerType.LETTER: "What letter do you see on me?",
+    AnswerType.SHAPE: "What shape am I?",
+    AnswerType.WORD: "What word do you see on me?",
+}
+# The stored value stays "colour", the texts are American.
+_NAMES = {AnswerType.COLOUR: "color"}
+
+
 def _riddle(objects: list[str], index: int, target: str | None = None) -> dict[str, Any]:
     target = target or objects[index % len(objects)]
     answer_type = _ANSWER_TYPES[index % len(_ANSWER_TYPES)]
+    name = _NAMES.get(answer_type, answer_type.value)
     return {
-        "text": f"I am somewhere in your home and my name is {target}. Find me!",
+        "text": f"I am somewhere in your home and my name is {target}. Find me! "
+        f"{_ASKS[answer_type]}",
         "target_object": target,
         "answer_type": answer_type.value,
-        "parent_note": f"Go to the {target} and let the kids tell you its {answer_type.value}.",
+        "parent_note": f"Go to the {target} and let the kids tell you its {name}.",
     }
 
 

@@ -42,10 +42,15 @@ def story(words: int, paragraphs: int = 3) -> tuple[str, ...]:
 GOOD = Payload(
     recap="Last time you found the first clue.",
     read_aloud=story(100),
-    riddle=Riddle("I keep the milk cold.", "fridge", "colour", "Look at the fridge door."),
+    riddle=Riddle(
+        "I keep the milk cold. What color is my door?",
+        "fridge",
+        "colour",
+        "Look at the fridge door.",
+    ),
     hint="It hums in the kitchen.",
     fallback_riddle=Riddle(
-        "You sit on me.",
+        "You sit on me. How many cushions do I have?",
         "sofa",
         "number",
         "Count the cushions.",
@@ -289,7 +294,7 @@ def test_the_built_in_story_fits_the_word_budget_of_every_age(age: int) -> None:
 
 
 def test_the_built_in_episode_keeps_a_safe_riddle_of_the_model() -> None:
-    model_riddle = Riddle("I boil water.", "kettle", "colour", "Look at the kettle.")
+    model_riddle = Riddle("I boil water. What color am I?", "kettle", "colour", "Look at it.")
     payload = domain.built_in_payload(
         "A case", "Clue.", OBJECTS, 2, False, ANSWER_SLOT, model_riddle
     )
@@ -852,3 +857,100 @@ def test_the_built_in_episode_uses_the_picked_objects() -> None:
         "kettle",
         "sofa",
     )
+
+
+@pytest.mark.parametrize(
+    ("text", "american"),
+    [
+        ("What colour is it?", "color"),
+        ("Her favourite cosy blanket", "favorite"),
+        ("A grey cat and two GREYS", "gray"),
+        ("The neighbour's centre", "neighbor"),
+        ("Mum realised the colourful tune", "mom"),
+        ("They organised the honour roll", "organized"),
+    ],
+)
+def test_british_spellings_are_found_with_the_american_one(text: str, american: str) -> None:
+    found = domain.british_spellings(text)
+
+    assert found != [] and any(american in word for word in found), found
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "What color is it? A cozy gray blanket, my neighbor and mom at the center.",
+        "The mummy, the greyhound's cousin: gray. A mumble, a colored pencil, the realm.",
+    ],
+)
+def test_american_spellings_and_other_words_pass(text: str) -> None:
+    if "greyhound" in text:
+        text = text.replace("greyhound's", "hound's")
+    assert domain.british_spellings(text) == []
+
+
+def test_a_draft_with_a_british_spelling_is_refused_with_a_clear_reason() -> None:
+    payload = replace(GOOD, hint="Look for the favourite colour.")
+
+    found = [f for f in problems(payload) if "british spelling" in f]
+
+    assert len(found) == 1
+    assert "favourite (favorite)" in found[0] and "colour (color)" in found[0]
+    assert "in hint" in found[0] and "american" in found[0]
+
+
+def test_the_clue_of_the_plan_may_be_british() -> None:
+    assert problems(replace(GOOD, case_clue="A grey feather and a colourful plate.")) == []
+
+
+def test_the_built_in_texts_are_american() -> None:
+    for objects in (OBJECTS, ()):
+        for number in range(1, 6):
+            payload = domain.built_in_payload("A", "C.", objects, number, number == 5, ANSWER_SLOT)
+
+            texts = [payload.recap, payload.hint, *payload.read_aloud]
+            for riddle in (payload.riddle, payload.fallback_riddle):
+                texts += [riddle.text, riddle.parent_note]
+            assert domain.british_spellings(" ".join(texts)) == []
+            assert all(domain.asks_for_answer(r) for r in (payload.riddle, payload.fallback_riddle))
+            assert payload.riddle.answer_type == "colour"
+
+
+def test_a_riddle_that_asks_for_nothing_is_refused_main_and_fallback() -> None:
+    bare = replace(GOOD.riddle, text="I keep the milk cold. What am I?")
+    other = replace(GOOD.fallback_riddle, text="You sit on me. What am I?")
+
+    main_only = problems(replace(GOOD, riddle=bare))
+    fallback_only = problems(replace(GOOD, fallback_riddle=other))
+
+    assert any("the riddle asks for nothing" in f and "color" in f for f in main_only)
+    assert any(
+        "the fallback riddle asks for nothing" in f and "how many" in f for f in fallback_only
+    )
+
+
+@pytest.mark.parametrize(
+    ("answer_type", "good", "bad"),
+    [
+        ("number", "How many legs do I have?", "What am I?"),
+        ("number", "What number is on my door?", "What color am I?"),
+        ("colour", "What color am I?", "How many am I?"),
+        ("letter", "Which letter starts my name?", "What word is on me?"),
+        ("shape", "What shape is my top?", "What number is on me?"),
+        ("word", "Which word is written on me?", "What letter is on me?"),
+    ],
+)
+def test_a_riddle_must_have_the_ask_word_of_its_answer_type(
+    answer_type: str, good: str, bad: str
+) -> None:
+    riddle = Riddle("Find me.", "fridge", answer_type, "Look.")
+
+    assert domain.asks_for_answer(replace(riddle, text=f"Find me. {good}"))
+    assert not domain.asks_for_answer(replace(riddle, text=f"Find me. {bad}"))
+
+
+def test_a_riddle_that_asks_for_nothing_is_not_kept_for_the_built_in_episode() -> None:
+    bare = Riddle("I keep the milk cold. What am I?", "fridge", "colour", "Look.")
+
+    assert not domain.is_safe_riddle(bare, OBJECTS, 7)
+    assert not domain.is_safe_riddle(replace(bare, text="What colour am I?"), OBJECTS, 7)

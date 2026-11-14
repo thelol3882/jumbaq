@@ -251,6 +251,43 @@ async def test_the_episode_prompt_keeps_the_clue_out_of_the_story() -> None:
     assert "cleared or suspected tonight" in system
 
 
+async def test_the_episode_prompt_sets_the_style_rules() -> None:
+    plan = await _stub_plan(1)
+    task = EpisodeInput(HOME, plan.title, plan.setting, plan.suspects, 2, plan.clues[1], ())
+
+    system = prompts.episode_prompt(task).system
+
+    assert "American English only" in system and "colour" in system
+    assert "read in the evening" in system and "Good morning" in system
+    assert "never turns their answer into a fact of the plot" in system
+    assert "without inventing a new sound" in system
+    assert "never repeats a cliffhanger of earlier_episodes" in system
+    assert "ends with a question that asks for the value of answer_type" in system
+
+
+async def test_the_earlier_cliffhangers_go_into_the_data() -> None:
+    plan = await _stub_plan(1)
+    played = (PlayedEpisode(1, "fridge", "7", "A squeak came from under the table."),)
+    task = EpisodeInput(HOME, plan.title, plan.setting, plan.suspects, 2, plan.clues[1], played)
+
+    assert "A squeak came from under the table." in prompts.episode_prompt(task).user
+
+
+async def test_the_stub_riddles_ask_for_their_value_in_american_english() -> None:
+    plan = await _stub_plan(1)
+    for number in range(1, 6):
+        task = EpisodeInput(
+            HOME, plan.title, plan.setting, plan.suspects, number, plan.clues[number - 1], ()
+        )
+        reply = await StubProvider().complete_json(
+            prompts.episode_prompt(task), prompts.EPISODE_SCHEMA
+        )
+        episode = parsing.episode_draft(reply.data)
+
+        for riddle in (episode.riddle, episode.fallback_riddle):
+            assert riddle.text.endswith("?") and "colour" not in riddle.parent_note
+
+
 async def test_a_retry_says_why_the_last_draft_was_refused() -> None:
     plan = await _stub_plan(1)
     reason = "unsafe for small kids: climb in hint; leave the word out entirely"
