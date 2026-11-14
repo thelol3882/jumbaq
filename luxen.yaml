@@ -143,6 +143,7 @@ env:
       { required: true, default: "https://jumbaq.fun", description: "Web app origins that may call the API with cookies; comma separated" }
     JUMBAQ_AI_PROVIDER: { default: "stub", description: "stub | claude | openrouter (laptops); a real model needs JUMBAQ_AI_API_KEY" }
     JUMBAQ_AI_API_KEY: { secret: true, description: "Anthropic API key from console.anthropic.com" }
+    JUMBAQ_AI_DAILY_CALL_LIMIT: { default: "400", description: "Model calls a day for all families together; past it the daily-limit error answers" }
     JUMBAQ_STRIPE_SECRET_KEY: { secret: true, description: "Stripe test key (sk_test_...); live keys are refused" }
     JUMBAQ_STRIPE_WEBHOOK_SECRET: { secret: true, description: "whsec_... of the webhook endpoint in the Stripe dashboard" }
     JUMBAQ_DEMO_MODE: { default: "true", description: "true allows opening the next episode at once, for the jury; false for real families" }

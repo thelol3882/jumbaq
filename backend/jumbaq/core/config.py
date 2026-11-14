@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     ai_timeout_seconds: float = 60
     # Every call costs money, so one family cannot start an endless chain of them.
     ai_daily_calls_per_family: int = 40
+    # The same cap for all families together, so many new families cannot spend without end.
+    ai_daily_call_limit: int = 400
 
     # Test mode only: the app refuses a live key, so no real money can move.
     stripe_secret_key: SecretStr | None = None

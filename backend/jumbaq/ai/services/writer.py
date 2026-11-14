@@ -1,4 +1,5 @@
-"""Asks the model for a case plan or an episode, within the daily cap of the family."""
+"""Asks the model for a case plan or an episode, within the daily cap of the family and the
+daily cap of all families together."""
 
 import time
 from collections.abc import Callable
@@ -24,12 +25,18 @@ from jumbaq.core.family import FamilyRef
 
 class StoryWriter:
     def __init__(
-        self, uow: AiUoWFactory, provider: Provider, clock: Clock, daily_limit: int
+        self,
+        uow: AiUoWFactory,
+        provider: Provider,
+        clock: Clock,
+        daily_limit: int,
+        global_daily_limit: int,
     ) -> None:
         self._uow = uow
         self._provider = provider
         self._clock = clock
         self._daily_limit = daily_limit
+        self._global_daily_limit = global_daily_limit
 
     async def plan_case(self, family: FamilyRef, task: CasePlanInput) -> CaseDraft:
         return await self._call(
@@ -82,7 +89,10 @@ class StoryWriter:
         since = domain.day_start(self._clock.now())
         async with self._uow() as uow:
             calls_today = await uow.calls.count_since(family, since)
-        if domain.limit_reached(calls_today, self._daily_limit):
+            all_calls_today = await uow.calls.count_all_since(since)
+        if domain.limit_reached(calls_today, self._daily_limit) or domain.limit_reached(
+            all_calls_today, self._global_daily_limit
+        ):
             raise AiDailyLimitError()
 
     async def _record(

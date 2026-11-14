@@ -30,6 +30,8 @@ TEST_SETTINGS = Settings(
     environment="test",
     database_url="postgresql+asyncpg://unused:unused@unused:5432/unused",
     redis_url="redis://unused:6379/0",
+    # Tests never clean the database, so the shared daily cap must not run out across runs.
+    ai_daily_call_limit=1_000_000,
 )
 
 # What the web app sends with every request. HTTPS, so the client sends the Secure cookie back.

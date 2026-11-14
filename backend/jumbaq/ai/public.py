@@ -52,6 +52,7 @@ def build_story_writer(
         provider or build_provider(settings),
         clock,
         settings.ai_daily_calls_per_family,
+        settings.ai_daily_call_limit,
     )
 
 
