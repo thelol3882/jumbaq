@@ -51,6 +51,8 @@ class SubscriptionChange:
     # The time of the event at the provider, not when it reached us.
     changed_at: datetime
     event_type: str = ""
+    # When an active subscription ends because the parent canceled it, else None.
+    cancels_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -60,6 +62,7 @@ class Subscription:
     customer_ref: str
     status: SubscriptionStatus
     changed_at: datetime
+    cancels_at: datetime | None = None
 
 
 def gives_access(status: SubscriptionStatus | None) -> bool:

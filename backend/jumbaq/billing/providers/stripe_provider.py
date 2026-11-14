@@ -3,6 +3,7 @@
 import logging
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 import stripe
 
@@ -119,4 +120,18 @@ class StripeProvider:
             status=status,
             changed_at=datetime.fromtimestamp(event.created, UTC),
             event_type=event.type,
+            cancels_at=_cancels_at(subscription),
         )
+
+
+def _cancels_at(subscription: dict[str, Any]) -> datetime | None:
+    """When Stripe will end the subscription: `cancel_at` if set, else the end of the paid period
+    for a cancel at period end, else None (not canceled, or the cancel was undone)."""
+    end = subscription.get("cancel_at")
+    if end is None and subscription.get("cancel_at_period_end"):
+        end = subscription.get("current_period_end")
+        if end is None:
+            # Newer API versions keep the period on the items.
+            items = (subscription.get("items") or {}).get("data") or []
+            end = items[0].get("current_period_end") if items else None
+    return datetime.fromtimestamp(end, UTC) if end is not None else None

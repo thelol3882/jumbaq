@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 from jumbaq.billing.domain import SubscriptionStatus
@@ -18,6 +20,8 @@ class SubscriptionOut(BaseModel):
 
     status: SubscriptionStatus | None
     active: bool
+    # Set while the subscription is active but canceled: access lasts until this time.
+    cancels_at: datetime | None
 
 
 class WebhookOut(BaseModel):

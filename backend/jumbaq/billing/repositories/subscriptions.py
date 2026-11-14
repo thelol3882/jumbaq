@@ -26,6 +26,7 @@ class SubscriptionRepository(Protocol):
         provider_ref: str,
         status: SubscriptionStatus,
         changed_at: datetime,
+        cancels_at: datetime | None,
     ) -> None: ...
 
     async def remember_event(

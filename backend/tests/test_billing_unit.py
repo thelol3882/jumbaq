@@ -126,3 +126,18 @@ async def test_the_checkout_is_a_monthly_subscription_that_carries_the_family() 
         799, "usd", {"interval": "month"},
     )  # fmt: skip
     assert sent["subscription_data"]["metadata"] == {"family_id": str(FAMILY)}
+
+
+def test_a_cancel_at_period_end_reads_the_end_of_the_period() -> None:
+    event = subscription_event(FAMILY, "active", cancel_at_period_end=True)
+    event["data"]["object"]["current_period_end"] = 1_800_100_000
+    change = _provider().parse_event(*signed(event, SECRET))
+
+    assert change is not None
+    assert change.cancels_at == datetime.fromtimestamp(1_800_100_000, UTC)
+
+    event["data"]["object"]["cancel_at_period_end"] = False
+    change = _provider().parse_event(*signed(event, SECRET))
+
+    assert change is not None
+    assert change.cancels_at is None

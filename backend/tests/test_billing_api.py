@@ -7,6 +7,7 @@ test secret of the Makefile and checked by the real Stripe code.
 import time
 import uuid
 from collections.abc import Iterator
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -154,6 +155,7 @@ async def test_a_paid_subscription_opens_the_next_cases(
     assert live_client.get("/api/v1/billing/subscription").json() == {
         "status": None,
         "active": False,
+        "cancels_at": None,
     }
     assert await access.has_access(family, 1)
     with pytest.raises(PaymentRequiredError):
@@ -167,6 +169,7 @@ async def test_a_paid_subscription_opens_the_next_cases(
     assert live_client.get("/api/v1/billing/subscription").json() == {
         "status": "active",
         "active": True,
+        "cancels_at": None,
     }
     assert await access.has_access(family, 2)
     assert await activations(sessionmaker, family_id) == 1
@@ -234,6 +237,7 @@ async def test_cancelling_closes_the_paid_cases(
     assert live_client.get("/api/v1/billing/subscription").json() == {
         "status": "canceled",
         "active": False,
+        "cancels_at": None,
     }
     assert not await build_billing_access(sessionmaker, settings).has_access(
         FamilyRef(family_id), 2
@@ -434,3 +438,73 @@ def test_without_stripe_keys_checkout_and_portal_give_503(
     for response in (checkout_page, portal):
         assert response.status_code == 503, response.text
         assert response.json()["error"]["code"] == "billing.not_configured"
+
+
+async def test_canceling_at_period_end_keeps_access_and_shows_the_end(
+    live_client: TestClient, stripe: TestClient, settings: Settings, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    ref, now = sub_id(), int(time.time())
+    end = now + 20 * 86400
+    send(
+        stripe, settings, subscription_event(family_id, "active", subscription_id=ref, created=now)
+    )
+    assert live_client.get("/api/v1/billing/subscription").json()["cancels_at"] is None
+
+    send(
+        stripe,
+        settings,
+        subscription_event(
+            family_id, "active", subscription_id=ref, created=now + 1,
+            cancel_at_period_end=True, cancel_at=end,
+        ),
+    )  # fmt: skip
+
+    body = live_client.get("/api/v1/billing/subscription").json()
+    assert body["status"] == "active"
+    assert body["active"] is True
+    assert datetime.fromisoformat(body["cancels_at"]) == datetime.fromtimestamp(end, UTC)
+    assert await build_billing_access(sessionmaker, settings).has_access(FamilyRef(family_id), 2)
+
+    send(
+        stripe,
+        settings,
+        subscription_event(family_id, "active", subscription_id=ref, created=now + 2),
+    )
+
+    body = live_client.get("/api/v1/billing/subscription").json()
+    assert body == {"status": "active", "active": True, "cancels_at": None}
+
+
+async def test_the_end_of_a_canceled_subscription_ends_access(
+    live_client: TestClient, stripe: TestClient, settings: Settings, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    ref, now = sub_id(), int(time.time())
+    send(
+        stripe,
+        settings,
+        subscription_event(
+            family_id, "active", subscription_id=ref, created=now,
+            cancel_at_period_end=True, cancel_at=now + 60,
+        ),
+    )  # fmt: skip
+
+    send(
+        stripe,
+        settings,
+        subscription_event(
+            family_id, "canceled", subscription_id=ref, created=now + 1,
+            event_type="customer.subscription.deleted",
+            cancel_at_period_end=True, cancel_at=now + 60,
+        ),
+    )  # fmt: skip
+
+    assert live_client.get("/api/v1/billing/subscription").json() == {
+        "status": "canceled",
+        "active": False,
+        "cancels_at": None,
+    }
+    assert not await build_billing_access(sessionmaker, settings).has_access(
+        FamilyRef(family_id), 2
+    )
