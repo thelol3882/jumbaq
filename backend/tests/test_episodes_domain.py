@@ -211,6 +211,13 @@ def test_a_shift_window_that_does_not_fit_moves_back() -> None:
     assert plan.decoys == ("LOOK NEAR THE", "RED APPLE PIE")
 
 
+def test_an_apostrophe_keeps_a_word_whole() -> None:
+    plan = domain.plan_cipher("Grandma\u2019s hat hid under Bram's bed", 9)
+
+    assert plan.secret == "UNDER BRAMS BED"
+    assert "S" not in " ".join((plan.secret or "", *plan.decoys)).split()
+
+
 def test_a_clue_of_two_words_gives_count_at_any_age() -> None:
     assert domain.plan_cipher("Green kettle", 9) == CipherPlan(CipherLevel.COUNT, None, ())
 
