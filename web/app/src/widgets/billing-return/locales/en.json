@@ -10,5 +10,12 @@
   "cancel": {
     "title": "No payment was made",
     "text": "Nothing changed. Case 1 is still yours, and the next case waits until you're ready."
+  },
+  "confirming": {
+    "title": "Confirming your payment…",
+    "text": "Stripe tells us in a few seconds. This page updates by itself.",
+    "slowLead": "this is taking longer than usual:",
+    "slow": "the payment may still be on its way. Check again in a minute, or open Plans to see your subscription.",
+    "retry": "Check again"
   }
 }
