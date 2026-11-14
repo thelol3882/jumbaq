@@ -32,6 +32,24 @@ class Settings(BaseSettings):
     # Every call costs money, so one family cannot start an endless chain of them.
     ai_daily_calls_per_family: int = 40
 
+    # Test mode only: the app refuses a live key, so no real money can move.
+    stripe_secret_key: SecretStr | None = None
+    stripe_webhook_secret: SecretStr | None = None
+    billing_free_cases: int = 1
+    # $7.99 a month, in cents.
+    billing_price_cents: int = 799
+    billing_currency: str = "usd"
+    # Where Stripe sends the parent back after the payment page.
+    web_app_url: str = "https://jumbaq.fun"
+
+    @field_validator("stripe_secret_key")
+    @classmethod
+    def only_test_keys(cls, key: SecretStr | None) -> SecretStr | None:
+        value = key.get_secret_value() if key is not None else ""
+        if value and not value.startswith("sk_test_"):
+            raise ValueError("JUMBAQ_STRIPE_SECRET_KEY must be a test key (sk_test_...)")
+        return key
+
     @model_validator(mode="after")
     def check_ai_key(self) -> Self:
         # An empty JUMBAQ_AI_API_KEY= in a .env file counts as missing.
