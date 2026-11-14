@@ -63,7 +63,7 @@ def _field_name(loc: tuple[int | str, ...]) -> str:
 def _field_code(err: dict[str, Any]) -> str:
     """Pydantic error type, like "missing" or "string_too_short".
 
-    Our own validators raise ValueError with a translation key ("kid.age_out_of_range"),
+    Our own validators raise ValueError with a translation key ("family.kid_nickname_repeated"),
     so for them we return that key without the "Value error, " prefix.
     """
     if err["type"] == "value_error":

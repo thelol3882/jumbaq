@@ -56,8 +56,6 @@ def build_handlers(
         EpisodePlayed: [cases.episode_played],
         # Registered without handlers, so their rows are marked processed and do not fail.
         CaseSolved: [],
-        # Registered without handlers, so its rows are marked processed and do not fail.
-        # cases will react to it.
         SubscriptionActivated: [],
     }
 
