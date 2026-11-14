@@ -14,8 +14,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY README.md ./
 COPY jumbaq ./jumbaq
+# uv knows a local package only by its pyproject.toml, so without --reinstall-package it
+# installs the cached build of the same version, with the old code.
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev --no-editable
+    uv sync --locked --no-dev --no-editable --reinstall-package jumbaq
 
 
 FROM python:3.13-slim
