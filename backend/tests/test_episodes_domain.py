@@ -173,6 +173,44 @@ def test_the_built_in_episode_keeps_a_safe_riddle_of_the_model() -> None:
     assert problems(payload) == []
 
 
+UNSAFE_HOME = ("kitchen knife", "gas stove", "windows", "fridge")
+
+
+@pytest.mark.parametrize("number", range(1, 6))
+def test_the_built_in_episode_never_points_at_an_unsafe_object(number: int) -> None:
+    payload = domain.built_in_payload(
+        "A case", "Clue.", UNSAFE_HOME, number, number == 5, ANSWER_SLOT
+    )
+
+    assert domain.banned_words(str(payload)) == []
+    assert payload.riddle.target_object == "fridge"
+    assert payload.fallback_riddle.target_object == "fridge"
+
+
+@pytest.mark.parametrize("number", range(1, 6))
+def test_the_built_in_episode_of_a_home_with_no_safe_object_needs_nothing_from_it(
+    number: int,
+) -> None:
+    payload = domain.built_in_payload(
+        "A case", "Clue.", ("kitchen knife", "oven", "front door"), number, False, ANSWER_SLOT
+    )
+
+    assert domain.banned_words(str(payload)) == []
+    assert payload.riddle.target_object != payload.fallback_riddle.target_object
+    assert payload.riddle.target_object not in ("kitchen knife", "oven", "front door")
+    assert domain.built_in_payload("A", "C.", (), number, False, ANSWER_SLOT).riddle.text
+
+
+def test_only_safe_objects_go_on() -> None:
+    assert domain.safe_objects(UNSAFE_HOME) == ("fridge",)
+    assert domain.safe_objects(OBJECTS) == OBJECTS
+
+
+def test_a_riddle_about_an_unsafe_object_is_not_safe() -> None:
+    riddle = Riddle("Find me.", "kitchen knife", "colour", "Look in the drawer.")
+    assert not domain.is_safe_riddle(riddle, ("kitchen knife", "fridge"), 7)
+
+
 def test_a_riddle_is_safe_only_for_this_home() -> None:
     assert domain.is_safe_riddle(GOOD.riddle, OBJECTS, 7)
     assert not domain.is_safe_riddle(replace(GOOD.riddle, target_object="piano"), OBJECTS, 7)

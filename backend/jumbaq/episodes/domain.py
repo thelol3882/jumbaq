@@ -258,10 +258,14 @@ def built_in_payload(
     model_riddle: Riddle | None = None,
 ) -> Payload:
     """A plain episode for when the model fails: always safe and always playable. A safe
-    riddle the model wrote for this home is kept."""
-    first = model_riddle or _built_in_riddle(objects[(number - 1) % len(objects)])
-    others = [obj for obj in objects if obj != first.target_object] or list(objects)
-    second = _built_in_riddle(others[number % len(others)])
+    riddle the model wrote for this home is kept. Only objects with safe names are used; a home
+    with none gets the generic riddles, which need nothing from the home."""
+    safe = safe_objects(objects)
+    first = model_riddle or (
+        _built_in_riddle(safe[(number - 1) % len(safe)]) if safe else _GENERIC_RIDDLES[0]
+    )
+    others = [obj for obj in safe if obj != first.target_object] or list(safe)
+    second = _built_in_riddle(others[number % len(others)]) if others else _GENERIC_RIDDLES[1]
     ending = (
         "Now think about all the clues together. Who do you think did it?"
         if last
@@ -282,6 +286,31 @@ def built_in_payload(
     )
 
 
+def safe_objects(objects: tuple[str, ...]) -> tuple[str, ...]:
+    """The objects whose names pass the unsafe-words check: only these go to the model and to
+    the built-in riddles."""
+    return tuple(obj for obj in objects if not banned_words(obj))
+
+
+# For a home with no safe object. They are not in the home's list, so nothing checks their
+# target: it only has to be safe text, which a fixed sentence is. Any room has something soft
+# and something round.
+_GENERIC_RIDDLES = (
+    Riddle(
+        text="Look around the room you are in and find something soft. What colour is it?",
+        target_object="something soft in the room",
+        answer_type="colour",
+        parent_note="Help the kids find something soft nearby. Any colour they say is right.",
+    ),
+    Riddle(
+        text="Look around the room you are in and find something round. What colour is it?",
+        target_object="something round in the room",
+        answer_type="colour",
+        parent_note="Help the kids find something round nearby. Any colour they say is right.",
+    ),
+)
+
+
 def _built_in_riddle(target: str) -> Riddle:
     return Riddle(
         text=f"Find the {target}. What colour is it?",
@@ -295,7 +324,7 @@ def is_safe_riddle(riddle: Riddle, objects: tuple[str, ...], youngest_age: int) 
     young = youngest_age < YOUNG_AGE
     texts = (riddle.text, riddle.parent_note)
     return (
-        riddle.target_object in objects
+        riddle.target_object in safe_objects(objects)
         and not any(banned_words(text) for text in texts)
         and all(len(text) <= SHORT_TEXT_LIMIT[young] for text in texts)
     )
