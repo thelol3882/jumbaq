@@ -268,9 +268,21 @@ def test_the_plan_prompt_wants_every_clue_to_name_its_suspect() -> None:
     assert "a striped animal" in system
 
 
-def test_the_plan_prompt_says_which_clues_may_point() -> None:
+def test_the_plan_prompt_states_the_false_trail_and_where_it_may_be() -> None:
     system = prompts.case_plan_prompt(CasePlanInput(HOME, 1)).system
 
-    assert "Only clues 4 and 5 may point at a suspect" in system
-    assert "Clues 1, 2 and 3 only rule suspects out" in system
-    assert "there are 2 innocents" in system
+    assert "exactly one clue, in episode 1 or episode 2, points at an INNOCENT suspect" in system
+    assert "no later than episode 3" in system
+    assert "The other innocent suspect is ruled out by a clue in episodes 1 to 3" in system
+    assert "Clues 4 and 5 point at the culprit" in system
+    assert "no clue ever rules the culprit out" in system
+    assert "no false trails" not in system
+
+
+def test_the_plan_prompt_keeps_every_card_from_giving_the_culprit_away() -> None:
+    system = prompts.case_plan_prompt(CasePlanInput(HOME, 1)).system
+
+    assert "equally plausible reason to want the missing thing" in system
+    assert "No description hints at guilt" in system
+    assert "motive appears only in the reveal and in clues 4 and 5" in system
+    assert "American English" in system
