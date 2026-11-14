@@ -33,8 +33,9 @@ from jumbaq.families.public import Family
 
 logger = logging.getLogger(__name__)
 
-# The first answer and one more, as for the case plan.
-WRITE_TRIES = 2
+# The first answer and two more. A fixed draft often trips another rule (a second unsafe word),
+# and a refused evening falls back to the built-in story, which is not about the family.
+WRITE_TRIES = 3
 _WRITABLE = {EpisodeStatus.REQUESTED, EpisodeStatus.GENERATING}
 
 
