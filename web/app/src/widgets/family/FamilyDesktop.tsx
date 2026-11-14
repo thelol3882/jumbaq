@@ -5,6 +5,7 @@ import { EveningBoxes, inOpening, type Case } from "@/features/cases";
 import { FamilyBoard, type FamilyState } from "@/features/families";
 import { DetectivesTag, NotebookPage, NotebookSpread, PlansLink, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
+import { NewFamily } from "./NewFamily";
 import { Tonight, TonightPending, type Waiting } from "./Tonight";
 
 /** Design F3: tonight on the left page, the case board on the right. */
@@ -40,6 +41,9 @@ export function FamilyDesktop({
           main={problem ?? (current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} large /> : <TonightPending waiting={waiting} detectives={detectives} large />)}
           side={current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilyBoard family={family} />}
         />
+      </div>
+      <div className="mt-12">
+        <NewFamily detectivesLabel={detectivesLabel} />
       </div>
     </NotebookPage>
   );
