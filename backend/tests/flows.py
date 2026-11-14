@@ -14,7 +14,7 @@ from jumbaq.core.events import Event
 from jumbaq.core.outbox import Handler, OutboxDelivery
 from jumbaq.episodes.models import EpisodeRow
 from jumbaq.families.deps import FAMILY_COOKIE
-from jumbaq.worker.main import build_handlers
+from jumbaq.worker.wiring import build_handlers
 from tests.conftest import TEST_SETTINGS
 
 
