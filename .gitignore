@@ -30,3 +30,6 @@ out/
 
 # Secrets
 *.pem
+
+# Server certificates and keys
+deploy/ssl/
