@@ -17,6 +17,7 @@ export function FamilyDesktop({
   waiting,
   problem,
   subscribed,
+  cancelsAt,
 }: {
   family: FamilyState;
   detectivesLabel: string | undefined;
@@ -26,6 +27,8 @@ export function FamilyDesktop({
   problem?: ReactNode;
   /** The family has a subscription it can manage. */
   subscribed: boolean;
+  /** When a canceled subscription ends, else null. */
+  cancelsAt: string | null;
 }) {
   const t = useTranslations("widget.family");
   const detectives = family.kids.map((kid) => kid.nickname);
@@ -46,7 +49,7 @@ export function FamilyDesktop({
           side={
             <div className="flex flex-col gap-9">
               {current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilyBoard family={family} />}
-              {subscribed ? <ManageSubscription /> : null}
+              {subscribed ? <ManageSubscription cancelsAt={cancelsAt} /> : null}
             </div>
           }
         />

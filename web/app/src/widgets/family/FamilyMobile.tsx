@@ -16,6 +16,7 @@ export function FamilyMobile({
   waiting,
   problem,
   subscribed,
+  cancelsAt,
 }: {
   family: FamilyState;
   detectivesLabel: string | undefined;
@@ -25,6 +26,8 @@ export function FamilyMobile({
   problem?: ReactNode;
   /** The family has a subscription it can manage. */
   subscribed: boolean;
+  /** When a canceled subscription ends, else null. */
+  cancelsAt: string | null;
 }) {
   const t = useTranslations("widget.family");
   const detectives = family.kids.map((kid) => kid.nickname);
@@ -45,7 +48,7 @@ export function FamilyMobile({
       <div className="mt-8 flex flex-col gap-9">
         {problem ?? (current ? <Tonight current={current} waiting={waiting} detectives={detectives} demoMode={family.demo_mode} /> : <TonightPending waiting={waiting} detectives={detectives} />)}
         {current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilySummary family={family} />}
-        {subscribed ? <ManageSubscription /> : null}
+        {subscribed ? <ManageSubscription cancelsAt={cancelsAt} /> : null}
         <NewFamily detectivesLabel={detectivesLabel} />
       </div>
     </NotebookPage>

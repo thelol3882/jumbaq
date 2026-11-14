@@ -1,3 +1,5 @@
 {
-  "manage": "Manage or cancel subscription"
+  "manage": "Manage or cancel subscription",
+  "manageCanceled": "Manage subscription",
+  "canceled": "Canceled. Your subscription stays active until {date}."
 }
