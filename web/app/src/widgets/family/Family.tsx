@@ -15,14 +15,14 @@ export function Family() {
   const t = useTranslations("widget.family");
   const errorMessage = useApiErrorMessage();
   const { family, loading, missing, error, retry } = useFamily();
-  const { current } = useCurrentCase();
+  const { current, slow, retry: check } = useCurrentCase();
   const isMobile = useIsMobile();
 
   if (family) {
     return isMobile ? (
-      <FamilyMobile family={family} current={current} />
+      <FamilyMobile family={family} current={current} waiting={{ slow, onCheck: () => void check() }} />
     ) : (
-      <FamilyDesktop family={family} current={current} />
+      <FamilyDesktop family={family} current={current} waiting={{ slow, onCheck: () => void check() }} />
     );
   }
 

@@ -4,6 +4,29 @@
   "stillSuspect": "still a suspect",
   "noEvidence": "No evidence yet. The first clue comes tonight.",
   "rankAwarded": "rank awarded",
+  "writing": {
+    "steps": {
+      "file": "Opening your case file",
+      "plan": "Planning the mystery: suspects and clues",
+      "evening": "Writing evening {number}",
+      "evidence": "Laying out the evidence"
+    },
+    "state": {
+      "done": "done",
+      "now": "being written now",
+      "todo": "not started"
+    },
+    "expect": {
+      "lead": "grown-ups:",
+      "case": "a new case takes about a minute and a half. This page updates by itself, and you can close it: the case waits for you.",
+      "evening": "an evening takes about a minute. This page updates by itself."
+    },
+    "slow": {
+      "lead": "taking longer than usual:",
+      "text": "the storyteller is slow right now. You can close this page and come back later; the case keeps its place.",
+      "check": "Check again"
+    }
+  },
   "ranks": {
     "chief_detective": "Chief Detective",
     "detective": "Detective",

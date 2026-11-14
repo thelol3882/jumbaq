@@ -1,14 +1,23 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { EveningBoxes, type Case } from "@/features/cases";
+import { EveningBoxes, inOpening, type Case } from "@/features/cases";
 import { FamilyBoard, type Family } from "@/features/families";
 import { NotebookPage, NotebookSpread, Wordmark } from "@/shared/components/notebook";
 import { Board } from "./Board";
-import { Tonight, TonightPending } from "./Tonight";
+import { Tonight, TonightPending, type Waiting } from "./Tonight";
 
 /** Design F3: tonight on the left page, the case board on the right. */
-export function FamilyDesktop({ family, current }: { family: Family; current: Case | undefined }) {
+export function FamilyDesktop({
+  family,
+  current,
+  waiting,
+}: {
+  family: Family;
+  current: Case | undefined;
+  waiting: Waiting;
+}) {
   const t = useTranslations("widget.family");
+  const detectives = family.kids.map((kid) => kid.nickname);
   return (
     <NotebookPage width="wide">
       <header className="flex flex-wrap items-center justify-between gap-6 border-b-[1.5px] border-rule-strong pb-4.5">
@@ -23,8 +32,8 @@ export function FamilyDesktop({ family, current }: { family: Family; current: Ca
       <div className="mt-11">
         <NotebookSpread
           sideLabel={t("boardLabel")}
-          main={current ? <Tonight current={current} large /> : <TonightPending large />}
-          side={current && current.suspects.length > 0 ? <Board current={current} /> : <FamilyBoard family={family} />}
+          main={current ? <Tonight current={current} waiting={waiting} detectives={detectives} large /> : <TonightPending waiting={waiting} detectives={detectives} large />}
+          side={current && current.suspects.length > 0 && !inOpening(current) ? <Board current={current} /> : <FamilyBoard family={family} />}
         />
       </div>
     </NotebookPage>
