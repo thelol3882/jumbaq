@@ -27,6 +27,21 @@ components:
       - { name: import-linter, command: uv run lint-imports }
       - { name: unit tests, command: uv run pytest }
 
+  # The web app: a standalone Next.js server. The API address is baked in at build time.
+  - name: web
+    directory: web/app
+    image: ghcr.io/thelol3882/jumbaq-web
+    services: [web]
+    build_compose: docker-compose.build.yml
+    version:
+      file: package.json
+      tool: pnpm
+    ci:
+      - { name: lint, command: pnpm lint }
+      - { name: typecheck, command: pnpm typecheck }
+      - { name: unit tests, command: pnpm test }
+      - { name: i18n, command: pnpm i18n:check }
+
   - name: infra
     directory: .
     services: [postgres, db-setup, redis, nginx]
@@ -77,6 +92,7 @@ server:
     command: python
   log_services:
     - { name: api, description: "FastAPI (uvicorn, 2 workers)" }
+    - { name: web, description: "Next.js standalone server" }
     - { name: worker, description: "arq worker, delivers the outbox" }
     - { name: migrate, description: "alembic upgrade head, once per deploy" }
     - { name: nginx, description: "Cloudflare origin, TLS" }
