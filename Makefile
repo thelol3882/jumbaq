@@ -24,7 +24,7 @@ NEXT_REV = $(shell printf '%04d' $$(( $$(ls backend/migrations/versions/*.py | w
 
 help:
 	@echo "make env        create infra/.env, or add the keys that are new in the example"
-	@echo "make up         build and start everything (API on http://localhost:8000)"
+	@echo "make up         build and start everything (web on http://localhost:3000, API on :8000)"
 	@echo "make down       stop everything (data stays in volumes)"
 	@echo "make reset      stop everything and delete the data"
 	@echo "make logs       follow the logs"

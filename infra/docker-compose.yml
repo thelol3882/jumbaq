@@ -106,6 +106,30 @@ services:
       timeout: 5s
       retries: 3
 
+  # The web app, as the server runs it. For hot reload stop this one and run `pnpm dev` in
+  # web/app instead, on the same port.
+  web:
+    build:
+      context: ../web/app
+      args:
+        # The browser on this laptop calls the API, so it is the host port, not the service.
+        NEXT_PUBLIC_API_URL: http://localhost:${API_HOST_PORT:-8000}
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   redis-data:

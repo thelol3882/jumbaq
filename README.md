@@ -11,14 +11,12 @@ Episodes are written by an LLM as strict JSON and checked by code before anyone 
 Needs Docker and [uv](https://docs.astral.sh/uv/).
 
 ```sh
-make up      # postgres, redis, migrations, the API and the worker
+make up      # postgres, redis, migrations, the API, the worker and the web app
 make test    # all backend tests, on the test database of `make up`
 make lint    # ruff and the import-linter contracts
 ```
 
-The API is on http://localhost:8000/api/v1, its docs on http://localhost:8000/api/v1/docs.
-
-The web app runs on its own: `cd web/app && pnpm install && pnpm dev`, then http://localhost:3000.
+The web app is on http://localhost:3000, the API on http://localhost:8000/api/v1 and its docs on http://localhost:8000/api/v1/docs.
 
 ## Layout
 

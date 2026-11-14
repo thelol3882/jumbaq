@@ -103,9 +103,12 @@ Logic from hooks over about 100 lines goes to `services/<name>.ts`: pure functio
 
 ## Running it
 
-From `web/app`, with `make up` running in the repository root (its `infra/.env` needs `JUMBAQ_CORS_ORIGINS=http://localhost:3000`):
+`make up` in the repository root builds and starts the web app with the backend, on http://localhost:3000, as the server runs it. Rebuild it with `make up` after a change.
+
+For hot reload, stop that container and run the dev server on the same port, so CORS (`JUMBAQ_CORS_ORIGINS` in `infra/.env`) still matches:
 
 ```sh
+docker compose -f ../../infra/docker-compose.yml stop web
 pnpm install
 pnpm dev        # http://localhost:3000, the API on http://localhost:8000
 ```
