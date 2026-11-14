@@ -11,8 +11,16 @@
   },
   "example": {
     "label": "from the case files",
-    "title": "The Case of the Missing Midnight Cookie"
+    "title": "The Case of the Missing Midnight Cookie",
+    "pageLabel": "a page from tonight's case",
+    "riddleLabel": "the riddle",
+    "riddle": "I have hands but never clap. Find me and tell me which number my short hand points at.",
+    "noteLead": "grown-ups only, don't read out:",
+    "note": "any clock counts. Whatever number they say is right.",
+    "exhibitLabel": "exhibit 2, filed tonight",
+    "exhibit": "Whoever took it left flour on the stairs."
   },
   "start": "Start tonight's case",
-  "free": "No sign-up. First case is free."
+  "free": "No sign-up. First case is free.",
+  "facts": "five evenings · about 15 minutes each · ages 4 to 10"
 }
