@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCheckout } from "@/features/billing";
-import { CertificateCard, RankStamp, useGetCertificateQuery, useStartNextCase, type Accusation, type Case } from "@/features/cases";
+import { CertificateCard, RankStamp, useStartNextCase, type Accusation, type Case, type Certificate } from "@/features/cases";
 import { useApiErrorMessage } from "@/shared/api/useApiErrorMessage";
 import { StampButton } from "@/shared/components/notebook";
 import { formatDay } from "@/shared/lib/dates";
@@ -13,6 +13,8 @@ export type AccuseViewProps = {
   solved: Accusation | null;
   onSolved: (result: Accusation) => void;
   detectivesLabel: string | undefined;
+  /** Loaded by the wrapper once the case is solved. */
+  certificate: Certificate | undefined;
 };
 
 export function SolvedStory({ current, solved, large = false }: { current: Case; solved: Accusation | null; large?: boolean }) {
@@ -37,14 +39,13 @@ export function SolvedStory({ current, solved, large = false }: { current: Case;
 }
 
 /** The certificate, the print button, and only then the next case: the win comes first. */
-export function CertificateAndNext({ current }: { current: Case }) {
+export function CertificateAndNext({ current, certificate }: { current: Case; certificate: Certificate | undefined }) {
   const t = useTranslations("widget.accuse");
-  const certificate = useGetCertificateQuery(current.id);
   return (
     <div className="flex flex-col gap-6">
-      {certificate.data ? (
+      {certificate ? (
         <>
-          <CertificateCard certificate={certificate.data} solvedOn={formatDay(certificate.data.solved_at)} />
+          <CertificateCard certificate={certificate} solvedOn={formatDay(certificate.solved_at)} />
           <StampButton onClick={() => window.print()} tilt="right">
             {t("print")}
           </StampButton>
