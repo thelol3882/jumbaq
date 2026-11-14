@@ -16,6 +16,8 @@ $(TEST_TARGETS): export JUMBAQ_REDIS_URL ?= redis://localhost:$(REDIS_HOST_PORT)
 # The tests sign their own webhook events with this secret and never call Stripe.
 $(TEST_TARGETS): export JUMBAQ_STRIPE_SECRET_KEY = sk_test_only_for_tests
 $(TEST_TARGETS): export JUMBAQ_STRIPE_WEBHOOK_SECRET = whsec_only_for_tests
+# The chain test opens five evenings at once; one test turns it off on purpose.
+$(TEST_TARGETS): export JUMBAQ_DEMO_MODE = true
 
 # Number of the next migration file: 0002, 0003, ...
 NEXT_REV = $(shell printf '%04d' $$(( $$(ls backend/migrations/versions/*.py | wc -l) + 1 )))
