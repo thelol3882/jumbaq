@@ -260,10 +260,56 @@ export interface paths {
         put?: never;
         /**
          * Answer Episode
-         * @description Any answer fits the story. Only for a ready episode (409 `episode.not_ready`) that is
-         *     available (409 `episode.not_available_yet`). The result is in `content.result`.
+         * @description Step 1 of 3. Any answer fits the story. Only for a ready episode (409
+         *     `episode.not_ready`) that is available (409 `episode.not_available_yet`). A second answer
+         *     gives 409 `episode.wrong_step`. The cipher to decode is then in `content.decode`; an
+         *     episode without a cipher is played here and its result is in `content.result`.
          */
         post: operations["answer_episode_api_v1_episodes__episode_id__answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episodes/{episode_id}/decode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decode Episode
+         * @description Step 2 of 3: the word the kids picked, or null for the count level. A wrong pick is not
+         *     an error: the step stays and `attempts` grows. After the second wrong one the word is
+         *     given away and the step moves on. Outside this step: 409 `episode.wrong_step`.
+         */
+        post: operations["decode_episode_api_v1_episodes__episode_id__decode_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/episodes/{episode_id}/strike": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Strike Episode
+         * @description Step 3 of 3: the suspect the clue is about. A wrong one is not an error: `attempts`
+         *     grows. The right one, or the second wrong one, ends the evening as played with the result
+         *     in `content.result`. Outside this step: 409 `episode.wrong_step`.
+         */
+        post: operations["strike_episode_api_v1_episodes__episode_id__strike_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -367,6 +413,13 @@ export interface components {
          * @enum {string}
          */
         AnswerType: "number" | "colour" | "letter" | "shape" | "word";
+        /** AnsweredOut */
+        AnsweredOut: {
+            /** Answer */
+            answer: string;
+            /** Resolution */
+            resolution: string;
+        };
         /** CaseEpisodeOut */
         CaseEpisodeOut: {
             /** Number */
@@ -435,6 +488,11 @@ export interface components {
             url: string;
         };
         /**
+         * CipherLevel
+         * @enum {string}
+         */
+        CipherLevel: "count" | "number_code" | "shift";
+        /**
          * ClueOut
          * @description A clue of an episode already played. Clues of later episodes are never sent.
          */
@@ -448,6 +506,30 @@ export interface components {
             /** Rules Out */
             rules_out: boolean;
         };
+        /** DecodeIn */
+        DecodeIn: {
+            /** Word */
+            word?: string | null;
+        };
+        /**
+         * DecodeOut
+         * @description The secret is never here: only the cipher and the buttons to pick from.
+         */
+        DecodeOut: {
+            level: components["schemas"]["CipherLevel"];
+            /** Key */
+            key: number;
+            /** Code */
+            code: string | null;
+            /** Count */
+            count: number | null;
+            /** Clue With Gap */
+            clue_with_gap: string | null;
+            /** Options */
+            options: string[];
+            /** Attempts */
+            attempts: number;
+        };
         /** EpisodeContentOut */
         EpisodeContentOut: {
             /** Recap */
@@ -459,6 +541,10 @@ export interface components {
             hint: string;
             /** Swapped */
             swapped: boolean;
+            step: components["schemas"]["EveningStep"];
+            answered: components["schemas"]["AnsweredOut"] | null;
+            decode: components["schemas"]["DecodeOut"] | null;
+            strike: components["schemas"]["StrikeOut"] | null;
             result: components["schemas"]["EpisodeResultOut"] | null;
         };
         /** EpisodeOut */
@@ -492,6 +578,12 @@ export interface components {
             case_clue: string;
             /** Cliffhanger */
             cliffhanger: string;
+            /** Decoded Word */
+            decoded_word: string | null;
+            /** Revealed Suspect */
+            revealed_suspect: boolean;
+            /** Struck Suspect Id */
+            struck_suspect_id: string | null;
         };
         /**
          * EpisodeSlotStatus
@@ -504,6 +596,11 @@ export interface components {
          * @enum {string}
          */
         EpisodeStatus: "requested" | "generating" | "ready" | "played" | "failed";
+        /**
+         * EveningStep
+         * @enum {string}
+         */
+        EveningStep: "answer" | "decode" | "strike" | "done";
         /** FamilyCreate */
         FamilyCreate: {
             /** Kids */
@@ -570,6 +667,24 @@ export interface components {
             answer_type: components["schemas"]["AnswerType"];
             /** Parent Note */
             parent_note: string;
+        };
+        /** StrikeIn */
+        StrikeIn: {
+            /** Suspect Id */
+            suspect_id: string;
+        };
+        /** StrikeOut */
+        StrikeOut: {
+            /** Clue */
+            clue: string;
+            /** Points At */
+            points_at: boolean;
+            /** Attempts */
+            attempts: number;
+            /** Decoded Word */
+            decoded_word: string | null;
+            /** Revealed Word */
+            revealed_word: boolean;
         };
         /** SubscriptionOut */
         SubscriptionOut: {
@@ -1000,6 +1115,80 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decode_episode_api_v1_episodes__episode_id__decode_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    strike_episode_api_v1_episodes__episode_id__strike_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: {
+                family_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrikeIn"];
             };
         };
         responses: {
