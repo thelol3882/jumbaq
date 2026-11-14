@@ -1,0 +1,46 @@
+[importlinter]
+root_package = jumbaq
+include_external_packages = True
+
+[importlinter:contract:errors-without-web-framework]
+name = Errors, error codes and the outbox know nothing about FastAPI or Starlette
+type = forbidden
+source_modules =
+    jumbaq.core.errors
+    jumbaq.core.error_codes
+    jumbaq.core.outbox
+forbidden_modules =
+    fastapi
+    starlette
+
+[importlinter:contract:core-parts-for-services]
+name = FamilyRef, Clock and events know nothing about the web framework or the database
+type = forbidden
+source_modules =
+    jumbaq.core.family
+    jumbaq.core.clock
+    jumbaq.core.events
+forbidden_modules =
+    fastapi
+    starlette
+    sqlalchemy
+
+[importlinter:contract:worker-without-web-framework]
+name = The worker does not depend on FastAPI or Starlette
+type = forbidden
+source_modules =
+    jumbaq.worker
+forbidden_modules =
+    fastapi
+    starlette
+
+[importlinter:contract:core-is-the-bottom]
+name = core does not import the app, the worker or the domain modules
+type = forbidden
+source_modules =
+    jumbaq.core
+forbidden_modules =
+    jumbaq.main
+    jumbaq.health
+    jumbaq.worker
+    jumbaq.models
