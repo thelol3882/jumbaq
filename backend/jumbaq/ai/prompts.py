@@ -89,24 +89,38 @@ forest school, a bakery of animals).
 one line that a child remembers.
 - One culprit, given by its id.
 - Exactly {EPISODES_PER_CASE} clues, one for each episode 1 to {EPISODES_PER_CASE}. Each clue \
-names its suspect by name in its text (never "a striped animal" or "someone": the kids \
+names one suspect by name in its text (never "a striped animal" or "someone": the kids \
 must know who the clue is about) and either points at that suspect (points_at true) or rules \
 them out (points_at false).
-- Every innocent suspect is ruled out by at least one clue. No clue rules out the culprit. \
-No clue points at an innocent suspect: small kids take a clue at its word, so there are no \
-false trails.
-- Only clues 4 and 5 may point at a suspect (points_at true), and they point at the culprit. \
-Clues 1, 2 and 3 only rule suspects out (points_at false): a pointing clue early on would \
-solve the game at once. With {SUSPECTS_PER_CASE} suspects there are {SUSPECTS_PER_CASE - 1} \
-innocents, and clues 1 to 3 rule all of them out, so one of them is ruled out twice.
-- The reveal: a few sentences that explain how the clues fit together.
+
+The shape of the clues is fixed. Two suspects are innocent and one is the culprit:
+- One false trail: exactly one clue, in episode 1 or episode 2, points at an INNOCENT suspect. \
+It looks bad for that suspect, but gently.
+- That same suspect is ruled out by a later clue, after the false trail and no later than \
+episode 3. That clue explains the false trail, so the kids are never left with a wrong idea.
+- The other innocent suspect is ruled out by a clue in episodes 1 to 3.
+- Clues 4 and 5 point at the culprit (points_at true). No other clue points at the culprit, and \
+no clue ever rules the culprit out.
+So episodes 1 to 3 hold the false trail, its explanation and the other innocent's alibi, in \
+an order you choose (the false trail first or second, its explanation after it), and episodes \
+4 and 5 hold the two clues that point at the culprit.
+
+The suspect cards must not give the culprit away:
+- Every suspect's description gives them an equally plausible reason to want the missing \
+thing, written in the same warm tone and about the same length.
+- No description hints at guilt: no sneaky, greedy or secretive habits, and nothing that \
+matches the clues.
+- The culprit's real motive appears only in the reveal and in clues 4 and 5, never on a card.
+- The reveal: a few sentences that explain how the clues fit together, including the false \
+trail and why the culprit did it.
 {_clue_limit(task)}
 {_SAFETY}
 
-{_DATA_RULES}"""
-    data = data_block({"case_number": task.case_number, "home": _home(task.home)})
-    user = f"Plan case number {task.case_number} for this family.\n\n{_retry(task.fix)}{data}"
-    return Prompt(system, user)
+{_DATA_RULES}
+Use American English spelling in every text you write (color, favorite, cozy, gray, neighbor)."""
+    data = {"case_number": task.case_number, "home": _home(task.home)}
+    user = f"Plan case number {task.case_number} for this family.\n\n{_retry(task.fix)}"
+    return Prompt(system, user + data_block(data))
 
 
 def _limits(rules: TextRules) -> str:
