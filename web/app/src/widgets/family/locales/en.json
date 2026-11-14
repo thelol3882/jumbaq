@@ -18,7 +18,8 @@
   },
   "writing": {
     "title": "Your case is being written",
-    "text": "It's written for your home and your detectives. It takes about a minute; this page updates by itself."
+    "meanwhileLead": "while you wait:",
+    "meanwhile": "gather {names} in the room you will search tonight."
   },
   "doneTonight": "done for tonight",
   "opens": "Evening {number} unlocks {when}.",
@@ -29,9 +30,45 @@
   "solved": "case closed",
   "certificate": "See the certificate",
   "failed": {
-    "title": "No new story tonight",
-    "text": "The storyteller has written enough for today. Come back tomorrow evening and the case goes on."
+    "title": "This story couldn't be written",
+    "text": "Something went wrong on our side while writing it. It isn't something you did."
   },
   "suspects": "suspects",
-  "evidence": "evidence so far"
+  "evidence": "evidence so far",
+  "opening": {
+    "label": "tonight · before evening 1",
+    "title": "Swear in your detectives",
+    "readAloud": "read aloud",
+    "note": {
+      "lead": "grown-ups:",
+      "text": "read each part out loud as it appears. The case is being written meanwhile, and new parts only ever appear below."
+    },
+    "stamps": {
+      "opened": "case opened",
+      "suspects": "suspects in",
+      "firstClue": "first clue ready",
+      "done": "stamped",
+      "notYet": "not yet"
+    },
+    "oath": {
+      "intro": "{count, plural, one {Detective {names}, stand up and raise your right hand. Repeat after me:} other {Detectives {names}, stand up and raise your right hands. Repeat after me:}}",
+      "look": "I promise to look closely and listen carefully.",
+      "search": "I'll search only where my grown-up says, and I'll never touch anything hot, sharp or up high.",
+      "culprit": "I won't name the culprit until I can prove it.",
+      "end": "{count, plural, one {Detective, you're on the case!} other {Detectives, you're on the case!}}"
+    },
+    "suspects": {
+      "intro": "Our case tonight: {title}. {count, plural, =1 {One person is} =2 {Two people are} =3 {Three people are} =4 {Four people are} other {# people are}} under suspicion. Listen carefully:"
+    },
+    "ready": {
+      "title": "Evening 1 is ready",
+      "start": "Start evening 1",
+      "opens": "Evening 1 unlocks {when}."
+    },
+    "slow": {
+      "lead": "this is taking longer than usual:",
+      "text": "the storyteller is slow right now. Try again, or close this page and come back later; the case keeps its place.",
+      "retry": "Try again"
+    }
+  }
 }
