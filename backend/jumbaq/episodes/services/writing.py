@@ -18,6 +18,7 @@ from jumbaq.ai.public import (
     RiddleDraft,
     StoryWriter,
     SuspectDraft,
+    TextRules,
 )
 from jumbaq.cases.public import EpisodeBrief
 from jumbaq.core.clock import Clock
@@ -103,7 +104,9 @@ class EpisodeWriting:
     ) -> tuple[Payload, bool]:
         """The model's episode, or the built-in one. The second item is True for the built-in."""
         youngest = home.kids[0].age if home.kids else domain.YOUNG_AGE
-        task = _task(episode, brief, home, played)
+        paragraph_max, short_max = domain.text_limits(youngest)
+        rules = TextRules(paragraph_max, short_max, domain.BANNED_WORDS)
+        task = replace(_task(episode, brief, home, played), rules=rules)
         safe_riddle: Riddle | None = None
         for attempt in range(1, WRITE_TRIES + 1):
             try:
@@ -120,6 +123,7 @@ class EpisodeWriting:
             if not problems:
                 return payload, False
             logger.info("episode breaks the rules (%s), try %s", "; ".join(problems), attempt)
+            task = replace(task, fix=tuple(problems))
             if domain.is_safe_riddle(payload.fallback_riddle, home.objects, youngest):
                 safe_riddle = payload.fallback_riddle
         built_in = domain.built_in_payload(

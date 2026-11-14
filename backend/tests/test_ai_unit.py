@@ -18,6 +18,7 @@ from jumbaq.ai.domain import (
     HomeInput,
     KidInput,
     PlayedEpisode,
+    TextRules,
 )
 from jumbaq.ai.errors import AiBadOutputError, AiUnavailableError
 from jumbaq.ai.providers.claude import ClaudeProvider
@@ -186,3 +187,38 @@ async def test_claude_a_rejected_request_is_bad_output() -> None:
     error = anthropic.BadRequestError("x", response=response, body=None)
     with pytest.raises(AiBadOutputError):
         await _claude(error).complete_json(_PROMPT, {})
+
+
+async def test_the_episode_prompt_states_the_limits_and_the_banned_words() -> None:
+    plan = await _stub_plan(1)
+    rules = TextRules(
+        paragraph_max_chars=400, short_text_max_chars=250, banned_words=("climb", "oven")
+    )
+    task = EpisodeInput(
+        HOME, plan.title, plan.setting, plan.suspects, 1, plan.clues[0], (), rules=rules
+    )
+    prompt = prompts.episode_prompt(task)
+
+    assert "at most 400 characters" in prompt.system
+    assert "at most 250 characters" in prompt.system
+    assert '"climb", "oven"' in prompt.system
+    assert "refused" not in prompt.user
+
+
+async def test_a_retry_says_why_the_last_draft_was_refused() -> None:
+    plan = await _stub_plan(1)
+    reason = "unsafe for small kids: climb in hint; leave the word out entirely"
+    task = EpisodeInput(
+        HOME, plan.title, plan.setting, plan.suspects, 1, plan.clues[0], (), fix=(reason,)
+    )
+    prompt = prompts.episode_prompt(task)
+
+    assert reason in prompt.user
+    assert reason not in prompt.system
+
+
+def test_the_plan_prompt_states_the_clue_limit_and_the_retry_reasons() -> None:
+    reason = "the clue of episode 2 has 289 characters, the limit is 140"
+    prompt = prompts.case_plan_prompt(CasePlanInput(HOME, 1, clue_max_chars=140, fix=(reason,)))
+    assert "at most 140 characters" in prompt.system
+    assert reason in prompt.user and reason not in prompt.system

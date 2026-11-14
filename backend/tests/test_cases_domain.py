@@ -126,3 +126,9 @@ def test_the_right_suspect_solves_the_case_with_a_rank() -> None:
     assert result.case.status == S.SOLVED
     assert result.case.rank == Rank.SECOND_TRY
     assert result.case.solved_at == NOW
+
+
+def test_a_clue_is_one_short_sentence() -> None:
+    long = with_clue(1, Clue(2, "word " * 30, "s2", False))
+    assert any("the clue of episode 2 has 150 characters" in found for found in problems(long))
+    assert problems(GOOD) == []

@@ -95,9 +95,19 @@ class EpisodeBrief:
     clue: Clue
 
 
+# Every episode quotes its clue word for word to the kids, so a clue is one short sentence.
+CLUE_MAX_CHARS = 140
+
+
 def plan_problems(plan: Plan, suspects: int, episodes: int) -> list[str]:
     """Why the plan cannot be played. Empty when it is fine."""
     problems = []
+    for clue in plan.clues:
+        if len(clue.text) > CLUE_MAX_CHARS:
+            problems.append(
+                f"the clue of episode {clue.episode} has {len(clue.text)} characters, "
+                f"the limit is {CLUE_MAX_CHARS}"
+            )
     ids = [suspect.id for suspect in plan.suspects]
     if len(ids) != suspects or len(set(ids)) != len(ids):
         problems.append(f"needs {suspects} suspects with different ids")

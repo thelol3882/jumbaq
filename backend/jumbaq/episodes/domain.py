@@ -134,16 +134,25 @@ class Episode:
         return self.payload.fallback_riddle if self.used_fallback_riddle else self.payload.riddle
 
 
-def _short_texts(payload: Payload) -> list[str]:
-    riddles = (payload.riddle, payload.fallback_riddle)
+def _named_short_texts(payload: Payload) -> list[tuple[str, str]]:
+    # The names are the fields of the model's answer, so a refusal tells it what to fix.
     return [
-        payload.recap,
-        payload.hint,
-        payload.resolution_template,
-        payload.case_clue,
-        payload.cliffhanger,
-        *(text for riddle in riddles for text in (riddle.text, riddle.parent_note)),
+        ("recap", payload.recap),
+        ("hint", payload.hint),
+        ("resolution_template", payload.resolution_template),
+        ("case_clue", payload.case_clue),
+        ("cliffhanger", payload.cliffhanger),
+        ("riddle.text", payload.riddle.text),
+        ("riddle.parent_note", payload.riddle.parent_note),
+        ("fallback_riddle.text", payload.fallback_riddle.text),
+        ("fallback_riddle.parent_note", payload.fallback_riddle.parent_note),
     ]
+
+
+def text_limits(youngest_age: int) -> tuple[int, int]:
+    """The longest read-aloud paragraph and the longest short text, in characters."""
+    young = youngest_age < YOUNG_AGE
+    return PARAGRAPH_LIMIT[young], SHORT_TEXT_LIMIT[young]
 
 
 def banned_words(text: str) -> list[str]:
@@ -165,14 +174,28 @@ def draft_problems(
     young = youngest_age < YOUNG_AGE
     if not payload.read_aloud or len(payload.read_aloud) > MAX_PARAGRAPHS:
         problems.append(f"needs 1 to {MAX_PARAGRAPHS} paragraphs")
-    if any(len(text) > PARAGRAPH_LIMIT[young] for text in payload.read_aloud):
-        problems.append("a paragraph is too long for the youngest kid")
-    if any(len(text) > SHORT_TEXT_LIMIT[young] for text in _short_texts(payload)):
-        problems.append("a text is too long for the youngest kid")
-    texts = (*payload.read_aloud, *_short_texts(payload))
-    found = sorted({word for text in texts for word in banned_words(text)})
-    if found:
-        problems.append(f"unsafe for small kids: {', '.join(found)}")
+    paragraph_max, short_max = PARAGRAPH_LIMIT[young], SHORT_TEXT_LIMIT[young]
+    for index, text in enumerate(payload.read_aloud, start=1):
+        if len(text) > paragraph_max:
+            problems.append(
+                f"a read_aloud paragraph is too long: paragraph {index} has {len(text)} "
+                f"characters, the limit is {paragraph_max}"
+            )
+    named = [(f"read_aloud paragraph {i}", text) for i, text in enumerate(payload.read_aloud, 1)]
+    # The clue is the plan's text, checked when the case was planned: the episode cannot fix it.
+    own = [(name, text) for name, text in _named_short_texts(payload) if name != "case_clue"]
+    named += own
+    for name, text in own:
+        if len(text) > short_max:
+            problems.append(
+                f"a text is too long: {name} has {len(text)} characters, the limit is {short_max}"
+            )
+    for name, text in named:
+        found = sorted(set(banned_words(text)))
+        if found:
+            problems.append(
+                f"unsafe for small kids: {', '.join(found)} in {name}; leave the word out entirely"
+            )
     return problems
 
 

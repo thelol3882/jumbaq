@@ -308,3 +308,8 @@ def test_an_older_payload_has_no_steps_and_the_new_one_has() -> None:
     assert domain.has_evening_steps(stepped)
     assert (stepped.clue_suspect_id, stepped.clue_points_at) == ("s2", True)
     assert (stepped.cipher_secret, stepped.cipher_decoys) == ("FEATHER", ("GREY", "LIES"))
+
+
+def test_the_plan_clue_is_not_measured_again() -> None:
+    # The clue is quoted from the plan, which checks it; the episode cannot change it.
+    assert problems(replace(GOOD, case_clue="word " * 80), youngest=4) == []

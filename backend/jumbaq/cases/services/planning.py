@@ -54,7 +54,8 @@ class CasePlanning:
 
         # No unit of work is open here: the model call can take a while.
         try:
-            plan = await self._ask(family, CasePlanInput(_home(home), case.number))
+            task = CasePlanInput(_home(home), case.number, clue_max_chars=domain.CLUE_MAX_CHARS)
+            plan = await self._ask(family, task)
         except AiDailyLimitError:
             logger.warning("case %s not planned: the family reached the daily cap", case_id)
             await self._fail(family, case_id)
@@ -73,6 +74,7 @@ class CasePlanning:
             if not problems:
                 return plan
             logger.info("plan breaks the rules (%s), try %s", "; ".join(problems), attempt)
+            task = replace(task, fix=tuple(problems))
         return None
 
     async def _save(self, family: FamilyRef, case_id: uuid.UUID, plan: Plan | None) -> None:

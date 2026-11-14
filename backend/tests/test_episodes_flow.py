@@ -56,6 +56,23 @@ def wrong_shape(data: dict[str, Any]) -> None:
     data.clear()
 
 
+class UnsafeFirstDraft:
+    """The stub, with the first episode draft unsafe. Keeps every episode prompt it gets."""
+
+    name, model = "unsafe-first-draft", "test"
+
+    def __init__(self) -> None:
+        self.episode_prompts: list[Prompt] = []
+
+    async def complete_json(self, prompt: Prompt, schema: dict[str, Any]) -> Reply:
+        reply = await StubProvider().complete_json(prompt, schema)
+        if schema is EPISODE_SCHEMA:
+            self.episode_prompts.append(prompt)
+            if len(self.episode_prompts) == 1:
+                unsafe(reply.data)
+        return reply
+
+
 def handlers_with(sessionmaker: Sessionmaker, provider: Provider, daily_limit: int = 40) -> Any:
     settings = TEST_SETTINGS.model_copy(update={"ai_daily_calls_per_family": daily_limit})
     writer = build_story_writer(sessionmaker, settings, SystemClock(), provider)
@@ -264,3 +281,18 @@ def test_no_episode_while_the_case_is_planned(live_client: TestClient) -> None:
 def test_episodes_need_a_family(live_client: TestClient) -> None:
     live_client.cookies.delete(FAMILY_COOKIE)
     assert live_client.get("/api/v1/episodes/current").status_code == 401
+
+
+async def test_the_second_try_learns_why_the_first_draft_was_refused(
+    live_client: TestClient, sessionmaker: Sessionmaker
+) -> None:
+    family_id, _ = create_family(live_client)
+    provider = UnsafeFirstDraft()
+
+    await deliver_all(sessionmaker, handlers_with(sessionmaker, provider))
+
+    first, second = provider.episode_prompts
+    assert "Hard limits" in first.system and "refused" not in first.user
+    assert "unsafe for small kids" in second.user and "in hint" in second.user
+    episode = await episode_1(sessionmaker, family_id)
+    assert episode.status == "ready" and not episode.is_fallback
