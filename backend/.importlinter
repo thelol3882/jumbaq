@@ -47,6 +47,7 @@ forbidden_modules =
     jumbaq.families
     jumbaq.cases
     jumbaq.ai
+    jumbaq.billing
 
 [importlinter:contract:models-without-web-framework]
 name = Models know nothing about FastAPI or Starlette
@@ -113,6 +114,7 @@ source_modules =
     jumbaq.families
     jumbaq.cases
     jumbaq.ai
+    jumbaq.billing
 forbidden_modules =
     jumbaq.*.handlers
 allow_indirect_imports = True
@@ -133,15 +135,15 @@ type = forbidden
 source_modules =
     jumbaq.cases
     jumbaq.ai
+    jumbaq.billing
     jumbaq.core
     jumbaq.worker
 forbidden_modules =
     jumbaq.families.deps
 allow_indirect_imports = True
 # When a module's routers or deps.py start to use FamilyDep, they are added here by name:
-# ignore_imports =
-#     jumbaq.cases.routers.* -> jumbaq.families.deps
-#     jumbaq.cases.deps -> jumbaq.families.deps
+ignore_imports =
+    jumbaq.billing.routers.* -> jumbaq.families.deps
 
 # A new module joins the contracts below in its first PR: one "through public" contract of its
 # own, and its name in the forbidden lists of the others.
@@ -154,6 +156,7 @@ source_modules =
 forbidden_modules =
     jumbaq.cases
     jumbaq.ai
+    jumbaq.billing
 allow_indirect_imports = True
 
 [importlinter:contract:cases-through-public]
@@ -180,6 +183,18 @@ forbidden_modules =
     jumbaq.ai.repositories
     jumbaq.ai.uow
     jumbaq.ai.services
+    jumbaq.billing.domain
+    jumbaq.billing.errors
+    jumbaq.billing.events
+    jumbaq.billing.models
+    jumbaq.billing.providers
+    jumbaq.billing.repositories
+    jumbaq.billing.queries
+    jumbaq.billing.uow
+    jumbaq.billing.services
+    jumbaq.billing.schemas
+    jumbaq.billing.deps
+    jumbaq.billing.routers
 allow_indirect_imports = True
 
 [importlinter:contract:ai-through-public]
@@ -190,6 +205,26 @@ source_modules =
 forbidden_modules =
     jumbaq.families
     jumbaq.cases
+    jumbaq.billing
+allow_indirect_imports = True
+
+[importlinter:contract:billing-through-public]
+name = billing uses other modules only through their public.py
+type = forbidden
+source_modules =
+    jumbaq.billing
+forbidden_modules =
+    jumbaq.families.domain
+    jumbaq.families.errors
+    jumbaq.families.events
+    jumbaq.families.models
+    jumbaq.families.repositories
+    jumbaq.families.queries
+    jumbaq.families.uow
+    jumbaq.families.services
+    jumbaq.families.schemas
+    jumbaq.cases
+    jumbaq.ai
 allow_indirect_imports = True
 
 [importlinter:contract:only-ai-providers-call-the-model]
@@ -201,6 +236,7 @@ source_modules =
     jumbaq.core
     jumbaq.families
     jumbaq.cases
+    jumbaq.billing
     jumbaq.ai.domain
     jumbaq.ai.services
     jumbaq.ai.repositories
@@ -208,4 +244,23 @@ source_modules =
     jumbaq.ai.parsing
 forbidden_modules =
     anthropic
+allow_indirect_imports = True
+
+[importlinter:contract:only-billing-providers-call-stripe]
+name = Only billing.providers talks to the Stripe SDK
+type = forbidden
+source_modules =
+    jumbaq.main
+    jumbaq.worker
+    jumbaq.core
+    jumbaq.families
+    jumbaq.cases
+    jumbaq.ai
+    jumbaq.billing.domain
+    jumbaq.billing.services
+    jumbaq.billing.repositories
+    jumbaq.billing.queries
+    jumbaq.billing.routers
+forbidden_modules =
+    stripe
 allow_indirect_imports = True
