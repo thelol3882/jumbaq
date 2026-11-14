@@ -8,7 +8,7 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from jumbaq.ai.domain import AnswerType, CasePlanInput, EpisodeInput, HomeInput
+from jumbaq.ai.domain import AnswerType, CasePlanInput, EpisodeInput, HomeInput, TextRules
 
 EPISODES_PER_CASE = 5
 SUSPECTS_PER_CASE = 3
@@ -55,6 +55,25 @@ def _home(home: HomeInput) -> dict[str, Any]:
     }
 
 
+def _clue_limit(task: CasePlanInput) -> str:
+    if task.clue_max_chars is None:
+        return ""
+    return (
+        f"- Each clue text is one short sentence of at most {task.clue_max_chars} characters. "
+        "Code checks it and refuses a longer one.\n"
+    )
+
+
+def _retry(fix: tuple[str, ...]) -> str:
+    if not fix:
+        return ""
+    reasons = "\n".join(f"- {reason}" for reason in fix)
+    return (
+        f"Your last draft was refused for these reasons:\n{reasons}\n"
+        "Write it again and fix exactly these.\n\n"
+    )
+
+
 def case_plan_prompt(task: CasePlanInput) -> Prompt:
     system = f"""\
 You plan a detective case for a family. A parent reads it aloud to kids aged about 4 to 10, \
@@ -74,14 +93,23 @@ names one suspect and either points at that suspect (points_at true) or rules th
 No clue points at an innocent suspect: small kids take a clue at its word, so there are no \
 false trails.
 - The reveal: a few sentences that explain how the clues fit together.
-
+{_clue_limit(task)}
 {_SAFETY}
 
 {_DATA_RULES}"""
-    user = f"Plan case number {task.case_number} for this family.\n\n" + data_block(
-        {"case_number": task.case_number, "home": _home(task.home)}
-    )
+    data = data_block({"case_number": task.case_number, "home": _home(task.home)})
+    user = f"Plan case number {task.case_number} for this family.\n\n{_retry(task.fix)}{data}"
     return Prompt(system, user)
+
+
+def _limits(rules: TextRules) -> str:
+    words = ", ".join(f'"{word}"' for word in rules.banned_words)
+    return f"""\
+Hard limits. Code checks every episode before anyone sees it, and refuses one that breaks a limit:
+- Each read_aloud paragraph is at most {rules.paragraph_max_chars} characters.
+- recap, hint, resolution_template, cliffhanger, and the text and the parent_note of both \
+riddles are at most {rules.short_text_max_chars} characters each.
+- These words never appear in any text, not even about a character of the story: {words}."""
 
 
 def episode_prompt(task: EpisodeInput) -> Prompt:
@@ -119,7 +147,7 @@ after the riddle.
 Never say or hint who the culprit is beyond what the clues say.
 
 {_SAFETY}
-
+{"" if task.rules is None else chr(10) + _limits(task.rules) + chr(10)}
 {_DATA_RULES}"""
     data = {
         "episode_number": task.number,
@@ -136,7 +164,7 @@ Never say or hint who the culprit is beyond what the clues say.
         },
         "earlier_episodes": [asdict(played) for played in task.played],
     }
-    user = f"Write episode {task.number}.\n\n" + data_block(data)
+    user = f"Write episode {task.number}.\n\n{_retry(task.fix)}" + data_block(data)
     return Prompt(system, user)
 
 

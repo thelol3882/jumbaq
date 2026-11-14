@@ -54,6 +54,10 @@ class HomeInput:
 class CasePlanInput:
     home: HomeInput
     case_number: int
+    # The longest clue the caller accepts. Episodes quote clues word for word, so they stay short.
+    clue_max_chars: int | None = None
+    # Why the previous plan was refused, so the next try fixes exactly that.
+    fix: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -91,6 +95,16 @@ class PlayedEpisode:
 
 
 @dataclass(frozen=True)
+class TextRules:
+    """The limits the caller checks a draft against. The prompt states the same numbers, so the
+    model knows the rules it is measured by."""
+
+    paragraph_max_chars: int
+    short_text_max_chars: int
+    banned_words: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class EpisodeInput:
     home: HomeInput
     case_title: str
@@ -99,6 +113,9 @@ class EpisodeInput:
     number: int
     clue: ClueDraft
     played: tuple[PlayedEpisode, ...]
+    rules: TextRules | None = None
+    # Why the previous draft was refused, so the next try fixes exactly that.
+    fix: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

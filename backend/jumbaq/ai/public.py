@@ -17,6 +17,7 @@ from jumbaq.ai.domain import (
     PlayedEpisode,
     RiddleDraft,
     SuspectDraft,
+    TextRules,
 )
 from jumbaq.ai.errors import AiBadOutputError, AiDailyLimitError, AiUnavailableError
 from jumbaq.ai.prompts import ANSWER_SLOT, EPISODES_PER_CASE, SUSPECTS_PER_CASE
@@ -76,5 +77,6 @@ __all__ = [
     "RiddleDraft",
     "StoryWriter",
     "SuspectDraft",
+    "TextRules",
     "build_story_writer",
 ]
