@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://jumbaq.fun"><b>jumbaq.fun</b></a> &nbsp;·&nbsp; no sign-up &nbsp;·&nbsp; the first case is free
   <br>
-  <sub>Business Cup 2.0 · Entertainment track</sub>
+  <sub>Business Cup 2.0 · Entertainment track · team localhost: Dias &amp; Bakhtiyar</sub>
 </p>
 
 *Jumbaq* is Kazakh for "riddle". A detective story for the evening that kids solve by searching their own home, read aloud by a parent from a phone.
