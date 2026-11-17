@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://jumbaq.fun"><b>jumbaq.fun</b></a> &nbsp;·&nbsp; no sign-up &nbsp;·&nbsp; the first case is free
+  <b>jumbaq.fun</b> ran during the hackathon and is offline now &nbsp;·&nbsp; <a href="#run-it">run it on your laptop</a>
   <br>
   <sub>Business Cup 2.0 · Entertainment track · team localhost: Dias &amp; Bakhtiyar</sub>
 </p>
@@ -18,14 +18,16 @@ Built in 24 hours. The user is a working parent in the U.S. with kids aged 4 to 
   <img src="docs/images/evening.webp" width="100%" alt="Four phone screens of one evening, taped to a notebook page one after another: the parent reads the story, the riddle sends the kids to a clock, their answer 3 is the key to a letter-shift cipher, and the clue asks which of three suspects it points at.">
 </p>
 
-The screens are from the live site: "The Case of the Missing Magic Wand", written by the model for Leo (5) and Ava (8).
+The screens are from the live site during the hackathon: "The Case of the Missing Magic Wand", written by the model for Leo (5) and Ava (8).
 
 ## For reviewers
+
+The live site at jumbaq.fun is switched off. Everything below works the same on your laptop: start the stack as in [Run it](#run-it) and open http://localhost:3000.
 
 - **No login.** Open the site and press *Start tonight's case*. Setup takes one minute, with ready nicknames to tap.
 - **Use your own home.** The case is written live by the model for the kids, rooms and objects you tick. Nothing is pre-written, except the built-in stories that play if the model is switched off or fails.
 - **Demo controls.** A family waits until the next evening. Reviewers get a *Demo controls* block on the evening screen: *open the next evening now* and *skip this evening*. A skipped evening is still written by the model and played through the same rules.
-- **Payments are in Stripe test mode.** The paywall appears when you ask for case 2. The test card is on the [Plans page](https://jumbaq.fun/plans): `4242 4242 4242 4242`, any future date, any CVC. *Manage or cancel subscription* opens the Stripe portal.
+- **Payments are in Stripe test mode.** The paywall appears when you ask for case 2. The test card is on the Plans page (http://localhost:3000/plans): `4242 4242 4242 4242`, any future date, any CVC. *Manage or cancel subscription* opens the Stripe portal. On a laptop this needs your own Stripe test keys in `infra/.env`; without them checkout answers that payments are not configured.
 - **Start again.** *Start a new family* on the family page gives you a fresh case with other inputs.
 
 ## One case, all the way
@@ -105,7 +107,7 @@ The web app is on http://localhost:3000, the API on http://localhost:8000/api/v1
 
 ```
 backend/   FastAPI API and arq worker (package jumbaq)
-web/app/   Next.js web app at jumbaq.fun (standalone server)
+web/app/   Next.js web app (standalone server)
 infra/     the local Docker Compose stack and the database setup
 deploy/    the server: its Docker Compose file and nginx behind Cloudflare
 brand/     logo, colours, type and tokens for the web app
@@ -140,4 +142,4 @@ docker compose exec api python -m jumbaq.ai.control off
 
 ## Deploy
 
-[Luxen](luxen.yaml) builds the backend and web images, pushes them to ghcr.io and deploys them to the server with `deploy/docker-compose.yml`. The web app is at https://jumbaq.fun, the API at https://api.jumbaq.fun. The server `.env` comes from `.env.example`.
+[Luxen](luxen.yaml) builds the backend and web images, pushes them to ghcr.io and deploys them to the server with `deploy/docker-compose.yml`. The server `.env` comes from `.env.example`. During the hackathon the web app ran at jumbaq.fun and the API at api.jumbaq.fun; the server is stopped now.
